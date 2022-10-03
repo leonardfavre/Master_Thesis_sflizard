@@ -1,0 +1,58 @@
+name: Continuous integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-code-formatting:
+    name: Check code formatting
+    runs-on: [self-hosted,exoscale]
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install needed packages (black, flake8, mypy, bandit)
+        run: |
+          pip install \
+            bandit==1.6 \
+            black==22.3.0 \
+            flake8==3.8.3 \
+            mypy==0.910 \
+            types-requests==2.28.9       
+
+      - name: Run Black
+        run: black --config=pyproject.toml --check .
+
+      - name: Run Flake8
+        run: flake8 --config setup.cfg .
+
+      - name: Run Bandit
+        run: bandit -s B101,B108,B301,B322,B403,B404,B601,B603,B607 .
+
+      - name: Run Mypy
+        run: mypy --config-file=pyproject.toml .
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install nbmake pytest-cov
+        run: pip install nbmake==1.2 pytest-cov==3.0.0
+
+      - name: Install pytest mock
+        run: pip install pytest-mock==3.7.0
