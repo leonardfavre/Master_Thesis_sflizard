@@ -21,3 +21,15 @@ Run training:
 ```
 python models/hover_net/run_train.py --gpu='0'
 ```
+
+
+Lizard:
+
+data utils-> data_extraction.py
+
+extract the splited data source into a pkl file with annotations.
+
+```
+python src/data_utils/data_extraction.py -ip Lizard_dataset/Lizard_Images1 Lizard_dataset/Lizard_Images2 -mf Lizard_dataset/Lizard_Labels/Labels -of data.pkl
+```
+
