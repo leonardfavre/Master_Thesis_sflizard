@@ -30,6 +30,14 @@ data utils-> data_extraction.py
 extract the splited data source into a pkl file with annotations.
 
 ```
-python src/data_utils/data_extraction.py -ip Lizard_dataset/Lizard_Images1 Lizard_dataset/Lizard_Images2 -mf Lizard_dataset/Lizard_Labels/Labels -of data.pkl
+python sflizard/data_utils/data_extraction.py -ip data/Lizard_dataset/Lizard_Images1 data/Lizard_dataset/Lizard_Images2 -mf data/Lizard_dataset/Lizard_Labels/Labels -of data-540-200.pkl
 ```
 
+Stardist:
+
+Update model to use pytorch lightning.
+
+training stardist:
+```
+python sflizard/training.py --data_path=data-540-200.pkl --max_epochs=10 --batch_size=4 --gpus=1
+```
