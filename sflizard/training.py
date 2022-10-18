@@ -7,7 +7,7 @@ permission of the copyright holders. If you encounter this file and do not have
 permission, please contact the copyright holders and delete this file.
 """
 
-from data_utils.data_module import LizardDataModule
+from sflizard import LizardDataModule
 
 from sflizard import Stardist
 

@@ -63,10 +63,7 @@ class LizardDataset(Dataset):
             return image, obj_probabilities, distances
 
         # for testing, return image id for reporting
-        if self.test:
-            return image, annotation, self.df.iloc[idx].id
-        else:
-            return image, annotation
+        return image, annotation
 
 
 class LizardDataModule(pl.LightningDataModule):

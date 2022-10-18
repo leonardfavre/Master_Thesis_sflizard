@@ -109,7 +109,7 @@ class UNetStar(nn.Module):
                 dist_numpy, prob_numpy, nms_thresh=0.5, prob_thresh=0.5
             )
             star_label = polygons_to_label(
-                dists, points, image[i].squeeze(0).squeeze(0).shape, probs
+                dists, points, (image.shape[1], image.shape[2]), probs
             )
             if not multiple:
                 # keep only the largest connected component
