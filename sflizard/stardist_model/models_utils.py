@@ -38,7 +38,7 @@ class MaskStardist:
         dist, prob = self.model(tensors)
 
         star_labels = self.model.compute_star_label(tensors, dist, prob, multiple)
-        
+
         return star_labels
 
 
@@ -97,7 +97,7 @@ class UNetStar(nn.Module):
         image: torch.Tensor,
         dist: torch.Tensor,
         prob: torch.Tensor,
-        multiple: bool=True,
+        multiple: bool = True,
     ):
         """Compute the stare label of images according dist and prob."""
         star_labels = []
@@ -128,10 +128,13 @@ class UNetStar(nn.Module):
                     # replace all other labels with background (set to 0), replace the label by the number 1
                     for i in range(star_label.shape[0]):
                         for j in range(star_label.shape[1]):
-                            star_label[i][j] = 0 if star_label[i][j] != best_label else 1
+                            star_label[i][j] = (
+                                0 if star_label[i][j] != best_label else 1
+                            )
             star_labels.append(star_label)
         star_labels = np.array(star_labels)
         return star_labels
+
 
 # Utilities for UNetStar model
 class double_conv(nn.Module):

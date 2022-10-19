@@ -9,7 +9,7 @@ permission, please contact the copyright holders and delete this file.
 
 __version__ = "1.0.0"
 
-from sflizard.stardist_model.stardist_model import Stardist
-from sflizard.data_utils.data_module import LizardDataModule
-from sflizard.data_utils.graph_module import LizardGraphDataModule
-from sflizard.data_utils.data_module_utils import get_edge_list
+from sflizard.stardist_model.stardist_model import Stardist  # noqa: F401
+from sflizard.data_utils.data_module import LizardDataModule  # noqa: F401
+from sflizard.data_utils.graph_module import LizardGraphDataModule  # noqa: F401
+from sflizard.data_utils.data_module_utils import get_edge_list  # noqa: F401

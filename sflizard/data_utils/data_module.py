@@ -21,6 +21,7 @@ from sklearn.model_selection import train_test_split
 
 from sflizard.data_utils import get_stardist_data
 
+
 class LizardDataset(Dataset):
     """Dataset object for the Lizard."""
 
@@ -50,9 +51,11 @@ class LizardDataset(Dataset):
         image = np.array(self.data[self.df.iloc[idx].id])
         if self.tf is not None:
             image = self.tf(image=image)["image"]
-        
+
         if self.annotation_target == "stardist":
-            obj_probabilities, distances = get_stardist_data(self.df.iloc[idx].inst_map, self.aditional_args)
+            obj_probabilities, distances = get_stardist_data(
+                self.df.iloc[idx].inst_map, self.aditional_args
+            )
             return image, obj_probabilities, distances
         elif self.annotation_target == "inst":
             annotation = self.df.iloc[idx].inst_map
@@ -150,9 +153,16 @@ class LizardDataModule(pl.LightningDataModule):
         self.train_ds = LizardDataset(
             train_df, data, tf_augment, self.annotation_target, self.aditional_args
         )
-        self.valid_ds = LizardDataset(valid_df, data, tf_base, self.annotation_target, self.aditional_args)
+        self.valid_ds = LizardDataset(
+            valid_df, data, tf_base, self.annotation_target, self.aditional_args
+        )
         self.test_ds = LizardDataset(
-            test_df, data, tf_base, self.annotation_target, self.aditional_args, test=True
+            test_df,
+            data,
+            tf_base,
+            self.annotation_target,
+            self.aditional_args,
+            test=True,
         )
 
     def train_dataloader(self):

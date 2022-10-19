@@ -1,8 +1,6 @@
 import pytorch_lightning as pl
 import torch
-import torchmetrics
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-import numpy as np
 from stardist.matching import matching_dataset
 
 from sflizard.stardist_model import UNetStar as UNet
@@ -74,7 +72,7 @@ class Stardist(pl.LightningModule):
             # self.val_values["prob"].append(prob.cpu())
             # self.val_values["targets"].append(targets.cpu())
             # self.val_values["distances"].append(distances.cpu())
-            
+
         elif name == "test":
             dist, prob = outputs
             self.test_values["inputs"].append(inputs.cpu())
@@ -91,8 +89,12 @@ class Stardist(pl.LightningModule):
         """Calculate metrics and log."""
         for val in values:
             values[val] = torch.cat(values[val])
-        mask_true = self.model.compute_star_label(values["inputs"], values["distances"], values["targets"])
-        mark_pred = self.model.compute_star_label(values["inputs"], values["dist"], values["prob"])
+        mask_true = self.model.compute_star_label(
+            values["inputs"], values["distances"], values["targets"]
+        )
+        mark_pred = self.model.compute_star_label(
+            values["inputs"], values["dist"], values["prob"]
+        )
         metrics = matching_dataset(mask_true, mark_pred)
         self.log(f"{name}_acc", metrics.accuracy)
 
