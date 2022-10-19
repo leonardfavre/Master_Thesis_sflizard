@@ -11,7 +11,6 @@ from typing import Optional
 from pathlib import Path
 import pickle
 
-import torch
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 import pandas as pd
@@ -19,7 +18,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import pytorch_lightning as pl
 from sklearn.model_selection import train_test_split
-from stardist import star_dist, edt_prob
+
+from sflizard.data_utils import get_stardist_data
 
 class LizardDataset(Dataset):
     """Dataset object for the Lizard."""
@@ -50,18 +50,12 @@ class LizardDataset(Dataset):
         image = np.array(self.data[self.df.iloc[idx].id])
         if self.tf is not None:
             image = self.tf(image=image)["image"]
-
-        annotation = self.df.iloc[idx].annotation
-
+        
         if self.annotation_target == "stardist":
-            if "n_rays" not in self.aditional_args.keys():
-                raise ValueError("n_rays not in aditional_args. Mandatory for stardist model.") 
-            distances = star_dist(annotation, self.aditional_args["n_rays"])
-            distances = torch.from_numpy(np.transpose(distances, (2, 0, 1)))
-            obj_probabilities = edt_prob(annotation)
-            obj_probabilities = torch.from_numpy(np.expand_dims(obj_probabilities, 0))
+            obj_probabilities, distances = get_stardist_data(self.df.iloc[idx].inst_map, self.aditional_args)
             return image, obj_probabilities, distances
-
+        elif self.annotation_target == "inst":
+            annotation = self.df.iloc[idx].inst_map
         # for testing, return image id for reporting
         return image, annotation
 
@@ -100,25 +94,25 @@ class LizardDataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[str] = None):
         """Data setup for training."""
         annotations = self.data["annotations"]
-        if self.annotation_target in ["inst", "stardist"]:
-            # keep only the nuclei instance
-            annotations = annotations.drop(
-                ["class_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
-            )
-            annotations.rename(columns={"inst_map": "annotation"}, inplace=True)
-        elif self.annotation_target == "class":
-            # keep only the class
-            annotations = annotations.drop(
-                ["inst_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
-            )
-            annotations.rename(columns={"class_map": "annotation"}, inplace=True)
-            self.num_classes = len(
-                np.unique(np.concatenate([np.unique(a) for a in annotations.class_map]))
-            )
-        elif self.annotation_target == "full":
-            print("not implemented yet")
-        else:
-            raise ValueError(f"Invalid annotation target: {self.annotation_target}")
+        # if self.annotation_target in ["inst", "stardist"]:
+        #     # keep only the nuclei instance
+        #     annotations = annotations.drop(
+        #         ["class_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
+        #     )
+        #     annotations.rename(columns={"inst_map": "annotation"}, inplace=True)
+        # elif self.annotation_target == "class":
+        #     # keep only the class
+        #     annotations = annotations.drop(
+        #         ["inst_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
+        #     )
+        #     annotations.rename(columns={"class_map": "annotation"}, inplace=True)
+        #     self.num_classes = len(
+        #         np.unique(np.concatenate([np.unique(a) for a in annotations.class_map]))
+        #     )
+        # elif self.annotation_target == "full":
+        #     print("not implemented yet")
+        # else:
+        #     raise ValueError(f"Invalid annotation target: {self.annotation_target}")
 
         train_df, test_df = train_test_split(
             annotations,

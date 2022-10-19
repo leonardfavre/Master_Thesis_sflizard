@@ -11,3 +11,5 @@ __version__ = "1.0.0"
 
 from sflizard.stardist_model.stardist_model import Stardist
 from sflizard.data_utils.data_module import LizardDataModule
+from sflizard.data_utils.graph_module import LizardGraphDataModule
+from sflizard.data_utils.data_module_utils import get_edge_list

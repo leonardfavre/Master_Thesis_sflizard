@@ -41,3 +41,9 @@ training stardist:
 ```
 python sflizard/training.py --data_path=data-540-200.pkl --max_epochs=10 --batch_size=4 --gpus=1
 ```
+
+Graph:
+
+Graph datamodule with pytorch geometric
+https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs
+https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html

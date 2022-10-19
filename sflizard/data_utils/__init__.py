@@ -1,1 +1,3 @@
+from sflizard.data_utils.data_module_utils import get_stardist_data, get_graph_from_inst_map
 from sflizard.data_utils.data_module import LizardDataModule
+from sflizard.data_utils.graph_module import LizardGraphDataModule
