@@ -13,3 +13,4 @@ from sflizard.stardist_model.stardist_model import Stardist  # noqa: F401
 from sflizard.data_utils.data_module import LizardDataModule  # noqa: F401
 from sflizard.data_utils.graph_module import LizardGraphDataModule  # noqa: F401
 from sflizard.data_utils.data_module_utils import get_edge_list  # noqa: F401
+from sflizard.GraphSage_model.graphSage_model import GraphSAGE  # noqa: F401

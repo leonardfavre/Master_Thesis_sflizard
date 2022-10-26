@@ -1,10 +1,10 @@
 import pytorch_lightning as pl
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from stardist.matching import matching_dataset
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from sflizard.stardist_model import UNetStar as UNet
 from sflizard.stardist_model import MyL1BCELoss
+from sflizard.stardist_model import UNetStar as UNet
 
 
 class Stardist(pl.LightningModule):
@@ -28,7 +28,7 @@ class Stardist(pl.LightningModule):
 
         self.loss = MyL1BCELoss()
 
-        self.val_values = {
+        self.val_values: dict[str, list] = {
             "inputs": [],
             "dist": [],
             "prob": [],
@@ -36,7 +36,7 @@ class Stardist(pl.LightningModule):
             "distances": [],
         }
 
-        self.test_values = {
+        self.test_values: dict[str, list] = {
             "inputs": [],
             "dist": [],
             "prob": [],

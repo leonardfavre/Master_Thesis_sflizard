@@ -6,16 +6,17 @@ This file is confidential and only available to authorized individuals with the
 permission of the copyright holders. If you encounter this file and do not have
 permission, please contact the copyright holders and delete this file.
 """
-from rich import print
-import glob
 import argparse
-import time
-from PIL import Image
-from pathlib import Path
-import scipy.io as sio
-import numpy as np
+import glob
 import pickle
+import time
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
+import scipy.io as sio
+from PIL import Image
+from rich import print
 from tqdm import tqdm
 
 
@@ -253,6 +254,7 @@ def extract_data(args):
         f" > Number of classes : {len(np.unique(np.concatenate([d for d in cleaned_data['annotations']['classes']])))}"
     )
 
+    print("5. Saving File...\n")
     save = args.output_file
     with open(save, "wb") as f:
         pickle.dump(cleaned_data, f)

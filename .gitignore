@@ -132,6 +132,10 @@ dmypy.json
 logs/
 checkpoints/
 lightning_logs/
+*.ckpt
 
 # dataset
 data/
+*.pkl
+
+

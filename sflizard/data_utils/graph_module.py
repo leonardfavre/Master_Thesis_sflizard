@@ -1,15 +1,13 @@
-import torch
-from torch_geometric.data import Dataset, LightningDataset
-from torch_geometric.data import Data
-
 import os.path as osp
+import pickle
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-from pathlib import Path
-import pickle
+import torch
 from sklearn.model_selection import train_test_split
+from torch_geometric.data import Data, Dataset, LightningDataset
+from tqdm import tqdm
 
 from sflizard.data_utils import get_graph_from_inst_map
 
@@ -49,15 +47,18 @@ class LizardGraphDataset(Dataset):
         for idx in tqdm(range(len(self.df)), desc=f"Processing {self.name} dataset"):
             image = torch.tensor(self.data[self.df.iloc[idx].id]).permute(2, 0, 1)
             inst_map = self.df.iloc[idx].inst_map
+            class_map = self.df.iloc[idx].class_map
             graph = get_graph_from_inst_map(
-                inst_map, n_rays=self.n_rays, distance=self.distance
+                inst_map, class_map, n_rays=self.n_rays, distance=self.distance
             )
             processed_data = Data(
                 x=graph["x"],
+                y=graph["y"],
                 pos=graph["pos"],
                 edge_index=graph["edge_index"],
                 edge_attr=["edge_attr"],
                 original_img=image,
+                class_map=class_map,
             )
             torch.save(processed_data, osp.join(self.processed_dir, f"data_{idx}.pt"))
 

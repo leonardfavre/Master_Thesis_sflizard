@@ -7,14 +7,12 @@ permission of the copyright holders. If you encounter this file and do not have
 permission, please contact the copyright holders and delete this file.
 """
 
-from sflizard import LizardDataModule
-
-from sflizard import Stardist
-
 import argparse
 import os
 
 import pytorch_lightning as pl
+
+from sflizard import GraphSAGE, LizardDataModule, LizardGraphDataModule, Stardist
 
 
 def init_stardist_training(args):
@@ -23,8 +21,17 @@ def init_stardist_training(args):
     IN_CHANNELS = 3
     N_RAYS = 32
 
-    # keep only the instance map from the dataset
-    annotation_target = "stardist"
+    # create the datamodule
+    dm = LizardDataModule(
+        data_path=args.data_path,
+        annotation_target="stardist",
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        input_size=args.input_size,
+        seed=args.seed,
+        aditional_args={"n_rays": N_RAYS},
+    )
+    dm.setup()
 
     # create the model
     model = Stardist(
@@ -35,30 +42,44 @@ def init_stardist_training(args):
         seed=args.seed,
     )
 
-    aditional_args = {"n_rays": N_RAYS}
+    return dm, model
 
-    return model, annotation_target, aditional_args
+
+def init_graphSage_training(args):
+    """Init the training for the graphSage model."""
+
+    NUM_FEATURES = 32
+    NUM_CLASSES = 7
+
+    # create the datamodule
+    dm = LizardGraphDataModule(
+        data_path=args.data_path,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        seed=args.seed,
+    )
+    dm.setup()
+
+    # create the model
+    model = GraphSAGE(
+        learning_rate=args.learning_rate,
+        num_features=NUM_FEATURES,
+        num_classes=NUM_CLASSES,
+        seed=args.seed,
+    )
+
+    return dm, model
 
 
 def full_training(args):
     """Train the model on the whole dataset."""
 
     if args.model == "stardist":
-        model, annotation_target, aditional_args = init_stardist_training(args)
+        dm, model = init_stardist_training(args)
+    elif args.model == "graphSage":
+        dm, model = init_graphSage_training(args)
     else:
         raise ValueError("Model not implemented.")
-
-    # create the datamodule
-    dm = LizardDataModule(
-        data_path=args.data_path,
-        annotation_target=annotation_target,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        input_size=args.input_size,
-        seed=args.seed,
-        aditional_args=aditional_args,
-    )
-    dm.setup()
 
     # create the trainer
     trainer = pl.Trainer.from_argparse_args(args)
@@ -67,7 +88,7 @@ def full_training(args):
     trainer.fit(model, dm)
 
     # # save the model
-    trainer.save_checkpoint(f"models/full_training_{args.model}.ckpt")
+    trainer.save_checkpoint(f"models/full_training_{args.model}_{args.max_epochs}.ckpt")
 
 
 if __name__ == "__main__":

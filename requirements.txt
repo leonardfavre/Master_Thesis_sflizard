@@ -11,3 +11,8 @@ stardist==0.8.3
 torch_geometric==2.1.0
 torch_sparse==0.6.15
 torch_scatter==2.0.9
+
+dgl==0.9.1 
+dglgo==0.0.2 # https://www.dgl.ai/pages/start.html
+
+# to include in ci : flake8==5.0.4

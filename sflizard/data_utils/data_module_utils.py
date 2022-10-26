@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from stardist import star_dist, edt_prob, non_maximum_suppression
+from stardist import edt_prob, non_maximum_suppression, star_dist
 
 
 def get_stardist_distances(inst_map, n_rays):
@@ -91,11 +91,12 @@ def get_edge_list(vertex, distance):
     return edge_list
 
 
-def get_graph_from_inst_map(inst_map, n_rays, distance):
+def get_graph_from_inst_map(inst_map, class_map, n_rays, distance):
     """Get the graph from the instance map.
 
     Args:
         inst_map (): instance map.
+        class_map (): class map.
         n_rays (int): number of rays of stardist objects.
         distance (int): distance between two vertex to have an edge.
 
@@ -107,9 +108,21 @@ def get_graph_from_inst_map(inst_map, n_rays, distance):
     prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
     points, probs, dists = compute_stardist(dist, prob)
 
+    # get points with target
+    y = []
+    for i in range(points.shape[0] - 1, -1, -1):
+        target = class_map[points[i, 0], points[i, 1]]
+        if target == 0:
+            points = np.delete(points, i, 0)
+            dists = np.delete(dists, i, 0)
+        else:
+            y.append(class_map[points[i, 0], points[i, 1]])
+    y.reverse()
+
     # add vertex info to graph
     graph["x"] = torch.Tensor(dists)
     graph["pos"] = torch.Tensor(points)
+    graph["y"] = torch.Tensor(y)
 
     # compute edge information
     edge_list = get_edge_list(points, distance)
