@@ -1,0 +1,29 @@
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+target-version = ['py36', 'py37', 'py38']
+include = '\.pyi?$'
+force-exclude = '''
+^/(
+  (
+      \.eggs         
+    | \.git          
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.mypy]
+allow_redefinition = "True"
+ignore_missing_imports = "True"
+show_error_codes = "True"
+exclude = "tests/segmentation/conftest.py"
