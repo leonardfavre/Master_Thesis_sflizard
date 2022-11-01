@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# logs and checkpoints
+logs/
+checkpoints/
+lightning_logs/
+*.ckpt
+
+# dataset
+data/
+*.pkl
+
+
