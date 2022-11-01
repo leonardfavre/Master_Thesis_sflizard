@@ -52,16 +52,19 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
         position=1,
         leave=False,
     ):
-        patch_id = np.unique(value)
-        patch_id_no_bg = patch_id[patch_id != 0] - 1
+        patch_id = np.unique(value).tolist()[1:]
         # keep only values present in the patch
-        nuclei_id = mat_file["id"][patch_id_no_bg]
-        classes = mat_file["class"][patch_id_no_bg]
-        bbox = mat_file["bbox"][patch_id_no_bg]
-        centroids = mat_file["centroid"][patch_id_no_bg]
+        nuclei_id = np.squeeze(mat_file["id"]).tolist()
+        #classes = []
+        #bbox = []
+        #centroids = []
         class_map = np.zeros(value.shape)
-        for i in range(len(classes)):
-            class_map[value == patch_id_no_bg[i]] = classes[i]
+        for v in patch_id:
+            idx = nuclei_id.index(v)
+            #classes.append(mat_file["class"][idx])
+            #bbox.append(mat_file["bbox"][idx])
+            #centroids.append(mat_file["centroid"][idx])
+            class_map[value == v] = mat_file["class"][idx]
         # add the new patch to the dataframe
         annotations = pd.concat(
             [
@@ -71,10 +74,10 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
                         "id": [key],
                         "inst_map": [value],
                         "class_map": [class_map],
-                        "nuclei_id": [nuclei_id],
-                        "classes": [classes],
-                        "bbox": [bbox],
-                        "centroids": [centroids],
+                        #"nuclei_id": [nuclei_id],
+                        #"classes": [classes],
+                        #"bbox": [bbox],
+                        #"centroids": [centroids],
                     }
                 ),
             ],
@@ -200,10 +203,10 @@ def extract_data(args):
             "id",
             "inst_map",
             "class_map",
-            "nuclei_id",
-            "classes",
-            "bboxs",
-            "centroids",
+            # "nuclei_id",
+            # "classes",
+            # "bboxs",
+            # "centroids",
         ]
     )
     # Get all the annotations from the folder list
@@ -247,12 +250,12 @@ def extract_data(args):
     print("4. Report\n")
 
     print(f" > Number of images : {len(cleaned_data['images'])}")
-    print(
-        f" > Number of nuclei : {np.sum([np.max(d) if len(d) > 0 else 0 for d in cleaned_data['annotations']['nuclei_id']])}"
-    )
-    print(
-        f" > Number of classes : {len(np.unique(np.concatenate([d for d in cleaned_data['annotations']['classes']])))}"
-    )
+    # print(
+    #     f" > Number of nuclei : {np.sum([np.max(d) if len(d) > 0 else 0 for d in cleaned_data['annotations']['nuclei_id']])}"
+    # )
+    # print(
+    #     f" > Number of classes : {len(np.unique(np.concatenate([d for d in cleaned_data['annotations']['classes']])))}"
+    # )
 
     print("5. Saving File...\n")
     save = args.output_file
