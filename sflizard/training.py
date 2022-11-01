@@ -11,8 +11,9 @@ import argparse
 import os
 
 import pytorch_lightning as pl
+import torch
 
-from sflizard import GraphSAGE, LizardDataModule, LizardGraphDataModule, Stardist
+from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 
 def init_stardist_training(args):
@@ -45,11 +46,13 @@ def init_stardist_training(args):
     return dm, model
 
 
-def init_graphSage_training(args):
+def init_graph_training(args):
     """Init the training for the graphSage model."""
 
     NUM_FEATURES = 32
     NUM_CLASSES = 7
+    DIM_H = 256
+    NUM_LAYERS = 8
 
     # create the datamodule
     dm = LizardGraphDataModule(
@@ -61,11 +64,15 @@ def init_graphSage_training(args):
     dm.setup()
 
     # create the model
-    model = GraphSAGE(
+    model = Graph(
+        model=args.model,
         learning_rate=args.learning_rate,
         num_features=NUM_FEATURES,
         num_classes=NUM_CLASSES,
         seed=args.seed,
+        max_epochs=args.max_epochs,
+        dim_h=DIM_H,
+        num_layers=NUM_LAYERS,
     )
 
     return dm, model
@@ -76,8 +83,8 @@ def full_training(args):
 
     if args.model == "stardist":
         dm, model = init_stardist_training(args)
-    elif args.model == "graphSage":
-        dm, model = init_graphSage_training(args)
+    elif "graph" in args.model:
+        dm, model = init_graph_training(args)
     else:
         raise ValueError("Model not implemented.")
 
@@ -89,6 +96,14 @@ def full_training(args):
 
     # # save the model
     trainer.save_checkpoint(f"models/full_training_{args.model}_{args.max_epochs}.ckpt")
+
+    # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
+    if args.gpus and args.gpus > 1:
+        torch.distributed.destroy_process_group()
+        if trainer.is_global_zero:
+            trainer = pl.Trainer(gpus=1)
+
+    trainer.test(model, dm)
 
 
 if __name__ == "__main__":

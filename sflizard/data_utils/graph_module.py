@@ -15,7 +15,7 @@ from sflizard.data_utils import get_graph_from_inst_map
 class LizardGraphDataset(Dataset):
     def __init__(
         self,
-        root="data/graph",
+        root="/opt/datasets/public/TM_Leo/data/graph",
         transform=None,
         pre_transform=None,
         df: pd.DataFrame = None,
@@ -49,7 +49,11 @@ class LizardGraphDataset(Dataset):
             inst_map = self.df.iloc[idx].inst_map
             class_map = self.df.iloc[idx].class_map
             graph = get_graph_from_inst_map(
-                inst_map, class_map, n_rays=self.n_rays, distance=self.distance
+                inst_map,
+                class_map,
+                n_rays=self.n_rays,
+                distance=self.distance,
+                image=image,
             )
             processed_data = Data(
                 x=graph["x"],
