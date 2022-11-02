@@ -110,14 +110,16 @@ def get_graph_from_inst_map(inst_map, class_map, n_rays, distance):
 
     # get points with target
     y = []
-    for i in range(points.shape[0] - 1, -1, -1):
-        target = class_map[points[i, 0], points[i, 1]]
-        if target == 0:
-            points = np.delete(points, i, 0)
-            dists = np.delete(dists, i, 0)
-        else:
-            y.append(class_map[points[i, 0], points[i, 1]])
-    y.reverse()
+    # for i in range(points.shape[0] - 1, -1, -1):
+    #     target = class_map[points[i, 0], points[i, 1]]
+    #     if target == 0:
+    #         points = np.delete(points, i, 0)
+    #         dists = np.delete(dists, i, 0)
+    #     else:
+    #         y.append(class_map[points[i, 0], points[i, 1]])
+    # y.reverse()
+    for i in range(points.shape[0]):
+        y.append(class_map[points[i, 0], points[i, 1]])
 
     # add vertex info to graph
     graph["x"] = torch.Tensor(dists)
