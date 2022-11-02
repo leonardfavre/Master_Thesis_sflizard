@@ -51,8 +51,6 @@ def init_graph_training(args):
 
     NUM_FEATURES = 32
     NUM_CLASSES = 7
-    DIM_H = 256
-    NUM_LAYERS = 8
 
     # create the datamodule
     dm = LizardGraphDataModule(
@@ -71,8 +69,9 @@ def init_graph_training(args):
         num_classes=NUM_CLASSES,
         seed=args.seed,
         max_epochs=args.max_epochs,
-        dim_h=DIM_H,
-        num_layers=NUM_LAYERS,
+        dim_h=args.dimh,
+        num_layers=args.num_layers,
+        heads=args.heads,
     )
 
     return dm, model
@@ -162,6 +161,27 @@ if __name__ == "__main__":
         type=str,
         help="Directory to save the trained weights to.",
         default=os.getcwd(),
+    )
+    parser.add_argument(
+        "-dh",
+        "--dimh",
+        type=int,
+        default=32,
+        help="Dimension of the hidden layer in the grap model.",
+    )
+    parser.add_argument(
+        "-nl",
+        "--num_layers",
+        type=int,
+        default=1,
+        help="Number of layers in the grap model.",
+    )
+    parser.add_argument(
+        "-he",
+        "--heads",
+        type=int,
+        default=8,
+        help="Number of heads in the grap model.",
     )
     args = parser.parse_args()
 

@@ -124,6 +124,7 @@ class Graph(pl.LightningModule):
         max_epochs: int = 20,
         dim_h: int = 32,
         num_layers: int = 0,
+        heads: int = 1,
     ):
 
         super().__init__()
@@ -137,7 +138,7 @@ class Graph(pl.LightningModule):
                 dim_in=num_features,
                 dim_h=dim_h,
                 dim_out=num_classes,
-                heads=32,
+                heads=heads,
                 num_layers=num_layers,
             )
         elif "GCN" in model:

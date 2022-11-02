@@ -22,7 +22,7 @@ class LizardGraphDataset(Dataset):
         data: np.ndarray = None,
         name: str = "",
         n_rays: int = 32,
-        distance: int = 40,
+        distance: int = 45,
     ):
         self.df = df
         self.data = data
