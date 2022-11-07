@@ -1,16 +1,11 @@
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from PIL import Image
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
-from torch_geometric.nn import (
-    GATConv,
-    GATv2Conv,
-    GCNConv,
-    GraphConv,
-    JumpingKnowledge,
-    SAGEConv,
-)
+from torch_geometric.nn import GATConv, GATv2Conv, GCNConv, JumpingKnowledge, SAGEConv
 
 
 class CustomGCN(torch.nn.Module):
@@ -89,25 +84,62 @@ class GraphTest(torch.nn.Module):
     def __init__(self, dim_in, dim_h, dim_out, layer_type):
         super().__init__()
         self.model = torch.nn.ModuleList()
-        self.model.append(layer_type(dim_in, dim_h))
-        self.model.append(layer_type(dim_h, dim_h))
-        self.model.append(layer_type(dim_h, dim_h))
-        self.model.append(layer_type(dim_h, dim_h))
-        self.jk = JumpingKnowledge("cat", dim_h)
-        self.lin = Linear(4 * dim_h, dim_out)
+        self.model.append(Linear(dim_in, 1024))
+        self.model.append(Linear(1024, 1024))
+        self.model.append(Linear(1024, dim_h))
+        for i in range(3):
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(JumpingKnowledge("cat", dim_h))
+            self.model.append(Linear(4 * dim_h, dim_h))
+        self.model.append(Linear(dim_h, dim_out))
 
     def forward(self, x, edge_index, edge_attr):
-        x1 = F.elu(self.model[0](x, edge_index))
-        x2 = F.dropout(x1, p=0.5, training=self.training)
-        x2 = F.elu(self.model[1](x2, edge_index))
-        x3 = F.dropout(x2, p=0.5, training=self.training)
-        x3 = F.elu(self.model[2](x3, edge_index))
-        x4 = F.dropout(x3, p=0.5, training=self.training)
-        x4 = F.elu(self.model[2](x4, edge_index))
-        x5 = self.jk([x1, x2, x3, x4])
-        # x3 = TopKPooling(x3)
-        x5 = self.lin(x5)
-        return x5
+        x = self.model[0](x).relu()
+        x = self.model[1](x).relu()
+        x = self.model[2](x).relu()
+        for i in range(3):
+            xa = self.model[6 * i + 3](x, edge_index).relu()
+            xb = self.model[6 * i + 4](xa, edge_index).relu()
+            xc = self.model[6 * i + 5](xb, edge_index).relu()
+            xd = self.model[6 * i + 6](xc, edge_index).relu()
+            x = self.model[6 * i + 7]([xa, xb, xc, xd])
+            x = self.model[6 * i + 8](x).relu()
+        x = self.model[-1](x)
+        return x
+
+
+class GraphTestBest(torch.nn.Module):
+    def __init__(self, dim_in, dim_h, dim_out, layer_type):
+        super().__init__()
+        self.model = torch.nn.ModuleList()
+        self.model.append(Linear(dim_in, 1024))
+        self.model.append(Linear(1024, 1024))
+        self.model.append(Linear(1024, dim_h))
+        for i in range(3):
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(layer_type(dim_h, dim_h))
+            self.model.append(JumpingKnowledge("cat", dim_h))
+            self.model.append(Linear(4 * dim_h, dim_h))
+        self.model.append(Linear(dim_h, dim_out))
+
+    def forward(self, x, edge_index, edge_attr):
+        x = self.model[0](x).relu()
+        x = self.model[1](x).relu()
+        x = self.model[2](x).relu()
+        for i in range(3):
+            xa = self.model[6 * i + 3](x, edge_index).relu()
+            xb = self.model[6 * i + 4](xa, edge_index).relu()
+            xc = self.model[6 * i + 5](xb, edge_index).relu()
+            xd = self.model[6 * i + 6](xc, edge_index).relu()
+            x = self.model[6 * i + 7]([xa, xb, xc, xd])
+            x = self.model[6 * i + 8](x).relu()
+        x = self.model[-1](x)
+        return x
 
 
 ####################################################################################################
@@ -161,7 +193,7 @@ class Graph(pl.LightningModule):
                 dim_in=num_features,
                 dim_h=dim_h,
                 dim_out=num_classes,
-                layer_type=GraphConv,
+                layer_type=SAGEConv,  # GraphConv,
             )
         self.seed = seed
         self.max_epochs = max_epochs
@@ -204,6 +236,8 @@ class Graph(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         """Test step."""
+        # if batch_idx == 0:
+        #     self.output_results(batch) # only work with batch size 1   aw     s
         return self._step(batch, "test")
 
     def _epoch_end(self, outputs, name):
@@ -214,8 +248,10 @@ class Graph(pl.LightningModule):
         batch_nbr = 0
 
         for lo, a in outputs:
-            loss += lo
-            accuracy += a
+            if lo == lo:
+                loss += lo
+            if a == a:
+                accuracy += a
             batch_nbr += 1
 
         loss /= batch_nbr
@@ -257,3 +293,24 @@ class Graph(pl.LightningModule):
 
         scheduler = schedulers[scheduler]
         return [optimizer], [scheduler]
+
+    def output_results(self, batch):
+        """Output results."""
+        x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
+
+        outputs = self.model(x, edge_index, edge_attr)
+        pred = outputs.argmax(-1)
+
+        class_map = batch.class_map[0]
+        pos = batch.pos.cpu().numpy()
+        for idx, point in enumerate(pos):
+            for b in range(-2, 3):
+                for c in range(-2, 3):
+                    class_map[(int(point[0]) + b) % 540][
+                        (int(point[1]) + c) % 540
+                    ] = pred[idx]
+
+        class_map = class_map * 255 / 10
+        class_map = class_map.astype(np.uint8)
+        class_map_img = Image.fromarray(class_map)
+        class_map_img.save("outputs/class_map.png")
