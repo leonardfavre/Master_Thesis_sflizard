@@ -55,15 +55,16 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
         patch_id = np.unique(value).tolist()[1:]
         # keep only values present in the patch
         nuclei_id = np.squeeze(mat_file["id"]).tolist()
-        #classes = []
-        #bbox = []
-        #centroids = []
+        classes = np.squeeze(mat_file["class"]).tolist()
+        classes = []
+        # bbox = []
+        # centroids = []
         class_map = np.zeros(value.shape)
         for v in patch_id:
             idx = nuclei_id.index(v)
-            #classes.append(mat_file["class"][idx])
-            #bbox.append(mat_file["bbox"][idx])
-            #centroids.append(mat_file["centroid"][idx])
+            # classes.append(mat_file["class"][idx])
+            # bbox.append(mat_file["bbox"][idx])
+            # centroids.append(mat_file["centroid"][idx])
             class_map[value == v] = mat_file["class"][idx]
         # add the new patch to the dataframe
         annotations = pd.concat(
@@ -74,10 +75,10 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
                         "id": [key],
                         "inst_map": [value],
                         "class_map": [class_map],
-                        #"nuclei_id": [nuclei_id],
-                        #"classes": [classes],
-                        #"bbox": [bbox],
-                        #"centroids": [centroids],
+                        "nuclei_id": [nuclei_id],
+                        "classes": [classes],
+                        # "bbox": [bbox],
+                        # "centroids": [centroids],
                     }
                 ),
             ],
@@ -171,7 +172,9 @@ def extract_data(args):
 
     print("1. Extracting images from folder...\n")
     start = time.time()
-    images = {}
+    images_train = {}
+    images_test = {}
+    image_files = []
     # Get all the images from the folder list
     for folder in args.images_path:
         # fix folder and extension format
@@ -182,17 +185,36 @@ def extract_data(args):
             else args.images_extension
         )
         # get the list of images in the folder
-        image_files = glob.glob(f"{folder}*{imgs_ext}")
-        for image_file in tqdm(
-            image_files, desc=f"Extracting images from folder {folder}"
-        ):
+        image_files += glob.glob(f"{folder}*{imgs_ext}")
+
+    # determine the number of images for training and testing
+    if args.train_test_split is None:
+        train_size = int(len(image_files) * 0.8)
+        test_size = len(image_files) - train_size
+    else:
+        train_size = int(len(image_files) * args.train_test_split)
+        test_size = len(image_files) - train_size
+
+    # extract train patches
+    for idx, image_file in enumerate(tqdm(
+        image_files, desc="Extracting images"
+    )):
+        # extract patches for training
+        if idx < train_size:
             # extract patches from the images to have multiple images of same size:
-            images.update(
+            images_train.update(
                 extract_image_patches(image_file, args.patch_size, args.patch_step)
             )
+        # extract patches for testing
+        else:
+            # extract patches from the images to have multiple images of same size:
+            images_test.update(
+                extract_image_patches(image_file, args.patch_size, args.patch_step)
+            )
+    
 
     print(
-        f"\nAll {len(images)} images extracted! (in {time.time() - start:.2f} secs)\n"
+        f"\nAll {len(images_train) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
     )
 
     print("2. Extracting annotations from folder...\n")
@@ -229,27 +251,33 @@ def extract_data(args):
 
     print("3. Cleaning...\n")
     start = time.time()
-    cleaned_data = {}
+    cleaned_train_data = {}
+    cleaned_test_data = {}
+
+    # split annotations
+    annotations_train = annotations[annotations["id"].isin(images_train.keys())]
+    annotations_test = annotations[annotations["id"].isin(images_test.keys())]
 
     # remove images with no annotations
-    if set(annotations.id) != set(images.keys()):
-        missings = set(images.keys()).difference(annotations.id)
-        print(f" > Images with no annotation : {len(missings)}")
-        for missing in missings:
-            del images[missing]
-    # remove annotations without images
-    if set(annotations.id) != set(images.keys()):
-        missings = set(annotations.id).difference(images.keys())
-        print(f" > annotations with no images : {len(missings)}")
-        annotations = annotations[~annotations.id.isin(missings)]
-    cleaned_data["images"] = images
-    cleaned_data["annotations"] = annotations
+    images_train, annotations_train = remove_missing_data(
+        images_train, annotations_train, "train"
+    )
+    images_test, annotations_test = remove_missing_data(
+        images_test, annotations_test, "test"
+    )
+    
+    cleaned_train_data["images"] = images_train
+    cleaned_train_data["annotations"] = annotations_train
+    cleaned_test_data["images"] = images_test
+    cleaned_test_data["annotations"] = annotations_test
 
     print(f"\nFiles cleaned! (in {time.time() - start:.2f} secs)\n")
 
     print("4. Report\n")
 
-    print(f" > Number of images : {len(cleaned_data['images'])}")
+    print(f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}")
+    print(f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}")
+    print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
     # print(
     #     f" > Number of nuclei : {np.sum([np.max(d) if len(d) > 0 else 0 for d in cleaned_data['annotations']['nuclei_id']])}"
     # )
@@ -258,11 +286,42 @@ def extract_data(args):
     # )
 
     print("5. Saving File...\n")
-    save = args.output_file
-    with open(save, "wb") as f:
-        pickle.dump(cleaned_data, f)
-    print(f"Cleaned data saved in {save}")
+    save_train = args.output_file + "_train.pkl"
+    save_test = args.output_file + "_test.pkl"
+    with open(save_train, "wb") as f:
+        pickle.dump(cleaned_train_data, f)
+    print(f"Cleaned train data saved in {save_train}")
+    with open(save_test, "wb") as f:
+        pickle.dump(cleaned_test_data, f)
+    print(f"Cleaned test data saved in {save_test}")
 
+def remove_missing_data(images, annotations, set_name):
+    """Clean data.
+
+    Args:
+        images (dict): dictionary of images.
+        annotations (pd.DataFrame): dataframe of annotations.
+        set_name (str): name of the set.
+
+    Returns:
+        images (dict): dictionary of images.
+        annotations (pd.DataFrame): dataframe of annotations.
+
+    Raises:
+        None.
+
+    """
+    if set(annotations.id) != set(images.keys()):
+        missings = set(images.keys()).difference(annotations.id)
+        print(f" > Images in {set_name} set with no annotation : {len(missings)}")
+        for missing in missings:
+            del images[missing]
+    # remove annotations without images
+    if set(annotations.id) != set(images.keys()):
+        missings = set(annotations.id).difference(images.keys())
+        print(f" > Annotations in {set_name} with no images : {len(missings)}")
+        annotations = annotations[~annotations.id.isin(missings)]
+    return images, annotations
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -292,7 +351,14 @@ if __name__ == "__main__":
         "--output_file",
         type=str,
         help="path for the output file (must end in .pkl).",
-        default=["data.pkl"],
+        default="data",
+    )
+    parser.add_argument(
+        "-dsr",
+        "--train_test_split",
+        type=float,
+        help="Ratio of the dataset to be used for training.",
+        default=0.8,
     )
 
     # arguments for patches extraction

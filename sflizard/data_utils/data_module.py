@@ -7,17 +7,18 @@ permission of the copyright holders. If you encounter this file and do not have
 permission, please contact the copyright holders and delete this file.
 """
 from __future__ import annotations
-from typing import Optional
-from pathlib import Path
-import pickle
 
-from torch.utils.data import DataLoader, Dataset
+import pickle
+from pathlib import Path
+from typing import Optional
+
+import albumentations as A
 import numpy as np
 import pandas as pd
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
 import pytorch_lightning as pl
+from albumentations.pytorch import ToTensorV2
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Dataset
 
 from sflizard.data_utils import get_stardist_data
 
@@ -29,7 +30,8 @@ class LizardDataset(Dataset):
         self,
         df: pd.DataFrame,
         data: np.ndarray,
-        tf: A.Compose,
+        tf_base: A.Compose,
+        tf_augment: A.Compose,
         annotation_target: str,
         aditional_args: Optional[dict] = None,
         test: bool = False,
@@ -37,7 +39,8 @@ class LizardDataset(Dataset):
         """Initialize dataset."""
         self.df = df
         self.data = data
-        self.tf = tf
+        self.tf_base = tf_base
+        self.tf_augment = tf_augment
         self.test = test
         self.annotation_target = annotation_target
         self.aditional_args = aditional_args
@@ -48,19 +51,46 @@ class LizardDataset(Dataset):
 
     def __getitem__(self, idx):
         """Get images and transform them if needed."""
+        # retriev inputs
         image = np.array(self.data[self.df.iloc[idx].id])
-        if self.tf is not None:
-            image = self.tf(image=image)["image"]
+        
+        #retrieve masks
+        inst_map = self.df.iloc[idx].inst_map
+        masks = [inst_map]
+        if self.annotation_target == "stardist_class":
+            class_map = self.df.iloc[idx].class_map
+            masks.append(class_map)
 
+        # augmentations
+        if self.tf_augment is not None:
+            transformed = self.tf_augment(image=image, masks=masks)
+            image = transformed['image']
+            inst_map = transformed['masks'][0]
+            if self.annotation_target == "stardist_class":
+                class_map = transformed['masks'][1]
+        if self.tf_base is not None:
+            image = self.tf_base(image=image)["image"]
+
+        # get targets in stardist form
         if self.annotation_target == "stardist":
             obj_probabilities, distances = get_stardist_data(
-                self.df.iloc[idx].inst_map, self.aditional_args
+                inst_map, self.aditional_args
             )
             return image, obj_probabilities, distances
-        elif self.annotation_target == "inst":
-            annotation = self.df.iloc[idx].inst_map
+        elif self.annotation_target == "stardist_class":
+            obj_probabilities, distances, classes = get_stardist_data(
+                inst_map,
+                self.aditional_args,
+                class_map,
+            )
+            return image, obj_probabilities, distances, classes
+        # elif self.annotation_target == "inst":
+        #     annotation = self.df.iloc[idx].inst_map
         # for testing, return image id for reporting
-        return image, annotation
+        else:
+            raise ValueError(
+                f"Annotation target {self.annotation_target} not supported."
+            )
 
 
 class LizardDataModule(pl.LightningDataModule):
@@ -68,9 +98,10 @@ class LizardDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        data_path: str,
+        train_data_path: str,
+        test_data_path: str,
         annotation_target: str = "inst",
-        batch_size: int = 32,
+        batch_size: int = 4,
         num_workers: int = 4,
         input_size=540,
         seed: int = 303,
@@ -79,10 +110,14 @@ class LizardDataModule(pl.LightningDataModule):
         """Initialize the dataloaders with batch size and targets."""
         super().__init__()
 
-        data_path = Path(data_path)
-        with data_path.open("rb") as f:
-            data = pickle.load(f)
-        self.data = data
+        train_data_path = Path(train_data_path)
+        with train_data_path.open("rb") as f:
+            train_data = pickle.load(f)
+        test_data_path = Path(test_data_path)
+        with test_data_path.open("rb") as f:
+            test_data = pickle.load(f)
+        self.train_data = train_data
+        self.test_data = test_data
 
         self.annotation_target = annotation_target
 
@@ -96,35 +131,12 @@ class LizardDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         """Data setup for training."""
-        annotations = self.data["annotations"]
-        # if self.annotation_target in ["inst", "stardist"]:
-        #     # keep only the nuclei instance
-        #     annotations = annotations.drop(
-        #         ["class_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
-        #     )
-        #     annotations.rename(columns={"inst_map": "annotation"}, inplace=True)
-        # elif self.annotation_target == "class":
-        #     # keep only the class
-        #     annotations = annotations.drop(
-        #         ["inst_map", "nuclei_id", "classes", "bboxs", "centroids"], axis=1
-        #     )
-        #     annotations.rename(columns={"class_map": "annotation"}, inplace=True)
-        #     self.num_classes = len(
-        #         np.unique(np.concatenate([np.unique(a) for a in annotations.class_map]))
-        #     )
-        # elif self.annotation_target == "full":
-        #     print("not implemented yet")
-        # else:
-        #     raise ValueError(f"Invalid annotation target: {self.annotation_target}")
-
-        train_df, test_df = train_test_split(
-            annotations,
-            test_size=0.2,
-            random_state=self.seed,
-        )
+        
+        train_annotations = self.train_data["annotations"]
+        test_df = self.test_data["annotations"]
 
         train_df, valid_df = train_test_split(
-            train_df,
+            train_annotations,
             test_size=0.2,
             random_state=self.seed,
         )
@@ -141,25 +153,25 @@ class LizardDataModule(pl.LightningDataModule):
         )
         tf_augment = A.Compose(
             [
-                A.Resize(self.input_size, self.input_size),
-                A.Normalize(mean=0, std=1),
-                A.HorizontalFlip(),
+                A.HorizontalFlip(p=0.5),
+                A.VerticalFlip(p=0.5),
+                A.RandomRotate90(p=0.5),
                 A.RandomBrightnessContrast(p=0.2),
-                ToTensorV2(),
             ]
         )
-        data = self.data["images"]
+
         print(f"Training with {len(train_df)} examples")
         self.train_ds = LizardDataset(
-            train_df, data, tf_augment, self.annotation_target, self.aditional_args
+            train_df, self.train_data["images"], tf_base, tf_augment, self.annotation_target, self.aditional_args
         )
         self.valid_ds = LizardDataset(
-            valid_df, data, tf_base, self.annotation_target, self.aditional_args
+            valid_df, self.train_data["images"], tf_base, None, self.annotation_target, self.aditional_args
         )
         self.test_ds = LizardDataset(
             test_df,
-            data,
+            self.test_data["images"],
             tf_base,
+            None,
             self.annotation_target,
             self.aditional_args,
             test=True,

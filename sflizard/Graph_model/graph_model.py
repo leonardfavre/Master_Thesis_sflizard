@@ -5,7 +5,8 @@ import torch.nn.functional as F
 from PIL import Image
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
-from torch_geometric.nn import GATConv, GATv2Conv, GCNConv, JumpingKnowledge, SAGEConv
+from torch_geometric.nn import GIN, RECT_L, GAT, GATConv, GATv2Conv, GCNConv, JumpingKnowledge, SAGEConv, GraphSAGE
+import torch.nn as nn
 
 
 class CustomGCN(torch.nn.Module):
@@ -80,9 +81,11 @@ class GraphSAGEModel(torch.nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+
 class GraphTest(torch.nn.Module):
     def __init__(self, dim_in, dim_h, dim_out, layer_type):
         super().__init__()
+
         self.model = torch.nn.ModuleList()
         self.model.append(Linear(dim_in, 1024))
         self.model.append(Linear(1024, 1024))
@@ -150,8 +153,8 @@ class Graph(pl.LightningModule):
         self,
         model: str = "graph_gat",
         learning_rate: float = 0.01,
-        num_features: int = 32,
-        num_classes: int = 7,
+        num_features: int = 33,
+        num_classes: int = 6,
         seed: int = 303,
         max_epochs: int = 20,
         dim_h: int = 32,
@@ -160,18 +163,40 @@ class Graph(pl.LightningModule):
     ):
 
         super().__init__()
+        self.save_hyperparameters()
+        
         self.learning_rate = learning_rate
         self.num_features = num_features
         self.num_classes = num_classes
         # self.model = GraphSAGEModel(num_features, 256, num_classes)
         if "graph_gat" in model:
-            self.model = CustomGATGraph(
-                layer_type=GATv2Conv if model == "graph_gatv2" else GATConv,
-                dim_in=num_features,
-                dim_h=dim_h,
-                dim_out=num_classes,
-                heads=heads,
+            self.model = GAT(
+                in_channels=self.num_features,
+                hidden_channels=dim_h,
                 num_layers=num_layers,
+                out_channels=self.num_classes,
+                jk="cat",
+            )
+            # self.model = CustomGATGraph(
+            #     layer_type=GATv2Conv if model == "graph_gatv2" else GATConv,
+            #     dim_in=num_features,
+            #     dim_h=dim_h,
+            #     dim_out=num_classes,
+            #     heads=heads,
+            #     num_layers=num_layers,
+            # )
+        elif "graph_rect" in model:
+            self.model = RECT_L(
+                in_channels=self.num_features,
+                hidden_channels=dim_h,
+            )
+        elif "graph_gin" in model:
+            self.model = GIN(
+                in_channels=self.num_features,
+                hidden_channels=dim_h,
+                num_layers=num_layers,
+                out_channels=self.num_classes,
+                jk="cat",
             )
         elif "GCN" in model:
             self.model = CustomGCN(
@@ -182,14 +207,21 @@ class Graph(pl.LightningModule):
                 num_layers=num_layers,
             )
         elif model == "graph_sage":
-            self.model = GraphSAGEModel(
-                dim_in=num_features,
-                dim_h=dim_h,
-                dim_out=num_classes,
+            self.model = GraphSAGE(
+                in_channels=self.num_features,
+                hidden_channels=dim_h,
                 num_layers=num_layers,
+                out_channels=self.num_classes,
+                # jk="cat",
             )
+            # self.model = GraphSAGEModel(
+            #     dim_in=num_features,
+            #     dim_h=dim_h,
+            #     dim_out=num_classes,
+            #     num_layers=num_layers,
+            # )
         elif model == "graph_test":
-            self.model = GraphTest(
+            self.model = GraphTestBest(
                 dim_in=num_features,
                 dim_h=dim_h,
                 dim_out=num_classes,
@@ -198,7 +230,17 @@ class Graph(pl.LightningModule):
         self.seed = seed
         self.max_epochs = max_epochs
 
-        self.loss = F.cross_entropy
+        class_weights = [
+            # 1 / 0.8435234983048621,
+            1 / 0.0015844697497448515,
+            1 / 0.09702835179125052,
+            1 / 0.018770678077839286,
+            1 / 0.005716505874930195,
+            1 / 0.0011799091886332306,
+            1 / 0.03219658701273987,
+        ]
+        class_weights = torch.tensor(class_weights).to("cuda")
+        self.loss = nn.CrossEntropyLoss(weight=class_weights)
 
     def forward(self, x, edge_index, edge_attr):
         """Forward pass."""
@@ -206,12 +248,14 @@ class Graph(pl.LightningModule):
 
     def _step(self, batch, name):
         x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
-        label = batch.y
+        label = batch.y - 1
+        # check if label contains background
+        if torch.sum(label == -1) > 0:
+            print("label contains background: ", torch.sum(label == -1))
         label = label.long()
 
-        outputs = self.model(x, edge_index, edge_attr)
+        outputs = self.model(x, edge_index)
         loss = self.loss(outputs, label)
-
         pred = outputs.argmax(-1)
         accuracy = (pred == label).sum() / pred.shape[0]
 
@@ -298,7 +342,7 @@ class Graph(pl.LightningModule):
         """Output results."""
         x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
 
-        outputs = self.model(x, edge_index, edge_attr)
+        outputs = self.model(x, edge_index) #, edge_attr)
         pred = outputs.argmax(-1)
 
         class_map = batch.class_map[0]
