@@ -11,6 +11,7 @@ import glob
 import pickle
 import time
 from pathlib import Path
+import random
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,12 @@ from PIL import Image
 from rich import print
 from tqdm import tqdm
 
+SEED=303
+TRAIN_TEST_SPLIT = 0.8
+IMAGE_EXTENSION = "png"
+OUTPUT_BASE_NAME = "data"
+PATCH_SIZE = 540
+PATCH_STEP = 200
 
 def extract_annotation_patches(annotation_file, annotations, patch_size, patch_step):
     """Extract patches from annotations.
@@ -57,14 +64,9 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
         nuclei_id = np.squeeze(mat_file["id"]).tolist()
         classes = np.squeeze(mat_file["class"]).tolist()
         classes = []
-        # bbox = []
-        # centroids = []
         class_map = np.zeros(value.shape)
         for v in patch_id:
             idx = nuclei_id.index(v)
-            # classes.append(mat_file["class"][idx])
-            # bbox.append(mat_file["bbox"][idx])
-            # centroids.append(mat_file["centroid"][idx])
             class_map[value == v] = mat_file["class"][idx]
         # add the new patch to the dataframe
         annotations = pd.concat(
@@ -77,8 +79,6 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
                         "class_map": [class_map],
                         "nuclei_id": [nuclei_id],
                         "classes": [classes],
-                        # "bbox": [bbox],
-                        # "centroids": [centroids],
                     }
                 ),
             ],
@@ -112,7 +112,7 @@ def extract_image_patches(image_file, patch_size, patch_step):
 
 
 def extract_patches(array, array_name, patch_size, patch_step):
-    """Extract patches from an image.
+    """Extract patches from an image or an instance map.
 
     Args:
         array (np.array): array to be patched.
@@ -156,18 +156,47 @@ def extract_patches(array, array_name, patch_size, patch_step):
     return array_dict
 
 
+def remove_missing_data(images, annotations, set_name):
+    """Clean data by removing image without annotations and annotations without images.
+
+    Args:
+        images (dict): dictionary of images.
+        annotations (pd.DataFrame): dataframe of annotations.
+        set_name (str): name of the set.
+
+    Returns:
+        images (dict): dictionary of images.
+        annotations (pd.DataFrame): dataframe of annotations.
+
+    Raises:
+        None.
+
+    """
+    # remove images without annotations
+    if set(annotations.id) != set(images.keys()):
+        missings = set(images.keys()).difference(annotations.id)
+        print(f" > Images in {set_name} set with no annotation : {len(missings)}")
+        for missing in missings:
+            del images[missing]
+    # remove annotations without images
+    if set(annotations.id) != set(images.keys()):
+        missings = set(annotations.id).difference(images.keys())
+        print(f" > Annotations in {set_name} with no images : {len(missings)}")
+        annotations = annotations[~annotations.id.isin(missings)]
+    return images, annotations
+
+
 def extract_data(args):
     """Extract data from the original dataset folder.
 
     Args:
-
+        args (argparse.Namespace): arguments from the command line (see list bellow).
 
     Returns:
-
+        None.
 
     Raises:
-
-
+        None.
     """
 
     print("1. Extracting images from folder...\n")
@@ -175,6 +204,8 @@ def extract_data(args):
     images_train = {}
     images_test = {}
     image_files = []
+    train_list = []
+    test_list = []
     # Get all the images from the folder list
     for folder in args.images_path:
         # fix folder and extension format
@@ -187,13 +218,12 @@ def extract_data(args):
         # get the list of images in the folder
         image_files += glob.glob(f"{folder}*{imgs_ext}")
 
+    # randomize images order
+    random.Random(SEED).shuffle(image_files)
+
     # determine the number of images for training and testing
-    if args.train_test_split is None:
-        train_size = int(len(image_files) * 0.8)
-        test_size = len(image_files) - train_size
-    else:
-        train_size = int(len(image_files) * args.train_test_split)
-        test_size = len(image_files) - train_size
+    train_size = int(len(image_files) * args.train_test_split)
+    test_size = len(image_files) - train_size
 
     # extract train patches
     for idx, image_file in enumerate(tqdm(
@@ -205,12 +235,22 @@ def extract_data(args):
             images_train.update(
                 extract_image_patches(image_file, args.patch_size, args.patch_step)
             )
+            train_list.append(image_file)
         # extract patches for testing
         else:
             # extract patches from the images to have multiple images of same size:
             images_test.update(
                 extract_image_patches(image_file, args.patch_size, args.patch_step)
             )
+            test_list.append(image_file)
+
+    # save the train and test lists
+    with open(args.output_base_name + "_train_list.txt", "w") as f:
+        for item in train_list:
+            f.write(f"{item}\n")
+    with open(args.output_base_name + "_test_list.txt", "w") as f:
+        for item in test_list:
+            f.write(f"{item}\n")
     
 
     print(
@@ -225,10 +265,6 @@ def extract_data(args):
             "id",
             "inst_map",
             "class_map",
-            # "nuclei_id",
-            # "classes",
-            # "bboxs",
-            # "centroids",
         ]
     )
     # Get all the annotations from the folder list
@@ -258,7 +294,7 @@ def extract_data(args):
     annotations_train = annotations[annotations["id"].isin(images_train.keys())]
     annotations_test = annotations[annotations["id"].isin(images_test.keys())]
 
-    # remove images with no annotations
+    # clean missing data
     images_train, annotations_train = remove_missing_data(
         images_train, annotations_train, "train"
     )
@@ -278,50 +314,16 @@ def extract_data(args):
     print(f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}")
     print(f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}")
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
-    # print(
-    #     f" > Number of nuclei : {np.sum([np.max(d) if len(d) > 0 else 0 for d in cleaned_data['annotations']['nuclei_id']])}"
-    # )
-    # print(
-    #     f" > Number of classes : {len(np.unique(np.concatenate([d for d in cleaned_data['annotations']['classes']])))}"
-    # )
 
     print("5. Saving File...\n")
-    save_train = args.output_file + "_train.pkl"
-    save_test = args.output_file + "_test.pkl"
+    save_train = args.output_base_name + "_train.pkl"
+    save_test = args.output_base_name + "_test.pkl"
     with open(save_train, "wb") as f:
         pickle.dump(cleaned_train_data, f)
     print(f"Cleaned train data saved in {save_train}")
     with open(save_test, "wb") as f:
         pickle.dump(cleaned_test_data, f)
     print(f"Cleaned test data saved in {save_test}")
-
-def remove_missing_data(images, annotations, set_name):
-    """Clean data.
-
-    Args:
-        images (dict): dictionary of images.
-        annotations (pd.DataFrame): dataframe of annotations.
-        set_name (str): name of the set.
-
-    Returns:
-        images (dict): dictionary of images.
-        annotations (pd.DataFrame): dataframe of annotations.
-
-    Raises:
-        None.
-
-    """
-    if set(annotations.id) != set(images.keys()):
-        missings = set(images.keys()).difference(annotations.id)
-        print(f" > Images in {set_name} set with no annotation : {len(missings)}")
-        for missing in missings:
-            del images[missing]
-    # remove annotations without images
-    if set(annotations.id) != set(images.keys()):
-        missings = set(annotations.id).difference(images.keys())
-        print(f" > Annotations in {set_name} with no images : {len(missings)}")
-        annotations = annotations[~annotations.id.isin(missings)]
-    return images, annotations
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -336,7 +338,7 @@ if __name__ == "__main__":
         "-ie",
         "--images_extension",
         type=str,
-        default="png",
+        default=IMAGE_EXTENSION,
         help="Extension of the images.",
     )
     parser.add_argument(
@@ -348,30 +350,37 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-of",
-        "--output_file",
+        "--output_base_name",
         type=str,
         help="path for the output file (must end in .pkl).",
-        default="data",
+        default=OUTPUT_BASE_NAME,
     )
     parser.add_argument(
         "-dsr",
         "--train_test_split",
         type=float,
         help="Ratio of the dataset to be used for training.",
-        default=0.8,
+        default=TRAIN_TEST_SPLIT,
+    )
+    parser.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        help="Seed for the random split.",
+        default=SEED,
     )
 
     # arguments for patches extraction
     parser.add_argument(
         "--patch_size",
         type=int,
-        default=540,
+        default=PATCH_SIZE,
         help="Size of the window to extract patches from the images.",
     )
     parser.add_argument(
         "--patch_step",
         type=int,
-        default=200,
+        default=PATCH_STEP,
         help="Step size to extract patches from the images.",
     )
 

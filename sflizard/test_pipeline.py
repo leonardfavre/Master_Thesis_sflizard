@@ -14,10 +14,11 @@ import os
 from PIL import ImageDraw
 import torchvision.transforms as T
 
-from sflizard import LizardDataModule, Stardist, get_class_name, ReportGenerator, Graph, get_graph_for_inference
+from sflizard import LizardDataModule, Stardist, get_class_name, ReportGenerator, Graph, get_graph_for_inference, get_graph_for_inference_v2
 
-DATA_PATH = "data_test.pkl"
+DATA_PATH = "data_shuffle_test.pkl"
 STARDIST_WEIGHTS_PATH = "models/stardist_1000epochs_0.0losspower_0.0005lr.ckpt"
+STAR_4_IMPROVEMENT = True
 GRAPH_WEIGHTS_PATH = None # "models/full_training_graph_test_2000_08413.ckpt"
 N_RAYS = 32
 N_CLASSES = 7
@@ -25,11 +26,21 @@ BATCH_SIZE = 4
 SEED = 303
 OUTPUT_DIR = "./pipeline_output/full_training_stardist_class_1000_111_1e-4/"
 IMGS_TO_DISPLAY = 10
+X_TYPE = {
+    128: "ll",
+    135: "ll+c",
+    137: "ll+c+x",
+    512: "4ll",
+    540: "4ll+c",
+    548: "4ll+c+x",
+}
+DISTANCE = 45
 
 class TestPipeline:
     def __init__(
         self,
         data_path: str,
+        test_data_path: str,
         stardist_weights_path: str,
         graph_weights_path: str,
         n_rays: int,
@@ -41,7 +52,7 @@ class TestPipeline:
         print("Using device:", self.device)
         self.n_classes = n_classes
         self.n_rays=n_rays
-        self.__init_dataloader(data_path, seed, batch_size)
+        self.__init_dataloader(data_path, test_data_path, seed, batch_size)
         self.__init_stardist_inference(stardist_weights_path)
 
         # graph initialization
@@ -52,6 +63,7 @@ class TestPipeline:
     def __init_dataloader(
         self,
         data_path: str,
+        test_data_path: str,
         seed: int = 303,
         batch_size: int = 1,
     ) -> None:
@@ -61,7 +73,7 @@ class TestPipeline:
         # create the datamodule
         dm = LizardDataModule(
             train_data_path=data_path,
-            test_data_path=data_path,
+            test_data_path=test_data_path,
             batch_size=batch_size,
             annotation_target="stardist" if self.n_classes == 1 else "stardist_class",
             seed=seed,
@@ -81,6 +93,7 @@ class TestPipeline:
             weights_path,
             wandb_log=False,
         )
+        self.stardist_weights_path = weights_path
 
         self.stardist = model.model.to(self.device)
         self.stardist_layer = copy.deepcopy(model.model).to(self.device)
@@ -92,12 +105,13 @@ class TestPipeline:
         print("Loading graph model...")
         model = Graph.load_from_checkpoint(
             weights_path,
-            model = "graph_test",
-            num_features = 128,
-            num_classes = 6,
-            dim_h=1024,
-            num_layers=4,
+            # model = "graph_test",
+            # num_features = 128,
+            # num_classes = 6,
+            # dim_h=1024,
+            # num_layers=4,
         )
+        self.x_type = X_TYPE[model.num_features]
         self.graph = model.model.to(self.device)
         print("Graph model loaded.")
 
@@ -108,9 +122,6 @@ class TestPipeline:
         self.__init_test_metrics()
 
         # results list
-        #true_masks = np.array([])
-        #predicted_masks = np.array([])
-        #graphs_masks = np.array([])
         if self.classification:
             true_classes = [None]
             predicted_classes = [None]
@@ -133,8 +144,8 @@ class TestPipeline:
 
         for i in tqdm(range(len(self.dataloader))):  # type: ignore
             
-            # if i > 3:
-            #     break
+            if i > 3:
+                break
 
             # get next test batch
             batch = next(self.dataloader)
@@ -160,23 +171,48 @@ class TestPipeline:
                     dist, prob, clas = self.stardist(inputs)
                 else:
                     dist, prob = self.stardist(inputs)
-                last_layer = self.stardist_layer(inputs)[0]
 
             pred_mask = self.stardist.compute_star_label(inputs, dist, prob)
 
+            # 4 times stardist to improve mask
+            if STAR_4_IMPROVEMENT:
+
+                def rotate_and_pred(inputs, angle):
+                    inputs_rotated = torch.rot90(inputs, angle, [2, 3])
+                    with torch.no_grad():
+                        dist, prob, c = self.stardist(inputs_rotated)
+                    pred_mask_rotated = self.stardist.compute_star_label(inputs_rotated, dist, prob)
+                    # return rotated np array
+                    return np.rot90(pred_mask_rotated, -angle, [1, 2]), torch.rot90(c.cpu(), -angle, [2, 3])
+                # rotate input
+                pred_90_mask, clas_90 = rotate_and_pred(inputs, 1)
+                pred_180_mask, clas_180 = rotate_and_pred(inputs, 2)
+                pred_270_mask, clas_270 = rotate_and_pred(inputs, 3)
+
             # stardist class mask
             if self.classification:
-                best_clas = torch.argmax(clas, dim=1)
-                class_pred = torch.Tensor(
-                    np.array([
-                        self.__improve_class_map(best_clas[b].cpu(), pred_mask[b])
-                        for b in range(len(best_clas))
-                    ])
-                )
+                def get_class_pred(clas, pred_mask):
+                    best_clas = torch.argmax(clas, dim=1)
+                    class_pred = torch.Tensor(
+                        np.array([
+                            self.__improve_class_map(best_clas[b].cpu(), pred_mask[b])
+                            for b in range(len(best_clas))
+                        ])
+                    )
+                    return class_pred, best_clas
+                class_pred, best_clas = get_class_pred(clas, pred_mask)
+                if STAR_4_IMPROVEMENT:
+                    class_pred_90, _ = get_class_pred(clas_90, pred_90_mask)
+                    class_pred_180, _ = get_class_pred(clas_180, pred_180_mask)
+                    class_pred_270, _ = get_class_pred(clas_270, pred_270_mask)
+                    class_pred = self._merge_stardist_class_together(class_pred, class_pred_90, class_pred_180, class_pred_270)
 
             if self.compute_graph:
                 # graph predicted mask
-                graph = get_graph_for_inference(dist, prob, class_pred, 45, last_layer)
+                
+                # graph = get_graph_for_inference(dist, prob, class_pred, 45, last_layer, clas, x_type)
+                graph = get_graph_for_inference_v2(inputs, args.distance, self.stardist_weights_path, self.x_type)
+                
                 with torch.no_grad():
                     graph_pred = []
                     for j in range(len(graph)):
@@ -185,17 +221,12 @@ class TestPipeline:
                                 self.graph(
                                     graph[j]["x"].to(self.device),
                                     graph[j]["edge_index"].to(self.device),
-                                    graph[j]["edge_attr"].to(self.device),
+                                    #graph[j]["edge_attr"].to(self.device),
                                 )
                             ) 
-                            graph_pred.append(out.argmax(-1) + 1)
+                            graph_pred.append(out.argmax(-1))# + 1)
                         else:
                             graph_pred.append(None)
-
-                        # testing
-                        # o = out.argmax(-1)
-                        # for k in range(len(o)):
-                        #     print((o[k]+1).int().cpu().numpy() == classes[j][graph[j]["pos"][k][0].int()][graph[j]["pos"][k][1].int()].int().cpu().numpy())
                         
                     graph_pred_mask = self._get_class_map_from_graph(graph, pred_mask, graph_pred, class_pred)
 
@@ -275,7 +306,6 @@ class TestPipeline:
                     o_true_masks.append(true_mask[j])
                     o_predicted_masks.append(pred_mask[j])
                     o_metrics.append(matching(true_mask[j], pred_mask[j]))
-                    # print(matching(true_masks[i], predicted_masks[i], report_matches=True))
                     if self.classification:
                         o_true_classes.append(classes[j].cpu().numpy())
                         o_predicted_classes.append(best_clas[j].cpu().numpy())
@@ -448,6 +478,8 @@ class TestPipeline:
         improved_class_map = np.zeros_like(class_map)
         for i in range(1, np.unique(predicted_masks).shape[0]):
             present_class = np.unique(class_map[predicted_masks == i])
+            if len(present_class) == 0:
+                best_class = 0
             for j in range(len(present_class)):
                 best_class = present_class[j]
                 if best_class != 0:
@@ -478,7 +510,7 @@ class TestPipeline:
         p = graph["pos"]
         ei = graph["edge_index"]
         transform = T.ToPILImage()
-        img = transform(class_map)
+        img = transform(class_map.astype(np.uint8))
         draw = ImageDraw.Draw(img) 
         for e in range(ei.shape[1]):
             draw.line((p[ei[0][e]][1],p[ei[0][e]][0], p[ei[1][e]][1],p[ei[1][e]][0]), fill=(5))
@@ -518,6 +550,18 @@ class TestPipeline:
                 "f1": [[] for _ in range(self.n_classes)],
                 "panoptic_quality": [[] for _ in range(self.n_classes)],
             }
+
+    def _merge_stardist_class_together(self, p0, p1, p2, p3):
+
+        class_map = torch.stack((p0, p1, p2, p3), dim=3)
+        class_map = class_map.numpy().astype(int)
+        class_map = np.apply_along_axis(
+            lambda x: np.argmax(np.bincount(x)), 3, class_map
+        )
+        class_map = torch.from_numpy(class_map)
+
+        return class_map
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -583,6 +627,13 @@ if __name__ == "__main__":
         type=int,
         default=IMGS_TO_DISPLAY,
         help="Number of images to display in the report.",
+    )
+    parser.add_argument(
+        "-d",
+        "--distance",
+        type=int,
+        default=DISTANCE,
+        help="Distance to use for the graph.",
     )
 
     args = parser.parse_args()

@@ -157,6 +157,12 @@ class LizardDataModule(pl.LightningDataModule):
                 A.VerticalFlip(p=0.5),
                 A.RandomRotate90(p=0.5),
                 A.RandomBrightnessContrast(p=0.2),
+                A.RandomSizedCrop(
+                    min_max_height=[self.input_size/2, self.input_size],
+                    height=self.input_size,
+                    width=self.input_size,
+                    p=0.75,
+                ),
             ]
         )
 

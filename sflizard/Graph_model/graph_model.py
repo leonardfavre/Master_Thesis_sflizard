@@ -231,7 +231,7 @@ class Graph(pl.LightningModule):
         self.max_epochs = max_epochs
 
         class_weights = [
-            # 1 / 0.8435234983048621,
+            1 / 0.8435234983048621,
             1 / 0.0015844697497448515,
             1 / 0.09702835179125052,
             1 / 0.018770678077839286,
@@ -248,7 +248,7 @@ class Graph(pl.LightningModule):
 
     def _step(self, batch, name):
         x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
-        label = batch.y - 1
+        label = batch.y #- 1
         # check if label contains background
         if torch.sum(label == -1) > 0:
             print("label contains background: ", torch.sum(label == -1))

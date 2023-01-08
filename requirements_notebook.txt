@@ -1,2 +1,4 @@
 jupyter==1.0.0
 jupyterlab==3.4.8
+matplotlib==3.6.2 
+seaborn==0.12.2

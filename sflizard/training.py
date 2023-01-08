@@ -18,13 +18,15 @@ from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 import wandb
 
+# default values
+
 IN_CHANNELS = 3
 N_RAYS = 32
-DATA_PATH = "data_train.pkl"
-TEST_DATA_PATH = "data_test.pkl"
+DATA_PATH = "data_shuffle_train.pkl"
+TEST_DATA_PATH = "data_shuffle_test.pkl"
 MODEL = "graph_sage"
 BATCH_SIZE = 4
-NUM_WORKERS = 4
+NUM_WORKERS = 8
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
 SEED = 303
@@ -35,9 +37,17 @@ LOSS_POWER_SCALER = 0.0
 DIMH = 1024
 NUM_LAYERS = 4
 HEADS = 8
-NUM_FEATURES = 128
+NUM_FEATURES = {
+    "ll": 128,
+    "ll+c": 135,
+    "ll+c+x": 137,
+    "4ll": 512,
+    "4ll+c": 540,
+    "4ll+c+x": 548,
+}
 STARDIST_CHECKPOINT = "models/stardist_1000epochs_0.0losspower_0.0005lr.ckpt"
-X_TYPE = "ll"
+X_TYPE = "ll+c"
+DISTANCE = 45
 
 def init_stardist_training(args, device, debug=False):
     """Init the training for the stardist model."""
@@ -79,7 +89,7 @@ def init_stardist_training(args, device, debug=False):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb",
-        filename=f"{args.model}" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"{args.model}-shuffle-crop" + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -102,7 +112,8 @@ def init_graph_training(args):
         num_workers=args.num_workers,
         seed=args.seed,
         stardist_checkpoint=STARDIST_CHECKPOINT,
-        x_type=X_TYPE,
+        x_type=args.x_type,
+        distance=args.distance, 
     )
     dm.setup()
 
@@ -110,8 +121,8 @@ def init_graph_training(args):
     model = Graph(
         model=args.model,
         learning_rate=args.learning_rate,
-        num_features=NUM_FEATURES,
-        num_classes=args.num_classes - 1,
+        num_features=NUM_FEATURES[args.x_type],
+        num_classes=args.num_classes,# - 1,
         seed=args.seed,
         max_epochs=args.max_epochs,
         dim_h=args.dimh,
@@ -121,7 +132,7 @@ def init_graph_training(args):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.learning_rate}" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -164,11 +175,11 @@ def full_training(args):
     now = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if "stardist" in args.model:
         trainer.save_checkpoint(
-            f"models/stardist_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
+            f"models/stardist_shuffle_crop_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
         trainer.save_checkpoint(
-            f"models/{args.model}_{args.dimh}dh_{args.num_layers}lay_{args.max_epochs}epochs_{args.learning_rate}lr.ckpt"
+            f"models/{args.model}_{args.dimh}dh_{args.num_layers}lay_{args.x_type}_{args.distance}dist_{args.max_epochs}epochs_{args.learning_rate}lr.ckpt"
         )
         
 
@@ -260,9 +271,6 @@ if __name__ == "__main__":
         default=LOSS_POWER_SCALER,
         help="Loss scaler to use for the stardist model.",
     )
-
-
-    # to remove ?
     parser.add_argument(
         "-dh",
         "--dimh",
@@ -284,6 +292,21 @@ if __name__ == "__main__":
         default=HEADS,
         help="Number of heads in the grap model.",
     )
+    parser.add_argument(
+        "-xt",
+        "--x_type",
+        type=str,
+        default=X_TYPE,
+        help="Type of the input in the grap model.",
+    )
+    parser.add_argument(
+        "-d",
+        "--distance",
+        type=int,
+        default=DISTANCE,
+        help="Distance to use for the graph model.",
+    )
+
     args = parser.parse_args()
 
     # wandb logging (see: https://wandb.ai)
@@ -296,6 +319,7 @@ if __name__ == "__main__":
         "loss_power_scaler": args.loss_power_scaler,
         "dimh": args.dimh,
         "num_layers": args.num_layers,
+        "data": "shuffle",
     }
     wandb.init(project="sflizard", entity="leonardfavre", config=wandb_config)
 

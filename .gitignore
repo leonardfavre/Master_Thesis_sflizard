@@ -139,3 +139,5 @@ data/
 
 
 *.ckpt
+*.png
+*.tar

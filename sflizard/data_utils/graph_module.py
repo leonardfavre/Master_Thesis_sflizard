@@ -33,7 +33,7 @@ class LizardGraphDataset(Dataset):
         self.distance = distance
         self.stardist_checkpoint = stardist_checkpoint
         self.x_type = x_type
-        root = f"{root}/{x_type}/{name}"
+        root = f"{root}/{distance}/{x_type}/{name}"
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -82,7 +82,14 @@ class LizardGraphDataset(Dataset):
 
 
 def LizardGraphDataModule(
-    train_data_path: str, test_data_path:str, batch_size: int = 32, num_workers: int = 4, seed: int = 303, stardist_checkpoint=None, x_type="ll"
+    train_data_path: str, 
+    test_data_path:str, 
+    batch_size: int = 32, 
+    num_workers: int = 4, 
+    seed: int = 303, 
+    stardist_checkpoint=None, 
+    x_type="ll",
+    distance=45,
 ):
     train_data_path = Path(train_data_path)
     with train_data_path.open("rb") as f:
@@ -104,9 +111,9 @@ def LizardGraphDataModule(
     valid_df.reset_index(drop=True, inplace=True)
     test_df.reset_index(drop=True, inplace=True)
 
-    train_ds = LizardGraphDataset(df=train_df, data=train_data["images"], name="train", stardist_checkpoint=stardist_checkpoint, x_type=x_type)
-    valid_ds = LizardGraphDataset(df=valid_df, data=train_data["images"], name="valid", stardist_checkpoint=stardist_checkpoint, x_type=x_type)
-    test_ds = LizardGraphDataset(df=test_df, data=test_data["images"], name="test", stardist_checkpoint=stardist_checkpoint, x_type=x_type)
+    train_ds = LizardGraphDataset(df=train_df, data=train_data["images"], name="train", stardist_checkpoint=stardist_checkpoint, distance=distance, x_type=x_type)
+    valid_ds = LizardGraphDataset(df=valid_df, data=train_data["images"], name="valid", stardist_checkpoint=stardist_checkpoint, distance=distance, x_type=x_type)
+    test_ds = LizardGraphDataset(df=test_df, data=test_data["images"], name="test", stardist_checkpoint=stardist_checkpoint, distance=distance, x_type=x_type)
 
     return LightningDataset(
         train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers
