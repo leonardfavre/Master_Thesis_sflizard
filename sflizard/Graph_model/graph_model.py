@@ -1,12 +1,21 @@
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
-from torch_geometric.nn import GIN, RECT_L, GAT, GATConv, GATv2Conv, GCNConv, JumpingKnowledge, SAGEConv, GraphSAGE
-import torch.nn as nn
+from torch_geometric.nn import (
+    GAT,
+    GIN,
+    RECT_L,
+    GCNConv,
+    GraphSAGE,
+    JumpingKnowledge,
+    SAGEConv,
+)
+from typing import List
 
 
 class CustomGCN(torch.nn.Module):
@@ -79,7 +88,6 @@ class GraphSAGEModel(torch.nn.Module):
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.sage2(x, edge_index)
         return F.log_softmax(x, dim=1)
-
 
 
 class GraphTest(torch.nn.Module):
@@ -160,15 +168,24 @@ class Graph(pl.LightningModule):
         dim_h: int = 32,
         num_layers: int = 0,
         heads: int = 1,
+        class_weights: List[float] = [
+            1 / 0.8435234983048621,
+            1 / 0.0015844697497448515,
+            1 / 0.09702835179125052,
+            1 / 0.018770678077839286,
+            1 / 0.005716505874930195,
+            1 / 0.0011799091886332306,
+            1 / 0.03219658701273987,
+        ],
     ):
 
         super().__init__()
         self.save_hyperparameters()
-        
+
         self.learning_rate = learning_rate
         self.num_features = num_features
         self.num_classes = num_classes
-        # self.model = GraphSAGEModel(num_features, 256, num_classes)
+        
         if "graph_gat" in model:
             self.model = GAT(
                 in_channels=self.num_features,
@@ -212,14 +229,7 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
-                # jk="cat",
             )
-            # self.model = GraphSAGEModel(
-            #     dim_in=num_features,
-            #     dim_h=dim_h,
-            #     dim_out=num_classes,
-            #     num_layers=num_layers,
-            # )
         elif model == "graph_test":
             self.model = GraphTestBest(
                 dim_in=num_features,
@@ -230,28 +240,23 @@ class Graph(pl.LightningModule):
         self.seed = seed
         self.max_epochs = max_epochs
 
-        class_weights = [
-            1 / 0.8435234983048621,
-            1 / 0.0015844697497448515,
-            1 / 0.09702835179125052,
-            1 / 0.018770678077839286,
-            1 / 0.005716505874930195,
-            1 / 0.0011799091886332306,
-            1 / 0.03219658701273987,
-        ]
-        class_weights = torch.tensor(class_weights).to("cuda")
-        self.loss = nn.CrossEntropyLoss(weight=class_weights)
+        if class_weights is not None:
+            class_weights = torch.tensor(class_weights).to("cuda")
+            self.loss = nn.CrossEntropyLoss(weight=class_weights)
+        else:
+            self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x, edge_index):
         """Forward pass."""
-        return self.model(x, edge_index, edge_attr)
+        return self.model(x, edge_index)
 
     def _step(self, batch, name):
-        x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
-        label = batch.y #- 1
+        x, edge_index = batch.x, batch.edge_index
+        label = batch.y - 1
         # check if label contains background
         if torch.sum(label == -1) > 0:
-            print("label contains background: ", torch.sum(label == -1))
+            print("label contains background.")
+            label = label + 1
         label = label.long()
 
         outputs = self.model(x, edge_index)
@@ -342,7 +347,7 @@ class Graph(pl.LightningModule):
         """Output results."""
         x, edge_index, edge_attr = batch.x, batch.edge_index, batch.edge_attr
 
-        outputs = self.model(x, edge_index) #, edge_attr)
+        outputs = self.model(x, edge_index)  # , edge_attr)
         pred = outputs.argmax(-1)
 
         class_map = batch.class_map[0]

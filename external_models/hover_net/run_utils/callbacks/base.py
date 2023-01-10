@@ -1,13 +1,7 @@
-import operator
 import json
+import operator
 
-import cv2
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
-from misc.utils import center_pad_to_shape, cropping_center
-from scipy.stats import mode as major_value
-from sklearn.metrics import confusion_matrix
 
 
 ####
@@ -170,7 +164,7 @@ class AccumulateRawOutput(BaseCallbacks):
 
 ####
 class ScalarMovingAverage(BaseCallbacks):
-    """Calculate the running average for all scalar output of 
+    """Calculate the running average for all scalar output of
     each runstep of the attached RunEngine."""
 
     def __init__(self, alpha=0.95):
@@ -207,7 +201,7 @@ class ProcessAccumulatedRawOutput(BaseCallbacks):
         self.proc_func = proc_func
 
     def run(self, state, event):
-        current_epoch = state.curr_epoch
+        state.curr_epoch
         # if current_epoch % self.per_n_epoch != 0: return
         raw_data = state.epoch_accumulated_output
         track_dict = self.proc_func(raw_data)
@@ -225,7 +219,7 @@ class VisualizeOutput(BaseCallbacks):
         self.proc_func = proc_func
 
     def run(self, state, event):
-        current_epoch = state.curr_epoch
+        state.curr_epoch
         raw_output = state.step_output["raw"]
         viz_image = self.proc_func(raw_output)
         state.tracked_step_output["image"]["output"] = viz_image

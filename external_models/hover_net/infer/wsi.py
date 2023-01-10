@@ -1,39 +1,21 @@
 import multiprocessing as mp
-from concurrent.futures import FIRST_EXCEPTION, ProcessPoolExecutor, as_completed, wait
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import Lock, Pool
 
 mp.set_start_method("spawn", True)  # ! must be at top for VScode debugging
 
-import argparse
 import glob
-import json
 import logging
-import math
 import os
 import pathlib
-import re
-import shutil
-import sys
 import time
-from functools import reduce
-from importlib import import_module
 
 import cv2
 import numpy as np
-import psutil
-import scipy.io as sio
-import torch
 import torch.utils.data as data
 import tqdm
-from dataloader.infer_loader import SerializeArray, SerializeFileList
-from docopt import docopt
-from misc.utils import (
-    cropping_center,
-    get_bounding_box,
-    log_debug,
-    log_info,
-    rm_n_mkdir,
-)
+from dataloader.infer_loader import SerializeArray
+from misc.utils import log_info, rm_n_mkdir
 from misc.wsi_handler import get_file_handler
 
 from . import base
@@ -50,7 +32,7 @@ def _init_worker_child(lock_):
 ####
 def _remove_inst(inst_map, remove_id_list):
     """Remove instances with id in remove_id_list.
-    
+
     Args:
         inst_map: map of instances
         remove_id_list: list of ids to remove from inst_map
@@ -96,7 +78,7 @@ def _get_tile_info(img_shape, tile_shape, ambiguous_size=128):
         img_shape: input image shape
         tile_shape: tile shape used for post processing
         ambiguous_size: used to define area at tile boundaries
-    
+
     """
     # * get normal tiling set
     tile_grid_top_left, _ = _get_patch_top_left_info(img_shape, tile_shape, tile_shape)
@@ -303,7 +285,7 @@ class InferManager(base.InferManager):
         Args:
             patch_info_list: patch input coordinate information
             has_output_info: whether output information is given
-        
+
         """
         down_sample_ratio = self.wsi_mask.shape[0] / self.wsi_proc_shape[0]
         selected_indices = []
@@ -332,7 +314,7 @@ class InferManager(base.InferManager):
         Args:
             chunk_info_list: list of inference tile coordinate information
             patch_info_list: list of patch coordinate information
-        
+
         """
         # 1 dedicated thread just to write results back to disk
         proc_pool = Pool(processes=1)
@@ -713,7 +695,7 @@ class InferManager(base.InferManager):
 
         Args:
             run_args: arguments as defined in run_infer.py
-        
+
         """
         self._parse_args(run_args)
 

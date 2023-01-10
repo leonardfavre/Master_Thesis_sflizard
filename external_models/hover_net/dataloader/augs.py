@@ -1,24 +1,13 @@
-import math
-
 import cv2
-import matplotlib.cm as cm
 import numpy as np
-
-from scipy import ndimage
 from scipy.ndimage import measurements
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.interpolation import affine_transform, map_coordinates
-
-from skimage import morphology as morph
-
-from misc.utils import cropping_center, get_bounding_box
 
 
 ####
 def fix_mirror_padding(ann):
     """Deal with duplicated instances due to mirroring in interpolation
     during shape augmentation (scale, rotation etc.).
-    
+
     """
     current_max_id = np.amax(ann)
     inst_list = list(np.unique(ann))

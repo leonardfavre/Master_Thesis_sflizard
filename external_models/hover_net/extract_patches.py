@@ -3,18 +3,15 @@
 Patch extraction script.
 """
 
-import re
 import glob
-import os
-import tqdm
 import pathlib
+import re
 
 import numpy as np
-
+import tqdm
+from dataset import get_dataset
 from misc.patch_extractor import PatchExtractor
 from misc.utils import rm_n_mkdir
-
-from dataset import get_dataset
 
 # -------------------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -35,11 +32,17 @@ if __name__ == "__main__":
     dataset_info = {
         "train": {
             "img": (".png", "data/Lizard_dataset_test_split/Lizard_Images_train/"),
-            "ann": (".mat", "data/Lizard_dataset_test_split/Lizard_Labels_train/Labels/"),
+            "ann": (
+                ".mat",
+                "data/Lizard_dataset_test_split/Lizard_Labels_train/Labels/",
+            ),
         },
         "valid": {
             "img": (".png", "data/Lizard_dataset_test_split/Lizard_Images_test/"),
-            "ann": (".mat", "data/Lizard_dataset_test_split/Lizard_Labels_test/Labels/"),
+            "ann": (
+                ".mat",
+                "data/Lizard_dataset_test_split/Lizard_Labels_test/Labels/",
+            ),
         },
     }
 

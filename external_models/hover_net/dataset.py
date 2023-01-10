@@ -1,4 +1,3 @@
-import glob
 import cv2
 import numpy as np
 import scipy.io as sio
@@ -8,7 +7,7 @@ class __AbstractDataset(object):
     """Abstract class for interface of subsequent classes.
     Main idea is to encapsulate how each dataset should parse
     their images and annotations.
-    
+
     """
 
     def load_img(self, path):
@@ -22,8 +21,8 @@ class __AbstractDataset(object):
 class __Kumar(__AbstractDataset):
     """Defines the Kumar dataset as originally introduced in:
 
-    Kumar, Neeraj, Ruchika Verma, Sanuj Sharma, Surabhi Bhargava, Abhishek Vahadane, 
-    and Amit Sethi. "A dataset and a technique for generalized nuclear segmentation for 
+    Kumar, Neeraj, Ruchika Verma, Sanuj Sharma, Surabhi Bhargava, Abhishek Vahadane,
+    and Amit Sethi. "A dataset and a technique for generalized nuclear segmentation for
     computational pathology." IEEE transactions on medical imaging 36, no. 7 (2017): 1550-1560.
 
     """
@@ -44,8 +43,8 @@ class __Kumar(__AbstractDataset):
 class __CPM17(__AbstractDataset):
     """Defines the CPM 2017 dataset as originally introduced in:
 
-    Vu, Quoc Dang, Simon Graham, Tahsin Kurc, Minh Nguyen Nhat To, Muhammad Shaban, 
-    Talha Qaiser, Navid Alemi Koohbanani et al. "Methods for segmentation and classification 
+    Vu, Quoc Dang, Simon Graham, Tahsin Kurc, Minh Nguyen Nhat To, Muhammad Shaban,
+    Talha Qaiser, Navid Alemi Koohbanani et al. "Methods for segmentation and classification
     of digital microscopy tissue images." Frontiers in bioengineering and biotechnology 7 (2019).
 
     """
@@ -66,10 +65,10 @@ class __CPM17(__AbstractDataset):
 class __CoNSeP(__AbstractDataset):
     """Defines the CoNSeP dataset as originally introduced in:
 
-    Graham, Simon, Quoc Dang Vu, Shan E. Ahmed Raza, Ayesha Azam, Yee Wah Tsang, Jin Tae Kwak, 
-    and Nasir Rajpoot. "Hover-Net: Simultaneous segmentation and classification of nuclei in 
+    Graham, Simon, Quoc Dang Vu, Shan E. Ahmed Raza, Ayesha Azam, Yee Wah Tsang, Jin Tae Kwak,
+    and Nasir Rajpoot. "Hover-Net: Simultaneous segmentation and classification of nuclei in
     multi-tissue histology images." Medical Image Analysis 58 (2019): 101563
-    
+
     """
 
     def load_img(self, path):
@@ -94,9 +93,9 @@ class __CoNSeP(__AbstractDataset):
 
         return ann
 
-#### 
-class __Lizard(__AbstractDataset):
 
+####
+class __Lizard(__AbstractDataset):
     def load_img(self, path):
         return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
 

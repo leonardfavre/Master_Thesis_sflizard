@@ -10,10 +10,10 @@ matplotlib.use("Agg")
 ####
 def fig2data(fig, dpi=180):
     """Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it.
-    
+
     Args:
         fig: a matplotlib figure
-    
+
     Return: a numpy 3D array of RGBA values
 
     """
@@ -97,9 +97,10 @@ class _ConfusionMatrix(object):
             http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 
             """
+            import itertools
+
             import matplotlib.pyplot as plt
             import numpy as np
-            import itertools
 
             accuracy = np.trace(cm) / np.sum(cm).astype("float")
             misclass = 1 - accuracy

@@ -9,9 +9,9 @@ permission, please contact the copyright holders and delete this file.
 import argparse
 import glob
 import pickle
+import random
 import time
 from pathlib import Path
-import random
 
 import numpy as np
 import pandas as pd
@@ -20,12 +20,13 @@ from PIL import Image
 from rich import print
 from tqdm import tqdm
 
-SEED=303
+SEED = 303
 TRAIN_TEST_SPLIT = 0.8
 IMAGE_EXTENSION = "png"
 OUTPUT_BASE_NAME = "data"
 PATCH_SIZE = 540
 PATCH_STEP = 200
+
 
 def extract_annotation_patches(annotation_file, annotations, patch_size, patch_step):
     """Extract patches from annotations.
@@ -223,12 +224,10 @@ def extract_data(args):
 
     # determine the number of images for training and testing
     train_size = int(len(image_files) * args.train_test_split)
-    test_size = len(image_files) - train_size
+    len(image_files) - train_size
 
     # extract train patches
-    for idx, image_file in enumerate(tqdm(
-        image_files, desc="Extracting images"
-    )):
+    for idx, image_file in enumerate(tqdm(image_files, desc="Extracting images")):
         # extract patches for training
         if idx < train_size:
             # extract patches from the images to have multiple images of same size:
@@ -251,7 +250,6 @@ def extract_data(args):
     with open(args.output_base_name + "_test_list.txt", "w") as f:
         for item in test_list:
             f.write(f"{item}\n")
-    
 
     print(
         f"\nAll {len(images_train) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
@@ -301,7 +299,7 @@ def extract_data(args):
     images_test, annotations_test = remove_missing_data(
         images_test, annotations_test, "test"
     )
-    
+
     cleaned_train_data["images"] = images_train
     cleaned_train_data["annotations"] = annotations_train
     cleaned_test_data["images"] = images_test
@@ -311,8 +309,12 @@ def extract_data(args):
 
     print("4. Report\n")
 
-    print(f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}")
-    print(f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}")
+    print(
+        f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}"
+    )
+    print(
+        f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}"
+    )
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
     print("5. Saving File...\n")
@@ -324,6 +326,7 @@ def extract_data(args):
     with open(save_test, "wb") as f:
         pickle.dump(cleaned_test_data, f)
     print(f"Cleaned test data saved in {save_test}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

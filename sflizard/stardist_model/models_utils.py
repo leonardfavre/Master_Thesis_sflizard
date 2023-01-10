@@ -95,7 +95,7 @@ class UNetStar(nn.Module):
         """Init the class."""
         super(UNetStar, self).__init__()
         self.output_classes = n_classes is not None
-        self.output_last_layer = last_layer_out 
+        self.output_last_layer = last_layer_out
         self.inc = inconv(n_channels, 32)
         self.down1 = down(32, 64)
         self.down2 = down(64, 128)

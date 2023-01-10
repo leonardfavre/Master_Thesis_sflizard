@@ -1,22 +1,15 @@
-import math
+import matplotlib.pyplot as plt
 import numpy as np
-
-import torch
-import torch.nn.functional as F
-
-from scipy import ndimage
+from dataloader.augs import fix_mirror_padding
+from misc.utils import center_pad_to_shape, cropping_center, get_bounding_box
 from scipy.ndimage import measurements
 from skimage import morphology as morph
-import matplotlib.pyplot as plt
-
-from misc.utils import center_pad_to_shape, cropping_center, get_bounding_box
-from dataloader.augs import fix_mirror_padding
 
 
 ####
 def gen_instance_hv_map(ann, crop_shape):
     """Input annotation must be of original shape.
-    
+
     The map is calculated only for instances within the crop portion
     but based on the original shape in original image.
 
@@ -146,7 +139,7 @@ def prep_sample(data, is_batch=False, **kwargs):
         viz_list = []
         data_shape = list(data.values())[0].shape
         for batch_idx in range(data_shape[0]):
-            sub_data = {k : v[batch_idx] for k, v in data.items()}
+            sub_data = {k: v[batch_idx] for k, v in data.items()}
             viz_list.append(prep_one_sample(sub_data))
         return np.concatenate(viz_list, axis=0)
     else:

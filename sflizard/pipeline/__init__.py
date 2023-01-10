@@ -1,4 +1,4 @@
 """isort:skip_file
 """
 
-from sflizard.pipeline.report import ReportGenerator # noqa: F401
+from sflizard.pipeline.report import ReportGenerator  # noqa: F401

@@ -5,10 +5,7 @@ from collections import OrderedDict
 
 import numpy as np
 import torch
-import torch.nn as nn
-from imgaug import imgaug as ia
 from termcolor import colored
-from torch.autograd import Variable
 
 
 ####
@@ -31,7 +28,7 @@ def convert_pytorch_checkpoint(net_state_dict):
 
 ####
 def check_manual_seed(seed):
-    """ If manual seed is not specified, choose a 
+    """If manual seed is not specified, choose a
     random one and communicate it to the user.
 
     Args:
@@ -89,7 +86,7 @@ def get_model_summary(
     def register_hook(module):
         def hook(module, input, output):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
-            module_idx = len(summary)
+            len(summary)
 
             m_key = module.name if module.name != "" else "%s" % class_name
 
@@ -178,12 +175,12 @@ def get_model_summary(
 
     # assume 4 bytes/number (float on cuda).
     total_input_size = abs(
-        np.prod(sum(input_size, ())) * batch_size * 4.0 / (1024 ** 2.0)
+        np.prod(sum(input_size, ())) * batch_size * 4.0 / (1024**2.0)
     )
     total_output_size = abs(
-        2.0 * total_output * 4.0 / (1024 ** 2.0)
+        2.0 * total_output * 4.0 / (1024**2.0)
     )  # x2 for gradients
-    total_params_size = abs(total_params * 4.0 / (1024 ** 2.0))
+    total_params_size = abs(total_params * 4.0 / (1024**2.0))
     total_size = total_params_size + total_output_size + total_input_size
 
     summary_str += "".join("=" for _ in range(len(header_line))) + "\n"

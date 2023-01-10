@@ -1,14 +1,15 @@
-from matplotlib import pyplot as plt
-from matplotlib.patches import Patch
-from matplotlib.colors import ListedColormap
 from pathlib import Path
-import torch
-import numpy as np
 
-from sflizard import get_class_name, get_class_color
+import numpy as np
+import torch
+from matplotlib import pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
+
+from sflizard import get_class_color, get_class_name
+
 
 class ReportGenerator:
-
     def __init__(
         self,
         images,
@@ -24,7 +25,7 @@ class ReportGenerator:
         graphs=None,
         graphs_masks=None,
     ):
-        
+
         self.images = images
         self.true_masks = true_masks
         self.predicted_masks = predicted_masks
@@ -50,22 +51,21 @@ class ReportGenerator:
         self.class_name = get_class_name()
         self.class_color = get_class_color()
         self.n_classes = len(self.class_name) + 1 if self.classification else 1
-    
-        
+
     def generate_md(self) -> None:
         """Generate a markdown file with the report.
-        
+
         Args:
             None.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
         print("Plotting...")
-        
+
         # create subdirectories
         Path(self.output_dir + "/images").mkdir(parents=True, exist_ok=True)
 
@@ -105,7 +105,9 @@ class ReportGenerator:
                 md += f"| n_pred | {self.image_metric[i].n_pred} |\n"
                 md += f"| mean_true_score | {self.image_metric[i].mean_true_score} |\n"
                 md += f"| mean_matched_score | {self.image_metric[i].mean_matched_score} |\n"
-                md += f"| panoptic_quality | {self.image_metric[i].panoptic_quality} |\n"
+                md += (
+                    f"| panoptic_quality | {self.image_metric[i].panoptic_quality} |\n"
+                )
                 if self.classification:
                     md += f"\n![](images/test_image_{i}_classes.png)\n"
                     md += f"\n![](images/test_image_{i}_graph.png)\n"
@@ -116,20 +118,24 @@ class ReportGenerator:
 
     def _generate_images(self):
         """Generate images for the report.
-        
+
         Args:
             None.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
         for i in range(len(self.images)):
             # save images and segmentation masks
             self._save_images(
-                [self.images[i].permute(1, 2, 0), self.true_masks[i], self.predicted_masks[i]],
+                [
+                    self.images[i].permute(1, 2, 0),
+                    self.true_masks[i],
+                    self.predicted_masks[i],
+                ],
                 ["Image", "True mask", "Predicted mask"],
                 f"test_image_{i}",
             )
@@ -137,7 +143,11 @@ class ReportGenerator:
             if self.classification:
                 # save true and predicted classes
                 self._save_images(
-                    [self.true_classes[i], self.predicted_classes[i], self.improved_class[i]],
+                    [
+                        self.true_classes[i],
+                        self.predicted_classes[i],
+                        self.improved_class[i],
+                    ],
                     ["True Class", "Predicted Class", "Predicted class after cleaning"],
                     f"test_image_{i}_classes",
                     legend=True,
@@ -153,7 +163,9 @@ class ReportGenerator:
 
                 # save differences between true and predicted maps
                 diff_imgs = {}
-                diff_imgs["class mask differences"] = np.zeros_like(self.true_classes[i])
+                diff_imgs["class mask differences"] = np.zeros_like(
+                    self.true_classes[i]
+                )
                 diff_imgs["class mask differences"][
                     self.true_classes[i] != self.improved_class[i]
                 ] = 1
@@ -163,19 +175,22 @@ class ReportGenerator:
                 diff_imgs["graph class mask differences"][
                     self.true_classes[i] != self.graphs_masks[i]
                 ] = 1
-                diff_imgs["class/graph mask differences"] = np.zeros_like(self.true_classes[i])
+                diff_imgs["class/graph mask differences"] = np.zeros_like(
+                    self.true_classes[i]
+                )
                 diff_imgs["class/graph mask differences"][
-                    diff_imgs["class mask differences"] > diff_imgs["graph class mask differences"]
+                    diff_imgs["class mask differences"]
+                    > diff_imgs["graph class mask differences"]
                 ] = 1
                 diff_imgs["class/graph mask differences"][
-                    diff_imgs["class mask differences"] < diff_imgs["graph class mask differences"]
+                    diff_imgs["class mask differences"]
+                    < diff_imgs["graph class mask differences"]
                 ] = 2
                 self._save_images(
-                    list(diff_imgs.values()), list(diff_imgs.keys()), f"test_image_{i}_diff"
+                    list(diff_imgs.values()),
+                    list(diff_imgs.keys()),
+                    f"test_image_{i}_diff",
                 )
-
-                
-
 
     def _save_images(self, imgs, titles, file_name, legend=False):
         """Save images to png files.
@@ -199,17 +214,17 @@ class ReportGenerator:
             else:
                 ax[i].imshow(imgs[i])
             ax[i].set_title(titles[i])
-            ax[i].axis("off") 
-            
-        if legend:              
+            ax[i].axis("off")
+
+        if legend:
             fig.legend(
                 handles=[
-                        Patch(color=self.class_color[i], label=self.class_name[i])
-                        for i in range(1, self.n_classes)
-                    ],
-                    loc="lower center",
-                    ncol=self.n_classes,
-                )
+                    Patch(color=self.class_color[i], label=self.class_name[i])
+                    for i in range(1, self.n_classes)
+                ],
+                loc="lower center",
+                ncol=self.n_classes,
+            )
         # saving
         plt.savefig(f"{self.output_dir}images/{file_name}.png")
         plt.close()

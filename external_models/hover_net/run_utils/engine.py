@@ -1,5 +1,6 @@
-import tqdm
 from enum import Enum
+
+import tqdm
 
 
 ####
@@ -202,4 +203,3 @@ class RunEngine(object):
             )
 
         return
-

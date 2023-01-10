@@ -1185,3 +1185,31 @@ Results:
 │    f1    │  0.0918  │  0.9672  │  0.6639   │ 0.2505 │  0.2012  │  0.6899   │
 │ panopti… │  0.0533  │  0.6288  │  0.3933   │ 0.1416 │  0.1270  │  0.4096   │
 └──────────┴──────────┴──────────┴───────────┴────────┴──────────┴───────────┘
+
+
+
+TODO :
+
+stardist :
+
+200 no aug - done
+200 rotate - in progress
+200 rotate + bright
+200 croped
+200 croped lr * 2
+200 power scale ** 2
+200 no power scale
+
+Graph :
+
+redo all sheets
+improve sage custom
+
+hovernet :
+proof of concept graph with validation selection
+
+hovernet lizard :
+extraction train
+graph training
+validation selection
+test graph

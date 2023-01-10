@@ -5,15 +5,14 @@ Note, this is only used for tile segmentation results; not WSI.
 
 """
 
-import os
-import re
 import glob
 import json
+import os
 import pathlib
-import numpy as np
-import shutil
+import re
 
-from misc.utils import rm_n_mkdir, mkdir
+import numpy as np
+
 
 ####
 def to_qupath(file_path, nuc_pos_list, nuc_type_list, type_info_dict):

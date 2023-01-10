@@ -1,57 +1,37 @@
-import logging
 import multiprocessing
-from multiprocessing import Lock, Pool
 
 multiprocessing.set_start_method("spawn", True)  # ! must be at top for VScode debugging
-import argparse
 import glob
-import json
 import math
-import multiprocessing as mp
-import os
 import pathlib
-import pickle
 import re
 import sys
-import warnings
-from concurrent.futures import FIRST_EXCEPTION, ProcessPoolExecutor, as_completed, wait
-from functools import reduce
-from importlib import import_module
-from multiprocessing import Lock, Pool
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
+import convert_format
 import cv2
 import numpy as np
 import psutil
 import scipy.io as sio
-import torch
 import torch.utils.data as data
 import tqdm
-from dataloader.infer_loader import SerializeArray, SerializeFileList
-from misc.utils import (
-    color_deconvolution,
-    cropping_center,
-    get_bounding_box,
-    log_debug,
-    log_info,
-    rm_n_mkdir,
-)
-from misc.viz_utils import colorize, visualize_instances_dict
-from skimage import color
+from dataloader.infer_loader import SerializeFileList
+from misc.utils import log_info, rm_n_mkdir
+from misc.viz_utils import visualize_instances_dict
 
-import convert_format
 from . import base
 
 
 ####
 def _prepare_patching(img, window_size, mask_size, return_src_top_corner=False):
     """Prepare patch information for tile processing.
-    
+
     Args:
         img: original input image
         window_size: input patch size
         mask_size: output patch size
         return_src_top_corner: whether to return coordiante information for top left corner of img
-        
+
     """
 
     win_size = window_size
@@ -96,10 +76,14 @@ def _prepare_patching(img, window_size, mask_size, return_src_top_corner=False):
 
 ####
 def _post_process_patches(
-    post_proc_func, post_proc_kwargs, patch_info, image_info, overlay_kwargs,
+    post_proc_func,
+    post_proc_kwargs,
+    patch_info,
+    image_info,
+    overlay_kwargs,
 ):
     """Apply post processing to patches.
-    
+
     Args:
         post_proc_func: post processing function to use
         post_proc_kwargs: keyword arguments used in post processing function
@@ -159,17 +143,17 @@ class InferManager(base.InferManager):
         patterning = lambda x: re.sub("([\[\]])", "[\\1]", x)
         file_path_list = glob.glob(patterning("%s/*" % self.input_dir))
         file_path_list.sort()  # ensure same order
-        assert len(file_path_list) > 0, 'Not Detected Any Files From Path'
-        
-        rm_n_mkdir(self.output_dir + '/json/')
-        rm_n_mkdir(self.output_dir + '/mat/')
-        rm_n_mkdir(self.output_dir + '/overlay/')
+        assert len(file_path_list) > 0, "Not Detected Any Files From Path"
+
+        rm_n_mkdir(self.output_dir + "/json/")
+        rm_n_mkdir(self.output_dir + "/mat/")
+        rm_n_mkdir(self.output_dir + "/overlay/")
         if self.save_qupath:
             rm_n_mkdir(self.output_dir + "/qupath/")
 
         def proc_callback(results):
             """Post processing callback.
-            
+
             Output format is implicit assumption, taken from `_post_process_patches`
 
             """
@@ -177,18 +161,18 @@ class InferManager(base.InferManager):
 
             nuc_val_list = list(inst_info_dict.values())
             # need singleton to make matlab happy
-            nuc_uid_list = np.array(list(inst_info_dict.keys()))[:,None]
-            nuc_type_list = np.array([v["type"] for v in nuc_val_list])[:,None]
+            nuc_uid_list = np.array(list(inst_info_dict.keys()))[:, None]
+            nuc_type_list = np.array([v["type"] for v in nuc_val_list])[:, None]
             nuc_coms_list = np.array([v["centroid"] for v in nuc_val_list])
 
             mat_dict = {
-                "inst_map" : pred_inst,
-                "inst_uid" : nuc_uid_list,
+                "inst_map": pred_inst,
+                "inst_uid": nuc_uid_list,
                 "inst_type": nuc_type_list,
-                "inst_centroid": nuc_coms_list
+                "inst_centroid": nuc_coms_list,
             }
-            if self.nr_types is None: # matlab does not have None type array
-                mat_dict.pop("inst_type", None) 
+            if self.nr_types is None:  # matlab does not have None type array
+                mat_dict.pop("inst_type", None)
 
             if self.save_raw_map:
                 mat_dict["raw_map"] = pred_map
@@ -385,4 +369,3 @@ class InferManager(base.InferManager):
                         file_path = proc_callback(future.result())
                         log_info("Done Assembling %s" % file_path)
         return
-

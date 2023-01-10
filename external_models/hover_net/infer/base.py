@@ -1,20 +1,9 @@
-import argparse
-import glob
 import json
-import math
-import multiprocessing
-import os
-import re
-import sys
 from importlib import import_module
-from multiprocessing import Lock, Pool
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.utils.data as data
-import tqdm
-
 from run_utils.utils import convert_pytorch_checkpoint
 
 
@@ -56,7 +45,7 @@ class InferManager(object):
     def __load_model(self):
         """Create the model, load the checkpoint and define
         associated run steps to process each data batch.
-        
+
         """
         model_desc = import_module("models.hovernet.net_desc")
         model_creator = getattr(model_desc, "create_model")

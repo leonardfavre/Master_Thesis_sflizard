@@ -1,18 +1,14 @@
 from collections import OrderedDict
+
 import cv2
 import numpy as np
-from skimage import img_as_ubyte
-from skimage import color
-import re
-import subprocess
-
 import openslide
 
 
 class FileHandler(object):
     def __init__(self):
         """The handler is responsible for storing the processed data, parsing
-        the metadata from original file, and reading it from storage. 
+        the metadata from original file, and reading it from storage.
         """
         self.metadata = {
             ("available_mag", None),
@@ -21,7 +17,6 @@ class FileHandler(object):
             ("mpp  ", None),
             ("base_shape", None),
         }
-        pass
 
     def __load_metadata(self):
         raise NotImplementedError
@@ -37,12 +32,12 @@ class FileHandler(object):
         """Must call `prepare_reading` before hand.
 
         Args:
-            coords (tuple): (dims_x, dims_y), 
-                          top left coordinates of image region at selected 
-                          `read_mag` or `read_mpp` from `prepare_reading` 
+            coords (tuple): (dims_x, dims_y),
+                          top left coordinates of image region at selected
+                          `read_mag` or `read_mpp` from `prepare_reading`
             size (tuple): (dims_x, dims_y)
-                          width and height of image region at selected 
-                          `read_mag` or `read_mpp` from `prepare_reading`       
+                          width and height of image region at selected
+                          `read_mag` or `read_mpp` from `prepare_reading`
 
         """
         raise NotImplementedError
@@ -141,12 +136,12 @@ class OpenSlideHandler(FileHandler):
         """Must call `prepare_reading` before hand.
 
         Args:
-            coords (tuple): (dims_x, dims_y), 
-                          top left coordinates of image region at selected 
-                          `read_mag` or `read_mpp` from `prepare_reading` 
+            coords (tuple): (dims_x, dims_y),
+                          top left coordinates of image region at selected
+                          `read_mag` or `read_mpp` from `prepare_reading`
             size (tuple): (dims_x, dims_y)
-                          width and height of image region at selected 
-                          `read_mag` or `read_mpp` from `prepare_reading`       
+                          width and height of image region at selected
+                          `read_mag` or `read_mpp` from `prepare_reading`
 
         """
         if self.image_ptr is None:
@@ -192,13 +187,17 @@ class OpenSlideHandler(FileHandler):
 
 def get_file_handler(path, backend):
     if backend in [
-            '.svs', '.tif', 
-            '.vms', '.vmu', '.ndpi',
-            '.scn', '.mrxs', '.tiff',
-            '.svslide',
-            '.bif',
-            ]:
+        ".svs",
+        ".tif",
+        ".vms",
+        ".vmu",
+        ".ndpi",
+        ".scn",
+        ".mrxs",
+        ".tiff",
+        ".svslide",
+        ".bif",
+    ]:
         return OpenSlideHandler(path)
     else:
         assert False, "Unknown WSI format `%s`" % backend
-

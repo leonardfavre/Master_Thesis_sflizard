@@ -53,8 +53,8 @@ class LizardDataset(Dataset):
         """Get images and transform them if needed."""
         # retriev inputs
         image = np.array(self.data[self.df.iloc[idx].id])
-        
-        #retrieve masks
+
+        # retrieve masks
         inst_map = self.df.iloc[idx].inst_map
         masks = [inst_map]
         if self.annotation_target == "stardist_class":
@@ -64,10 +64,10 @@ class LizardDataset(Dataset):
         # augmentations
         if self.tf_augment is not None:
             transformed = self.tf_augment(image=image, masks=masks)
-            image = transformed['image']
-            inst_map = transformed['masks'][0]
+            image = transformed["image"]
+            inst_map = transformed["masks"][0]
             if self.annotation_target == "stardist_class":
-                class_map = transformed['masks'][1]
+                class_map = transformed["masks"][1]
         if self.tf_base is not None:
             image = self.tf_base(image=image)["image"]
 
@@ -84,9 +84,6 @@ class LizardDataset(Dataset):
                 class_map,
             )
             return image, obj_probabilities, distances, classes
-        # elif self.annotation_target == "inst":
-        #     annotation = self.df.iloc[idx].inst_map
-        # for testing, return image id for reporting
         else:
             raise ValueError(
                 f"Annotation target {self.annotation_target} not supported."
@@ -131,7 +128,7 @@ class LizardDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         """Data setup for training."""
-        
+
         train_annotations = self.train_data["annotations"]
         test_df = self.test_data["annotations"]
 
@@ -156,22 +153,32 @@ class LizardDataModule(pl.LightningDataModule):
                 A.HorizontalFlip(p=0.5),
                 A.VerticalFlip(p=0.5),
                 A.RandomRotate90(p=0.5),
-                A.RandomBrightnessContrast(p=0.2),
-                A.RandomSizedCrop(
-                    min_max_height=[self.input_size/2, self.input_size],
-                    height=self.input_size,
-                    width=self.input_size,
-                    p=0.75,
-                ),
+                # A.RandomBrightnessContrast(p=0.2),
+                # A.RandomSizedCrop(
+                #     min_max_height=[self.input_size / 2, self.input_size],
+                #     height=self.input_size,
+                #     width=self.input_size,
+                #     p=0.75,
+                # ),
             ]
         )
 
         print(f"Training with {len(train_df)} examples")
         self.train_ds = LizardDataset(
-            train_df, self.train_data["images"], tf_base, tf_augment, self.annotation_target, self.aditional_args
+            train_df,
+            self.train_data["images"],
+            tf_base,
+            tf_augment,
+            self.annotation_target,
+            self.aditional_args,
         )
         self.valid_ds = LizardDataset(
-            valid_df, self.train_data["images"], tf_base, None, self.annotation_target, self.aditional_args
+            valid_df,
+            self.train_data["images"],
+            tf_base,
+            None,
+            self.annotation_target,
+            self.aditional_args,
         )
         self.test_ds = LizardDataset(
             test_df,

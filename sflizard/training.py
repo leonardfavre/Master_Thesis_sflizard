@@ -13,10 +13,11 @@ from datetime import datetime
 
 import pytorch_lightning as pl
 import torch
-
-from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
+from pathlib import Path
+import pickle
 
 import wandb
+from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 # default values
 
@@ -48,6 +49,7 @@ NUM_FEATURES = {
 STARDIST_CHECKPOINT = "models/stardist_1000epochs_0.0losspower_0.0005lr.ckpt"
 X_TYPE = "ll+c"
 DISTANCE = 45
+
 
 def init_stardist_training(args, device, debug=False):
     """Init the training for the stardist model."""
@@ -89,7 +91,7 @@ def init_stardist_training(args, device, debug=False):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb",
-        filename=f"{args.model}-shuffle-crop" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"{args.model}-shuffle-rotate" + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -103,17 +105,28 @@ def init_stardist_training(args, device, debug=False):
 
 def init_graph_training(args):
     """Init the training for the graphSage model."""
+    # get the train data
+    train_data_path = Path(args.data_path)
+    with train_data_path.open("rb") as f:
+        train_data = pickle.load(f)
+    train_data = train_data["annotations"]
+
+    # get the test data
+    test_data_path = Path(args.test_data_path)
+    with test_data_path.open("rb") as f:
+        test_data = pickle.load(f)
+        test_data = test_data["annotations"]
 
     # create the datamodule
     dm = LizardGraphDataModule(
-        train_data_path=args.data_path,
-        test_data_path=args.test_data_path,
+        train_data=train_data,
+        test_data_path=test_data,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         seed=args.seed,
         stardist_checkpoint=STARDIST_CHECKPOINT,
         x_type=args.x_type,
-        distance=args.distance, 
+        distance=args.distance,
     )
     dm.setup()
 
@@ -122,7 +135,7 @@ def init_graph_training(args):
         model=args.model,
         learning_rate=args.learning_rate,
         num_features=NUM_FEATURES[args.x_type],
-        num_classes=args.num_classes,# - 1,
+        num_classes=args.num_classes,  # - 1,
         seed=args.seed,
         max_epochs=args.max_epochs,
         dim_h=args.dimh,
@@ -132,7 +145,8 @@ def init_graph_training(args):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -172,16 +186,15 @@ def full_training(args):
     trainer.fit(model, dm)
 
     # # save the model
-    now = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if "stardist" in args.model:
         trainer.save_checkpoint(
-            f"models/stardist_shuffle_crop_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
+            f"models/stardist_shuffle_rotate_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
         trainer.save_checkpoint(
             f"models/{args.model}_{args.dimh}dh_{args.num_layers}lay_{args.x_type}_{args.distance}dist_{args.max_epochs}epochs_{args.learning_rate}lr.ckpt"
         )
-        
 
     # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
     if args.gpus and args.gpus > 1:
@@ -306,6 +319,13 @@ if __name__ == "__main__":
         default=DISTANCE,
         help="Distance to use for the graph model.",
     )
+    parser.add_argument(
+        "-sn",
+        "--save_name",
+        type=str,
+        default="",
+        help="Name to add to the saved model.",
+    )
 
     args = parser.parse_args()
 
@@ -320,9 +340,9 @@ if __name__ == "__main__":
         "dimh": args.dimh,
         "num_layers": args.num_layers,
         "data": "shuffle",
+        "save_name": args.save_name,
     }
     wandb.init(project="sflizard", entity="leonardfavre", config=wandb_config)
-
 
     # Set seed for reproducibility
     pl.seed_everything(args.seed, workers=True)

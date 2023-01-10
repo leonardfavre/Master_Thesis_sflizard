@@ -1,7 +1,10 @@
 import numpy as np
+import math
 import torch
 from stardist import edt_prob, non_maximum_suppression, star_dist
+
 from sflizard import Stardist
+
 
 def get_stardist_distances(inst_map, n_rays):
     """Get the distances for stardist.
@@ -96,47 +99,65 @@ def get_edge_list(vertex, distance):
     return edge_list
 
 
-def get_graph_from_inst_map(
-    inst_map, 
-    class_map=None,
-    n_rays=None, 
-    distance=None, 
-    stardist_checkpoint=None, 
+def get_graph(
+    inst_map=None,
+    points=None,
+    predicted_classes=None,
+    true_class_map=None,
+    n_rays=None,
+    distance=None,
+    stardist_checkpoint=None,
     image=None,
-    x_type="ll"
-    ):
+    x_type="ll",
+    consep_data=False,
+):
     """Get the graph from the instance map.
 
     Args:
-        inst_map (): instance map.
-        class_map (): class map.
+        inst_map (np.ndarray): instance map.
+        points (np.ndarray): list of detected cells centroid.
+        predicted_classes (np.ndarray): list of predicted classes corresponding to the cells in points array.
+        true_class_map (np.ndarray): true class map.
         n_rays (int): number of rays of stardist objects.
         distance (int): distance between two vertex to have an edge.
         stardist_checkpoint (str): path to stardist checkpoint.
         image (np.ndarray): image.
         x_type (str): type of x : ll or ll+c or ll+x or ll+c+x or 4ll or 4ll+c.
+        consep_data (bool): if True, the data is from consep datset.
 
     Returns:
         vertex (torch.Tensor): vertex.
+
+    Raises:
+        NotImplementedError: if x_type is not known.
     """
     graph = {}
     if stardist_checkpoint is None:
-        # get stardist result from instance map
-        prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
-        points, _, dists = compute_stardist(dist, prob)
-        # add vertex info to graph
-        graph["x"] = torch.Tensor(dists)
+        if x_type == "dist":
+            if inst_map is None or n_rays is None:
+                raise ValueError("inst_map and n_rays must be provided for xtype dist and no stardist checkpoint.")
+            # get stardist result from instance map
+            prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
+            points, _, dists = compute_stardist(dist, prob)
+            # add vertex info to graph
+            graph["x"] = torch.Tensor(dists)
+        if x_type == "c":
+            if predicted_classes is None or points is None:
+                raise ValueError("predicted_classes and points must be provided for xtype c and no stardist checkpoint.")
+            graph["x"] = torch.Tensor(predicted_classes)
+        else:
+            raise ValueError("x_type not implemented for graph without stardist checkpoint.")
 
     else:
-        model_c =Stardist.load_from_checkpoint(
+        model_c = Stardist.load_from_checkpoint(
             stardist_checkpoint,
             n_classes=7,
             wandb_log=False,
         )
-        model_c = model_c.model.to('cuda')
+        model_c = model_c.model.to("cuda")
 
         with torch.no_grad():
-            input = torch.Tensor(image).unsqueeze(0).float().to('cuda')
+            input = torch.Tensor(image).unsqueeze(0).float().to("cuda")
             dist, prob, _ = model_c(input)
             points, _, _ = compute_stardist(dist, prob)
 
@@ -150,24 +171,32 @@ def get_graph_from_inst_map(
                     n_classes=7,
                     wandb_log=False,
                 )
-                model_ll = model_ll.model.to('cuda')
+                model_ll = model_ll.model.to("cuda")
                 model_ll.output_last_layer = True
             else:
                 model_ll = None
 
-
             # get stardist points
             if "4" in x_type:
-                sp0 = get_stardist_point_for_graph(image, model_ll, model_c, points, x_type=x_type)
-                sp1 = get_stardist_point_for_graph(image, model_ll, model_c, points, x_type=x_type, rotate=90)
-                sp2 = get_stardist_point_for_graph(image, model_ll, model_c, points, x_type=x_type, rotate=180)
-                sp3 = get_stardist_point_for_graph(image, model_ll, model_c, points, x_type=x_type, rotate=270)
+                sp0 = get_stardist_point_for_graph(
+                    image, model_ll, model_c, points, x_type=x_type
+                )
+                sp1 = get_stardist_point_for_graph(
+                    image, model_ll, model_c, points, x_type=x_type, rotate=90
+                )
+                sp2 = get_stardist_point_for_graph(
+                    image, model_ll, model_c, points, x_type=x_type, rotate=180
+                )
+                sp3 = get_stardist_point_for_graph(
+                    image, model_ll, model_c, points, x_type=x_type, rotate=270
+                )
                 stardist_points = torch.cat((sp0, sp1, sp2, sp3), dim=1)
             else:
-                stardist_points = get_stardist_point_for_graph(image, model_ll, model_c, points, x_type=x_type)
+                stardist_points = get_stardist_point_for_graph(
+                    image, model_ll, model_c, points, x_type=x_type
+                )
             # set x for graph
             graph["x"] = stardist_points.detach().cpu()
-        
 
     graph["pos"] = torch.Tensor(points)
 
@@ -179,20 +208,44 @@ def get_graph_from_inst_map(
     graph["edge_attr"] = torch.tensor(edge_list[2], dtype=torch.float)
 
     # add target to graph
-    if class_map is not None:
+    if true_class_map is not None:
         # get points with target
         y = []
         for i in range(points.shape[0]):
-            y.append(class_map[points[i, 0], points[i, 1]])
+            if type(points[i, 0]) == int:
+                y.append(true_class_map[points[i, 0], points[i, 1]])
+            else:
+                # get the 4 nearest points in the class map
+                yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
+                yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
+                yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])
+                yi4 = int(true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])])
+                # if all 4 points have the same class
+                if (yi1 == yi2) & (yi2 == yi3) & (yi3 == yi4):
+                    yi = yi1
+                # if not, take the most common class
+                else:
+                    possible_y = [yi1, yi2, yi3, yi4]
+                    # remove 0
+                    possible_y = [x for x in possible_y if x != 0]
+                    yi = max(set(possible_y), key=possible_y.count)
+            if consep_data:
+                if (yi == 3) or (yi == 4):
+                    yi = 3
+                elif (yi == 5) | (yi == 6) | (yi == 7):
+                    yi = 4
         graph["y"] = torch.Tensor(y)
 
     return graph
 
-def get_stardist_point_for_graph(image, model_ll, model_c, points, x_type="ll", rotate=0):
+
+def get_stardist_point_for_graph(
+    image, model_ll, model_c, points, x_type="ll", rotate=0
+):
     """
     Get the stardist point for graph.
     """
-    input = torch.Tensor(image).unsqueeze(0).float().to('cuda')
+    input = torch.Tensor(image).unsqueeze(0).float().to("cuda")
     if rotate != 0:
         input = torch.rot90(input, rotate // 90, [2, 3])
     with torch.no_grad():
@@ -205,30 +258,26 @@ def get_stardist_point_for_graph(image, model_ll, model_c, points, x_type="ll", 
             ll = torch.rot90(ll, -rotate // 90, [2, 3])
         if "c" in x_type:
             c = torch.rot90(c, -rotate // 90, [2, 3])
-    
+
     stardist_points = []
     for i in range(points.shape[0]):
         if "ll" in x_type:
-            lli = (
-                torch.select(
-                    torch.select(ll[0], dim=1, index=points[i, 0]),
-                    dim=1,
-                    index=points[i, 1],
-                )
+            lli = torch.select(
+                torch.select(ll[0], dim=1, index=points[i, 0]),
+                dim=1,
+                index=points[i, 1],
             )
         if "c" in x_type:
-            ci = (
-                torch.select(
-                    torch.select(c[0], dim=1, index=points[i, 0]),
-                    dim=1,
-                    index=points[i, 1],
-                )
+            ci = torch.select(
+                torch.select(c[0], dim=1, index=points[i, 0]),
+                dim=1,
+                index=points[i, 1],
             )
         if "x" in x_type:
             xi = torch.Tensor([points[i, 0], points[i, 1]])
 
         # concat everything together
-        sp = torch.Tensor([]).to('cuda')
+        sp = torch.Tensor([]).to("cuda")
         if "ll" in x_type:
             sp = torch.cat((sp, lli))
         if "c" in x_type:
@@ -240,87 +289,8 @@ def get_stardist_point_for_graph(image, model_ll, model_c, points, x_type="ll", 
     stardist_points = torch.stack(stardist_points)
     return stardist_points
 
-def get_graph_for_inference(dist, prob, class_map, distance, last_layer=None, clas=None, x_type="ll"):
-    """Get the graph for inference.
 
-    Args:
-        dist (torch.Tensor): distance map.
-        prob (torch.Tensor): probability map.
-        class_map (): class map.
-        distance (int): distance between two vertex to have an edge.
-        last_layer (torch.Tensor): last layer of stardist.
-
-    Returns:
-        graph (list): graph.
-    """
-    graphs = []
-    # get stardist result from instance map
-    # prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
-    for i in range(dist.shape[0]):
-        graph = {}
-        points, probs, dists = compute_stardist(dist[i], prob[i])
-        if len(points > 0):
-            if last_layer is not None:
-                # stardist_map = torch.argmax(stardist_map[0], dim=0)
-                ll = last_layer[i]
-                if "c" in x_type:
-                    c = clas[i]
-                stardist_points = []
-                for j in range(points.shape[0]):
-                    lli = (
-                        torch.select(
-                            torch.select(ll, dim=1, index=points[j, 0]),
-                            dim=1,
-                            index=points[j, 1],
-                        )
-                    )
-                    if "c" in x_type:
-                        ci = (
-                            torch.select(
-                                torch.select(c, dim=1, index=points[j, 0]),
-                                dim=1,
-                                index=points[j, 1],
-                            )
-                        )
-                        stardist_points.append(torch.cat((lli, ci)))
-                    else:
-                        stardist_points.append(lli)
-                
-                stardist_points = torch.stack(stardist_points)
-                # stardist_points = torch.Tensor(stardist_points).unsqueeze(1)
-                graph["x"] = stardist_points.detach().cpu()
-
-            else:
-                # add vertex info to graph
-                graph["x"] = torch.Tensor(dists)
-                # add class info to x
-                stardist_points = []
-                for j in range(points.shape[0]):
-                    stardist_points.append(class_map[i, points[j, 0], points[j, 1]])
-                stardist_points = torch.Tensor(stardist_points).unsqueeze(1)
-                graph["x"] = torch.cat((graph["x"], stardist_points), dim=1)
-            
-            graph["pos"] = torch.Tensor(points)
-
-            # compute edge information
-            edge_list = get_edge_list(points, distance)
-            # add edge information to graph
-            graph["edge_index"] = torch.tensor([edge_list[0], edge_list[1]], dtype=torch.long)
-            graph["edge_attr"] = torch.tensor(edge_list[2], dtype=torch.float)
-            graphs.append(graph)
-        else:
-            graph["x"] = torch.Tensor([])
-            graph["pos"] = torch.Tensor([])
-            graph["edge_index"] = torch.tensor([[], []], dtype=torch.long)
-            graph["edge_attr"] = torch.tensor([], dtype=torch.float)
-            graphs.append(graph)
-    return graphs
-
-def get_graph_for_inference_v2(
-    batch,
-    distance, 
-    stardist_checkpoint, 
-    x_type="ll"):
+def get_graph_for_inference(batch, distance, stardist_checkpoint, x_type="ll"):
     """Get the graph for inference.
 
     Args:
@@ -334,6 +304,8 @@ def get_graph_for_inference_v2(
     """
     graphs = []
     for i in range(batch.shape[0]):
-        graph = get_graph_from_inst_map(None, None, None, distance, stardist_checkpoint, batch[i], x_type)
+        graph = get_graph(
+            distance=distance, stardist_checkpoint=stardist_checkpoint, image=batch[i], x_type=x_type
+        )
         graphs.append(graph)
     return graphs

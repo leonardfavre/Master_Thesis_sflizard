@@ -1,9 +1,11 @@
 from pathlib import Path
-import yaml  # type: ignore
+
 import numpy as np
+import yaml  # type: ignore
+
 
 def get_class_name():
-    """ Get the class name of the cells from the yaml file.
+    """Get the class name of the cells from the yaml file.
 
     Args:
         None.
@@ -21,8 +23,9 @@ def get_class_name():
         class_name = classes_file["classes_name"]
     return class_name
 
+
 def get_class_color():
-    """ Get the color to use for plotting for the background and the cells from the yaml file.
+    """Get the color to use for plotting for the background and the cells from the yaml file.
 
     Args:
         None.

@@ -9,7 +9,7 @@ do
 for xtype in 4ll+c # 4ll
 do
 for distance in 30 35 40 45 50 55 60
-do
+do3
 echo $numlayer-$dimh-$distance
 python sflizard/training.py --model $model --max_epochs 500 --gpus 1 --num_layers $numlayer --dimh $dimh --x_type $xtype --distance $distance
 done

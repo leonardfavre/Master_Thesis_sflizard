@@ -6,10 +6,10 @@ from rich.table import Table
 from stardist.matching import matching_dataset
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+import wandb
 from sflizard.stardist_model import ClassL1BCELoss, MyL1BCELoss
 from sflizard.stardist_model import UNetStar as UNet
 
-import wandb
 
 class Stardist(pl.LightningModule):
     """Stardist model class."""
@@ -24,7 +24,7 @@ class Stardist(pl.LightningModule):
         loss_power_scaler: float = 0.0,
         seed: int = 303,
         device: str = "cpu",
-        wandb_log = False,
+        wandb_log=False,
     ):
         """Initialize the model."""
         super().__init__()
@@ -49,9 +49,9 @@ class Stardist(pl.LightningModule):
             ]
             class_weights = torch.tensor(class_weights).to(device)
             loss_scale = [
-                2 ** loss_power_scaler / 0.24240250366886978,
-                3 ** loss_power_scaler / 0.16856008596522243,
-                1 ** loss_power_scaler / 1.1985746181324908,
+                2**loss_power_scaler / 0.24240250366886978,
+                3**loss_power_scaler / 0.16856008596522243,
+                1**loss_power_scaler / 1.1985746181324908,
             ]
             self.loss = ClassL1BCELoss(class_weights, loss_scale)
             self.test_classes_acc = torchmetrics.Accuracy(
@@ -136,7 +136,7 @@ class Stardist(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         """Training step."""
         return self._step(batch, "train")
-    
+
     def training_epoch_end(self, outputs):
         """Training epoch end."""
         outputs = [x["loss"] for x in outputs if x is not None]
