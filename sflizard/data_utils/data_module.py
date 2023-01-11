@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 from albumentations.pytorch import ToTensorV2
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
 from sflizard.data_utils import get_stardist_data
@@ -174,7 +173,7 @@ class LizardDataModule(pl.LightningDataModule):
 
         valid_df.reset_index(drop=True, inplace=True)
         test_df.reset_index(drop=True, inplace=True)
-        
+
         self.valid_ds = LizardDataset(
             valid_df,
             self.valid_data["images"],

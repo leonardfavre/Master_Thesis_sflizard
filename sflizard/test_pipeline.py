@@ -29,7 +29,7 @@ N_RAYS = 32
 N_CLASSES = 7
 BATCH_SIZE = 4
 SEED = 303
-OUTPUT_DIR = None # "./pipeline_output/full_training_stardist_class_1000_111_1e-4/"
+OUTPUT_DIR = None  # "./pipeline_output/full_training_stardist_class_1000_111_1e-4/"
 IMGS_TO_DISPLAY = 10
 X_TYPE = {
     128: "ll",
@@ -668,7 +668,7 @@ if __name__ == "__main__":
         "--mode",
         type=str,
         default=MODE,
-        help="Mode to use for the test ('valid' or 'test')."
+        help="Mode to use for the test ('valid' or 'test').",
     )
 
     args = parser.parse_args()

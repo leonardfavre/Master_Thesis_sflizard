@@ -253,13 +253,22 @@ def extract_data(args):
             test_list.append(image_file)
 
     # save the images lists
-    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_train_list.txt", "w") as f:
+    with open(
+        "data/Lizard_dataset_extraction/" + args.output_base_name + "_train_list.txt",
+        "w",
+    ) as f:
         for item in train_list:
             f.write(f"{item}\n")
-    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid_list.txt", "w") as f:
+    with open(
+        "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid_list.txt",
+        "w",
+    ) as f:
         for item in valid_list:
             f.write(f"{item}\n")
-    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_test_list.txt", "w") as f:
+    with open(
+        "data/Lizard_dataset_extraction/" + args.output_base_name + "_test_list.txt",
+        "w",
+    ) as f:
         for item in test_list:
             f.write(f"{item}\n")
 
@@ -331,17 +340,17 @@ def extract_data(args):
     print(
         f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_valid_data['images']) + len(cleaned_test_data['images'])}"
     )
-    print(
-        f" > Number of images in train set: {len(cleaned_train_data['images'])}"
-    )
-    print(
-        f" > Number of images in valid set: {len(cleaned_valid_data['images'])}"
-    )
+    print(f" > Number of images in train set: {len(cleaned_train_data['images'])}")
+    print(f" > Number of images in valid set: {len(cleaned_valid_data['images'])}")
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
     print("5. Saving File...\n")
-    save_train = "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
-    save_valid = "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+    save_train = (
+        "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
+    )
+    save_valid = (
+        "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+    )
     save_test = "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
     with open(save_train, "wb") as f:
         pickle.dump(cleaned_train_data, f)
