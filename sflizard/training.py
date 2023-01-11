@@ -23,8 +23,9 @@ from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 IN_CHANNELS = 3
 N_RAYS = 32
-DATA_PATH = "data_shuffle_train.pkl"
-TEST_DATA_PATH = "data_shuffle_test.pkl"
+TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
+VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
+TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 MODEL = "graph_sage"
 BATCH_SIZE = 4
 NUM_WORKERS = 8
@@ -59,7 +60,8 @@ def init_stardist_training(args, device, debug=False):
 
     # create the datamodule
     dm = LizardDataModule(
-        train_data_path=args.data_path,
+        train_data_path=args.train_data_path,
+        valid_data_path=args.valid_data_path,
         test_data_path=args.test_data_path,
         annotation_target=args.model,
         batch_size=args.batch_size,
@@ -91,7 +93,7 @@ def init_stardist_training(args, device, debug=False):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb",
-        filename=f"{args.model}-shuffle-rotate" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"final2-{args.model}-rotate" + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -145,7 +147,7 @@ def init_graph_training(args):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
         + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
@@ -189,7 +191,7 @@ def full_training(args):
     datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if "stardist" in args.model:
         trainer.save_checkpoint(
-            f"models/stardist_shuffle_rotate_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
+            f"models/final2_stardist_rotate_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
         trainer.save_checkpoint(
@@ -209,11 +211,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
     parser.add_argument(
-        "-dp",
-        "--data_path",
+        "-tdp",
+        "--train_data_path",
         type=str,
-        default=DATA_PATH,
-        help="Path to the .pkl file containing the data.",
+        default=TRAIN_DATA_PATH,
+        help="Path to the .pkl file containing the train data.",
+    )
+    parser.add_argument(
+        "-vdp",
+        "--valid_data_path",
+        type=str,
+        default=VALID_DATA_PATH,
+        help="Path to the .pkl file containing the validation data.",
     )
     parser.add_argument(
         "-tp",
