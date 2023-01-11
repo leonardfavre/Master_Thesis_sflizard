@@ -20,15 +20,16 @@ from sflizard import (
     get_graph_for_inference,
 )
 
-DATA_PATH = "data_shuffle_test.pkl"
+VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
+TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 STARDIST_WEIGHTS_PATH = "models/stardist_1000epochs_0.0losspower_0.0005lr.ckpt"
-STAR_4_IMPROVEMENT = True
+STAR_4_IMPROVEMENT = False
 GRAPH_WEIGHTS_PATH = None  # "models/full_training_graph_test_2000_08413.ckpt"
 N_RAYS = 32
 N_CLASSES = 7
 BATCH_SIZE = 4
 SEED = 303
-OUTPUT_DIR = "./pipeline_output/full_training_stardist_class_1000_111_1e-4/"
+OUTPUT_DIR = None # "./pipeline_output/full_training_stardist_class_1000_111_1e-4/"
 IMGS_TO_DISPLAY = 10
 X_TYPE = {
     128: "ll",
@@ -39,12 +40,13 @@ X_TYPE = {
     548: "4ll+c+x",
 }
 DISTANCE = 45
+MODE = "test"
 
 
 class TestPipeline:
     def __init__(
         self,
-        data_path: str,
+        valid_data_path: str,
         test_data_path: str,
         stardist_weights_path: str,
         graph_weights_path: str,
@@ -58,7 +60,7 @@ class TestPipeline:
         print("Using device:", self.device)
         self.n_classes = n_classes
         self.n_rays = n_rays
-        self.__init_dataloader(data_path, test_data_path, seed, batch_size, mode)
+        self.__init_dataloader(valid_data_path, test_data_path, seed, batch_size, mode)
         self.__init_stardist_inference(stardist_weights_path)
 
         # graph initialization
@@ -68,18 +70,19 @@ class TestPipeline:
 
     def __init_dataloader(
         self,
-        data_path: str,
+        valid_data_path: str,
         test_data_path: str,
         seed: int = 303,
         batch_size: int = 1,
-        mode: str = "test",
+        mode: str = "valid",
     ) -> None:
         aditional_args = {"n_rays": self.n_rays}
 
         print("Loading data...")
         # create the datamodule
         dm = LizardDataModule(
-            train_data_path=data_path,
+            train_data_path=None,
+            valid_data_path=valid_data_path,
             test_data_path=test_data_path,
             batch_size=batch_size,
             annotation_target="stardist" if self.n_classes == 1 else "stardist_class",
@@ -90,6 +93,7 @@ class TestPipeline:
 
         # get the dataloader
         if mode == "test":
+            print("test mode")
             self.dataloader = iter(dm.test_dataloader())
         elif mode == "valid":
             self.dataloader = iter(dm.val_dataloader())
@@ -150,8 +154,8 @@ class TestPipeline:
 
         for i in tqdm(range(len(self.dataloader))):  # type: ignore
 
-            if i > 3:
-                break
+            # if i > 3:
+            #     break
 
             # get next test batch
             batch = next(self.dataloader)
@@ -583,11 +587,18 @@ class TestPipeline:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-dp",
-        "--data_path",
+        "-vdp",
+        "--valid_data_path",
         type=str,
-        default=DATA_PATH,
+        default=VALID_DATA_PATH,
         help="Path to the .pkl file containing the data.",
+    )
+    parser.add_argument(
+        "-tdp",
+        "--test_data_path",
+        type=str,
+        default=TEST_DATA_PATH,
+        help="Path to the .pkl file containing the test data.",
     )
     parser.add_argument(
         "-swp",
@@ -652,18 +663,27 @@ if __name__ == "__main__":
         default=DISTANCE,
         help="Distance to use for the graph.",
     )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        type=str,
+        default=MODE,
+        help="Mode to use for the test ('valid' or 'test')."
+    )
 
     args = parser.parse_args()
 
     print("Testing pipeline...")
     pipeline = TestPipeline(
-        data_path=args.data_path,
+        valid_data_path=args.valid_data_path,
+        test_data_path=args.test_data_path,
         stardist_weights_path=args.stardist_weights_path,
         graph_weights_path=args.graph_weights_path,
         n_rays=args.n_rays,
         n_classes=args.n_classes,
         batch_size=args.batch_size,
         seed=args.seed,
+        mode=args.mode,
     )
     pipeline.test(
         output_dir=args.output_dir,

@@ -1,0 +1,341 @@
+Starting test
+final_stardist_shuffle_noaug_200epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.9276 │
+│      recall      │ 0.9481 │
+│       acc        │ 0.8827 │
+│        f1        │ 0.9377 │
+│ panoptic_quality │ 0.7693 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9599676728248596 │ 0.8404896855354309 │
+│      F1      │ 0.9599676728248596 │ 0.8294332027435303 │
+└──────────────┴────────────────────┴────────────────────┘
+                              Per class metrics                               
+┏━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┓
+┃          ┃          ┃          ┃           ┃        ┃          ┃ Connecti… ┃
+┃  Class   ┃ Neutrop… ┃ Epithel… ┃ Lymphocy… ┃ Plasma ┃ Eosinop… ┃  tissue   ┃
+┡━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━┩
+│ precisi… │  0.3621  │  0.9679  │  0.9065   │ 0.7652 │  0.7888  │  0.9580   │
+│  recall  │  0.5167  │  0.9873  │  0.9130   │ 0.7563 │  0.7815  │  0.9563   │
+│   acc    │  0.2705  │  0.9560  │  0.8344   │ 0.6138 │  0.6463  │  0.9178   │
+│    f1    │  0.4258  │  0.9775  │  0.9097   │ 0.7607 │  0.7852  │  0.9571   │
+│ panopti… │  0.2868  │  0.7473  │  0.6338   │ 0.5268 │  0.5665  │  0.6763   │
+└──────────┴──────────┴──────────┴───────────┴────────┴──────────┴───────────┘
+stardist_shuffle_rotate_200epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8767 │
+│      recall      │ 0.8893 │
+│       acc        │ 0.7904 │
+│        f1        │ 0.8830 │
+│ panoptic_quality │ 0.7036 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9419207572937012 │ 0.7522296905517578 │
+│      F1      │ 0.9419207572937012 │ 0.7156018018722534 │
+└──────────────┴────────────────────┴────────────────────┘
+                              Per class metrics                               
+┏━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┓
+┃          ┃          ┃          ┃           ┃        ┃          ┃ Connecti… ┃
+┃  Class   ┃ Neutrop… ┃ Epithel… ┃ Lymphocy… ┃ Plasma ┃ Eosinop… ┃  tissue   ┃
+┡━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━┩
+│ precisi… │  0.0578  │  0.9711  │  0.6613   │ 0.3087 │  0.2861  │  0.7688   │
+│  recall  │  0.0867  │  0.9764  │  0.6625   │ 0.3075 │  0.3169  │  0.7675   │
+│   acc    │  0.0359  │  0.9488  │  0.4947   │ 0.1821 │  0.1770  │  0.6236   │
+│    f1    │  0.0693  │  0.9737  │  0.6619   │ 0.3081 │  0.3007  │  0.7682   │
+│ panopti… │  0.0444  │  0.6680  │  0.4082   │ 0.1793 │  0.1883  │  0.4734   │
+└──────────┴──────────┴──────────┴───────────┴────────┴──────────┴───────────┘
+final_stardist_shuffle_1000epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+final_stardist_shuffle_crop_1000epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+final_stardist_shuffle_1000epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8777 │
+│      recall      │ 0.8895 │
+│       acc        │ 0.7914 │
+│        f1        │ 0.8835 │
+│ panoptic_quality │ 0.7047 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9419918060302734 │ 0.7487457990646362 │
+│      F1      │ 0.9419918656349182 │ 0.712881326675415  │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.0533   │   0.9641   │   0.6608   │ 0.2620 │   0.3266   │      0.7535       │
+│      recall      │   0.0800   │   0.9764   │   0.6643   │ 0.2650 │   0.3508   │      0.7535       │
+│       acc        │   0.0331   │   0.9421   │   0.4954   │ 0.1517 │   0.2036   │      0.6045       │
+│        f1        │   0.0640   │   0.9702   │   0.6625   │ 0.2635 │   0.3383   │      0.7535       │
+│ panoptic_quality │   0.0398   │   0.6668   │   0.4030   │ 0.1521 │   0.2072   │      0.4642       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
+final_stardist_shuffle_crop_1000epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8671 │
+│      recall      │ 0.8763 │
+│       acc        │ 0.7725 │
+│        f1        │ 0.8717 │
+│ panoptic_quality │ 0.6926 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9377970695495605 │ 0.7173058390617371 │
+│      F1      │ 0.9377970099449158 │ 0.6709699034690857 │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.0117   │   0.9550   │   0.5712   │ 0.1336 │   0.1575   │      0.6474       │
+│      recall      │   0.0200   │   0.9636   │   0.5702   │ 0.1315 │   0.1754   │      0.6451       │
+│       acc        │   0.0075   │   0.9217   │   0.3993   │ 0.0710 │   0.0905   │      0.4774       │
+│        f1        │   0.0148   │   0.9593   │   0.5707   │ 0.1326 │   0.1659   │      0.6462       │
+│ panoptic_quality │   0.0097   │   0.6464   │   0.3388   │ 0.0794 │   0.1007   │      0.3867       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
+loss_cb/stardist_class-shuffle-noaug-loss-epoch=161-val_loss=1.92.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.9226 │
+│      recall      │ 0.9510 │
+│       acc        │ 0.8807 │
+│        f1        │ 0.9366 │
+│ panoptic_quality │ 0.7690 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9595382809638977 │ 0.842199444770813  │
+│      F1      │ 0.9595382809638977 │ 0.8260054588317871 │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.3494   │   0.9696   │   0.8924   │ 0.7553 │   0.7906   │      0.9545       │
+│      recall      │   0.5067   │   0.9855   │   0.8988   │ 0.7524 │   0.7785   │      0.9528       │
+│       acc        │   0.2607   │   0.9559   │   0.8109   │ 0.6050 │   0.6454   │      0.9114       │
+│        f1        │   0.4136   │   0.9775   │   0.8956   │ 0.7539 │   0.7845   │      0.9536       │
+│ panoptic_quality │   0.2749   │   0.7485   │   0.6205   │ 0.5188 │   0.5621   │      0.6714       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
+loss_cb/stardist_class-shuffle-rotate-loss-epoch=151-val_loss=2.05.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8756 │
+│      recall      │ 0.8906 │
+│       acc        │ 0.7906 │
+│        f1        │ 0.8830 │
+│ panoptic_quality │ 0.7042 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9419817924499512 │ 0.7533872723579407 │
+│      F1      │ 0.9419817924499512 │ 0.7151942253112793 │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.0595   │   0.9693   │   0.6613   │ 0.3120 │   0.2897   │      0.7741       │
+│      recall      │   0.0900   │   0.9764   │   0.6625   │ 0.3114 │   0.3200   │      0.7727       │
+│       acc        │   0.0371   │   0.9471   │   0.4947   │ 0.1846 │   0.1793   │      0.6305       │
+│        f1        │   0.0716   │   0.9728   │   0.6619   │ 0.3117 │   0.3041   │      0.7734       │
+│ panoptic_quality │   0.0448   │   0.6679   │   0.4084   │ 0.1823 │   0.1888   │      0.4769       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
+loss_cb/stardist_class-shuffle-loss-epoch=141-val_loss=2.04.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8782 │
+│      recall      │ 0.8892 │
+│       acc        │ 0.7916 │
+│        f1        │ 0.8837 │
+│ panoptic_quality │ 0.7073 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9423474669456482 │ 0.7471073865890503 │
+│      F1      │ 0.9423474669456482 │ 0.7121872901916504 │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.0480   │   0.9676   │   0.6549   │ 0.2754 │   0.2943   │      0.7500       │
+│      recall      │   0.0733   │   0.9782   │   0.6572   │ 0.2727 │   0.3169   │      0.7500       │
+│       acc        │   0.0299   │   0.9472   │   0.4881   │ 0.1588 │   0.1801   │      0.6000       │
+│        f1        │   0.0580   │   0.9729   │   0.6560   │ 0.2741 │   0.3052   │      0.7500       │
+│ panoptic_quality │   0.0376   │   0.6697   │   0.4015   │ 0.1588 │   0.1869   │      0.4645       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
+loss_cb/stardist_class-shuffle-crop-loss-epoch=165-val_loss=2.08.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Training with 2323 examples
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8683 │
+│      recall      │ 0.8755 │
+│       acc        │ 0.7729 │
+│        f1        │ 0.8719 │
+│ panoptic_quality │ 0.6938 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9377498030662537 │ 0.7170569896697998 │
+│      F1      │ 0.9377498030662537 │ 0.6684153079986572 │
+└──────────────┴────────────────────┴────────────────────┘
+                                          Per class metrics                                          
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃      Class       ┃ Neutrophil ┃ Epithelial ┃ Lymphocyte ┃ Plasma ┃ Eosinophil ┃ Connective tissue ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│    precision     │   0.0097   │   0.9621   │   0.5490   │ 0.1257 │   0.1536   │      0.6204       │
+│      recall      │   0.0167   │   0.9691   │   0.5471   │ 0.1238 │   0.1692   │      0.6171       │
+│       acc        │   0.0062   │   0.9335   │   0.3775   │ 0.0665 │   0.0876   │      0.4480       │
+│        f1        │   0.0122   │   0.9656   │   0.5480   │ 0.1248 │   0.1611   │      0.6188       │
+│ panoptic_quality │   0.0069   │   0.6505   │   0.3243   │ 0.0745 │   0.0986   │      0.3712       │
+└──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘

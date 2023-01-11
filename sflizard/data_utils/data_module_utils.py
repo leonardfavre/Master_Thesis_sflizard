@@ -1,5 +1,6 @@
-import numpy as np
 import math
+
+import numpy as np
 import torch
 from stardist import edt_prob, non_maximum_suppression, star_dist
 
@@ -135,7 +136,9 @@ def get_graph(
     if stardist_checkpoint is None:
         if x_type == "dist":
             if inst_map is None or n_rays is None:
-                raise ValueError("inst_map and n_rays must be provided for xtype dist and no stardist checkpoint.")
+                raise ValueError(
+                    "inst_map and n_rays must be provided for xtype dist and no stardist checkpoint."
+                )
             # get stardist result from instance map
             prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
             points, _, dists = compute_stardist(dist, prob)
@@ -143,10 +146,14 @@ def get_graph(
             graph["x"] = torch.Tensor(dists)
         if x_type == "c":
             if predicted_classes is None or points is None:
-                raise ValueError("predicted_classes and points must be provided for xtype c and no stardist checkpoint.")
+                raise ValueError(
+                    "predicted_classes and points must be provided for xtype c and no stardist checkpoint."
+                )
             graph["x"] = torch.Tensor(predicted_classes)
         else:
-            raise ValueError("x_type not implemented for graph without stardist checkpoint.")
+            raise ValueError(
+                "x_type not implemented for graph without stardist checkpoint."
+            )
 
     else:
         model_c = Stardist.load_from_checkpoint(
@@ -219,7 +226,9 @@ def get_graph(
                 yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
                 yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
                 yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])
-                yi4 = int(true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])])
+                yi4 = int(
+                    true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])]
+                )
                 # if all 4 points have the same class
                 if (yi1 == yi2) & (yi2 == yi3) & (yi3 == yi4):
                     yi = yi1
@@ -305,7 +314,10 @@ def get_graph_for_inference(batch, distance, stardist_checkpoint, x_type="ll"):
     graphs = []
     for i in range(batch.shape[0]):
         graph = get_graph(
-            distance=distance, stardist_checkpoint=stardist_checkpoint, image=batch[i], x_type=x_type
+            distance=distance,
+            stardist_checkpoint=stardist_checkpoint,
+            image=batch[i],
+            x_type=x_type,
         )
         graphs.append(graph)
     return graphs

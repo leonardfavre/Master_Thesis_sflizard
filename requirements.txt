@@ -13,8 +13,8 @@ stardist==0.8.3
 torch_geometric==2.1.0
 pytorch-lightning-bolts==0.3.2
 ray==2.0.1
-torch_scatter==2.0.9 # pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
-torch_sparse==0.6.15 # pip install git+https://github.com/rusty1s/pytorch_sparse.git
+# torch_scatter==2.0.9 # pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0+cu102.html  # --> To install manualy
+# torch_sparse==0.6.15 # pip install git+https://github.com/rusty1s/pytorch_sparse.git --> To install manualy
 
 
 # dgl==0.9.1 

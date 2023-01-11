@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -15,7 +17,6 @@ from torch_geometric.nn import (
     JumpingKnowledge,
     SAGEConv,
 )
-from typing import List
 
 
 class CustomGCN(torch.nn.Module):
@@ -185,7 +186,7 @@ class Graph(pl.LightningModule):
         self.learning_rate = learning_rate
         self.num_features = num_features
         self.num_classes = num_classes
-        
+
         if "graph_gat" in model:
             self.model = GAT(
                 in_channels=self.num_features,

@@ -1194,8 +1194,8 @@ stardist :
 
 200 no aug - done
 200 rotate - in progress
-200 rotate + bright
-200 croped
+200 rotate + bright - done
+200 croped - done
 200 croped lr * 2
 200 power scale ** 2
 200 no power scale

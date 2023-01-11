@@ -4,7 +4,6 @@ import numpy as np
 import scipy.io as sio
 import torch
 
-
 from sflizard import Graph, get_graph
 
 
@@ -156,7 +155,9 @@ if __name__ == "__main__":
             points = pred["inst_centroid"]
             predicted_class = pred["inst_type"]
             # graph predicted mask
-            graph = get_graph(points=points, predicted_class=predicted_class, distance=45, x_type="c")
+            graph = get_graph(
+                points=points, predicted_class=predicted_class, distance=45, x_type="c"
+            )
             with torch.no_grad():
                 out = model(
                     graph["x"].to(device),

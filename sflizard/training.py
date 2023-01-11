@@ -9,12 +9,12 @@ permission, please contact the copyright holders and delete this file.
 
 import argparse
 import os
+import pickle
 from datetime import datetime
+from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-from pathlib import Path
-import pickle
 
 import wandb
 from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist

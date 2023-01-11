@@ -1,19 +1,13 @@
 import argparse
-import math
-import os.path as osp
-from datetime import datetime
 from pathlib import Path
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import scipy.io as sio
 import torch
-from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-from torch_geometric.data import Data, Dataset, LightningDataset
-from torch_geometric.nn import GraphSAGE
-from tqdm import tqdm
 
-from sflizard import LizardGraphDataModule, Graph
+from sflizard import Graph, LizardGraphDataModule
 
 ###### GRAPH
 
@@ -77,7 +71,7 @@ if __name__ == "__main__":
         mat = sio.loadmat(file_path)
         points.append(mat["inst_centroid"]),
         predicted_class.append(mat["inst_type"]),
-        
+
     # create df with the data
     train_data = pd.DataFrame(
         {
@@ -92,7 +86,7 @@ if __name__ == "__main__":
         train_data=train_data,
         x_type="c",
         root="data/graph_hovernet",
-        concep_data = CONSEP,
+        concep_data=CONSEP,
     )
     dm.setup()
 
@@ -115,7 +109,7 @@ if __name__ == "__main__":
 
             # create the trainer
             trainer = pl.Trainer.from_argparse_args(args)
-            
+
             # # train the model
             trainer.fit(model, dm)
 

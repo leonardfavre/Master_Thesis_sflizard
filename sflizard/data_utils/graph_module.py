@@ -1,6 +1,4 @@
 import os.path as osp
-import pickle
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -51,12 +49,24 @@ class LizardGraphDataset(Dataset):
 
     def process(self):
         for idx in tqdm(range(len(self.df)), desc=f"Processing {self.name} dataset"):
-            image = torch.tensor(self.data[self.df.iloc[idx].id]).permute(2, 0, 1) if self.data is not None else None
-            class_map = self.df.iloc[idx].class_map if "class_map" in self.df.columns else None
-            inst_map = self.df.iloc[idx].inst_map if "inst_map" in self.df.columns else None
-            predicted_classes = self.df.iloc[idx].predicted_classes if "predicted_classes" in self.df.columns else None
+            image = (
+                torch.tensor(self.data[self.df.iloc[idx].id]).permute(2, 0, 1)
+                if self.data is not None
+                else None
+            )
+            class_map = (
+                self.df.iloc[idx].class_map if "class_map" in self.df.columns else None
+            )
+            inst_map = (
+                self.df.iloc[idx].inst_map if "inst_map" in self.df.columns else None
+            )
+            predicted_classes = (
+                self.df.iloc[idx].predicted_classes
+                if "predicted_classes" in self.df.columns
+                else None
+            )
             points = self.df.iloc[idx].points if "points" in self.df.columns else None
-            
+
             graph = get_graph(
                 inst_map=inst_map,
                 points=points,
@@ -98,11 +108,11 @@ def LizardGraphDataModule(
     x_type="ll",
     distance=45,
     root="data/graph",
-    concep_data = False,
+    concep_data=False,
 ):
-    """ Data module to create dataloaders for graph training job.
+    """Data module to create dataloaders for graph training job.
 
-    Two mode possible: 
+    Two mode possible:
     - using pkl datapath: data must be in pkl format, with annotations and images.
     - using mat datapath: no test set.
 
@@ -112,7 +122,7 @@ def LizardGraphDataModule(
     Returns:
 
     Raises:
-         
+
     """
 
     train_df, valid_df = train_test_split(

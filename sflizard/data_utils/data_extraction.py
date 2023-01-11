@@ -21,9 +21,9 @@ from rich import print
 from tqdm import tqdm
 
 SEED = 303
-TRAIN_TEST_SPLIT = 0.8
+TRAIN_TEST_SPLIT = 0.9
 IMAGE_EXTENSION = "png"
-OUTPUT_BASE_NAME = "data"
+OUTPUT_BASE_NAME = "data_0.9_split"
 PATCH_SIZE = 540
 PATCH_STEP = 200
 
@@ -203,9 +203,11 @@ def extract_data(args):
     print("1. Extracting images from folder...\n")
     start = time.time()
     images_train = {}
+    images_valid = {}
     images_test = {}
     image_files = []
     train_list = []
+    valid_list = []
     test_list = []
     # Get all the images from the folder list
     for folder in args.images_path:
@@ -223,8 +225,8 @@ def extract_data(args):
     random.Random(SEED).shuffle(image_files)
 
     # determine the number of images for training and testing
-    train_size = int(len(image_files) * args.train_test_split)
-    len(image_files) - train_size
+    test_size = len(image_files) - int(len(image_files) * args.train_test_split)
+    train_size = int((len(image_files) - test_size) * args.train_test_split)
 
     # extract train patches
     for idx, image_file in enumerate(tqdm(image_files, desc="Extracting images")):
@@ -235,6 +237,13 @@ def extract_data(args):
                 extract_image_patches(image_file, args.patch_size, args.patch_step)
             )
             train_list.append(image_file)
+        # extract patches for validation
+        elif idx < len(image_files) - test_size:
+            # extract patches from the images to have multiple images of same size:
+            images_valid.update(
+                extract_image_patches(image_file, args.patch_size, args.patch_step)
+            )
+            valid_list.append(image_file)
         # extract patches for testing
         else:
             # extract patches from the images to have multiple images of same size:
@@ -243,16 +252,19 @@ def extract_data(args):
             )
             test_list.append(image_file)
 
-    # save the train and test lists
-    with open(args.output_base_name + "_train_list.txt", "w") as f:
+    # save the images lists
+    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_train_list.txt", "w") as f:
         for item in train_list:
             f.write(f"{item}\n")
-    with open(args.output_base_name + "_test_list.txt", "w") as f:
+    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid_list.txt", "w") as f:
+        for item in valid_list:
+            f.write(f"{item}\n")
+    with open( "data/Lizard_dataset_extraction/" + args.output_base_name + "_test_list.txt", "w") as f:
         for item in test_list:
             f.write(f"{item}\n")
 
     print(
-        f"\nAll {len(images_train) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
+        f"\nAll {len(images_train) + len(images_valid) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
     )
 
     print("2. Extracting annotations from folder...\n")
@@ -286,15 +298,20 @@ def extract_data(args):
     print("3. Cleaning...\n")
     start = time.time()
     cleaned_train_data = {}
+    cleaned_valid_data = {}
     cleaned_test_data = {}
 
     # split annotations
     annotations_train = annotations[annotations["id"].isin(images_train.keys())]
+    annotations_valid = annotations[annotations["id"].isin(images_valid.keys())]
     annotations_test = annotations[annotations["id"].isin(images_test.keys())]
 
     # clean missing data
     images_train, annotations_train = remove_missing_data(
         images_train, annotations_train, "train"
+    )
+    images_valid, annotations_valid = remove_missing_data(
+        images_valid, annotations_valid, "valid"
     )
     images_test, annotations_test = remove_missing_data(
         images_test, annotations_test, "test"
@@ -302,6 +319,8 @@ def extract_data(args):
 
     cleaned_train_data["images"] = images_train
     cleaned_train_data["annotations"] = annotations_train
+    cleaned_valid_data["images"] = images_valid
+    cleaned_valid_data["annotations"] = annotations_valid
     cleaned_test_data["images"] = images_test
     cleaned_test_data["annotations"] = annotations_test
 
@@ -310,19 +329,26 @@ def extract_data(args):
     print("4. Report\n")
 
     print(
-        f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}"
+        f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_valid_data['images']) + len(cleaned_test_data['images'])}"
     )
     print(
-        f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}"
+        f" > Number of images in train set: {len(cleaned_train_data['images'])}"
+    )
+    print(
+        f" > Number of images in valid set: {len(cleaned_valid_data['images'])}"
     )
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
     print("5. Saving File...\n")
-    save_train = args.output_base_name + "_train.pkl"
-    save_test = args.output_base_name + "_test.pkl"
+    save_train = "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
+    save_valid = "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+    save_test = "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
     with open(save_train, "wb") as f:
         pickle.dump(cleaned_train_data, f)
     print(f"Cleaned train data saved in {save_train}")
+    with open(save_valid, "wb") as f:
+        pickle.dump(cleaned_valid_data, f)
+    print(f"Cleaned valid data saved in {save_valid}")
     with open(save_test, "wb") as f:
         pickle.dump(cleaned_test_data, f)
     print(f"Cleaned test data saved in {save_test}")

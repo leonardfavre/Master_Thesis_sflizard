@@ -96,6 +96,7 @@ class LizardDataModule(pl.LightningDataModule):
     def __init__(
         self,
         train_data_path: str,
+        valid_data_path: str,
         test_data_path: str,
         annotation_target: str = "inst",
         batch_size: int = 4,
@@ -107,14 +108,18 @@ class LizardDataModule(pl.LightningDataModule):
         """Initialize the dataloaders with batch size and targets."""
         super().__init__()
 
-        train_data_path = Path(train_data_path)
-        with train_data_path.open("rb") as f:
-            train_data = pickle.load(f)
+        if train_data_path is not None:
+            train_data_path = Path(train_data_path)
+            with train_data_path.open("rb") as f:
+                self.train_data = pickle.load(f)
+        else:
+            self.train_data = None
+        valid_data_path = Path(valid_data_path)
+        with valid_data_path.open("rb") as f:
+            self.valid_data = pickle.load(f)
         test_data_path = Path(test_data_path)
         with test_data_path.open("rb") as f:
-            test_data = pickle.load(f)
-        self.train_data = train_data
-        self.test_data = test_data
+            self.test_data = pickle.load(f)
 
         self.annotation_target = annotation_target
 
@@ -129,18 +134,6 @@ class LizardDataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[str] = None):
         """Data setup for training."""
 
-        train_annotations = self.train_data["annotations"]
-        test_df = self.test_data["annotations"]
-
-        train_df, valid_df = train_test_split(
-            train_annotations,
-            test_size=0.2,
-            random_state=self.seed,
-        )
-
-        train_df.reset_index(drop=True, inplace=True)
-        valid_df.reset_index(drop=True, inplace=True)
-        test_df.reset_index(drop=True, inplace=True)
         tf_base = A.Compose(
             [
                 A.Resize(self.input_size, self.input_size),
@@ -163,18 +156,28 @@ class LizardDataModule(pl.LightningDataModule):
             ]
         )
 
-        print(f"Training with {len(train_df)} examples")
-        self.train_ds = LizardDataset(
-            train_df,
-            self.train_data["images"],
-            tf_base,
-            tf_augment,
-            self.annotation_target,
-            self.aditional_args,
-        )
+        if self.train_data is not None:
+            train_df = self.train_data["annotations"]
+            train_df.reset_index(drop=True, inplace=True)
+            print(f"Training with {len(train_df)} examples")
+            self.train_ds = LizardDataset(
+                train_df,
+                self.train_data["images"],
+                tf_base,
+                tf_augment,
+                self.annotation_target,
+                self.aditional_args,
+            )
+
+        valid_df = self.valid_data["annotations"]
+        test_df = self.test_data["annotations"]
+
+        valid_df.reset_index(drop=True, inplace=True)
+        test_df.reset_index(drop=True, inplace=True)
+        
         self.valid_ds = LizardDataset(
             valid_df,
-            self.train_data["images"],
+            self.valid_data["images"],
             tf_base,
             None,
             self.annotation_target,
@@ -192,6 +195,8 @@ class LizardDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         """Return the training dataloader."""
+        if self.train_data is None:
+            return None
         return DataLoader(self.train_ds, **self.dataloader_arguments)
 
     def val_dataloader(self):
