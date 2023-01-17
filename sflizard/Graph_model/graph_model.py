@@ -17,6 +17,7 @@ from torch_geometric.nn import (
     JumpingKnowledge,
     SAGEConv,
 )
+import torchmetrics
 
 
 class CustomGCN(torch.nn.Module):
@@ -170,13 +171,28 @@ class Graph(pl.LightningModule):
         num_layers: int = 0,
         heads: int = 1,
         class_weights: List[float] = [
-            1 / 0.8435234983048621,
-            1 / 0.0015844697497448515,
-            1 / 0.09702835179125052,
-            1 / 0.018770678077839286,
-            1 / 0.005716505874930195,
-            1 / 0.0011799091886332306,
-            1 / 0.03219658701273987,
+            0,
+            0.3713368309107073,
+            0.008605586894052789,
+            0.01929911238667816,
+            0.06729488533622548,
+            0.515399722585458,
+            0.018063861886878453
+
+            # 1,
+            # 90.18723210806598,
+            # 2.0900540911512655,
+            # 4.68720951818412,
+            # 16.344027681335106,
+            # 125.17604110329907,
+            # 4.38720204716698,
+            # 1 / 0.8435234983048621,
+            # 1 / 0.0015844697497448515,
+            # 1 / 0.09702835179125052,
+            # 1 / 0.018770678077839286,
+            # 1 / 0.005716505874930195,
+            # 1 / 0.0011799091886332306,
+            # 1 / 0.03219658701273987,
         ],
     ):
 
@@ -241,6 +257,9 @@ class Graph(pl.LightningModule):
         self.seed = seed
         self.max_epochs = max_epochs
 
+        self.val_acc = torchmetrics.Accuracy()
+        self.val_acc_macro = torchmetrics.Accuracy(num_classes=self.num_classes, average="macro", mdmc_average="global")
+
         if class_weights is not None:
             class_weights = torch.tensor(class_weights).to("cuda")
             self.loss = nn.CrossEntropyLoss(weight=class_weights)
@@ -251,12 +270,11 @@ class Graph(pl.LightningModule):
         """Forward pass."""
         return self.model(x, edge_index)
 
-    def _step(self, batch, name):
+    def _step(self, batch, batch_idx, name):
         x, edge_index = batch.x, batch.edge_index
         label = batch.y - 1
         # check if label contains background
         if torch.sum(label == -1) > 0:
-            print("label contains background.")
             label = label + 1
         label = label.long()
 
@@ -270,6 +288,22 @@ class Graph(pl.LightningModule):
             self.log("train_acc", accuracy)
             return loss
         elif name == "val":
+            self.val_acc(pred, label)
+            self.val_acc_macro(pred, label)
+            self.log(
+                "val_acc",
+                self.val_acc,
+                prog_bar=True,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                "val_acc_macro",
+                self.val_acc_macro,
+                prog_bar=True,
+                on_step=False,
+                on_epoch=True,
+            )
             return loss, accuracy
         elif name == "test":
             return loss, accuracy
@@ -278,17 +312,17 @@ class Graph(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         """Training step."""
-        return self._step(batch, "train")
+        return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx):
         """Validation step."""
-        return self._step(batch, "val")
+        return self._step(batch, batch_idx, "val")
 
     def test_step(self, batch, batch_idx):
         """Test step."""
         # if batch_idx == 0:
         #     self.output_results(batch) # only work with batch size 1   aw     s
-        return self._step(batch, "test")
+        return self._step(batch, batch_idx, "test")
 
     def _epoch_end(self, outputs, name):
         """Epoch end."""

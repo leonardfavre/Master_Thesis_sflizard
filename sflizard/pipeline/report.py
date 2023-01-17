@@ -5,52 +5,132 @@ import torch
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
+from stardist.matching import matching
+import torchvision.transforms as T
+from PIL import ImageDraw
 
 from sflizard import get_class_color, get_class_name
 
 
 class ReportGenerator:
-    def __init__(
-        self,
-        images,
-        true_masks,
-        predicted_masks,
-        image_metric,
-        test_values,
-        test_classes,
-        output_dir,
-        true_classes=None,
-        predicted_classes=None,
-        improved_class=None,
-        graphs=None,
-        graphs_masks=None,
-    ):
 
-        self.images = images
-        self.true_masks = true_masks
-        self.predicted_masks = predicted_masks
-        self.image_metric = image_metric
-        self.test_values = test_values
-        self.test_classes = test_classes
+    def __init__(self, output_dir, imgs_to_display, n_classes):
+        """Report generator.
+        
+        Args:
+            None.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         self.output_dir = output_dir
-        self.true_classes = true_classes
-        self.predicted_classes = predicted_classes
-        self.improved_class = improved_class
-        self.graphs = graphs
-        self.graphs_masks = graphs_masks
-
-        if self.true_classes is not None:
-            self.classification = True
-
-        if self.output_dir is None:
-            self.output_dir = Path(__file__).parents[2] / "output/report/"
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         if self.output_dir[-1] != "/":
             self.output_dir += "/"
 
+        self.imgs_to_display = imgs_to_display
+
+        self.n_classes = n_classes
         self.class_name = get_class_name()
         self.class_color = get_class_color()
-        self.n_classes = len(self.class_name) + 1 if self.classification else 1
+        
+
+        # images and masks
+        self.images = []
+        self.true_masks = []
+        self.predicted_masks = []
+
+        self.true_class_map = []
+        self.pred_class_map = []
+        self.pred_class_map_improved = []
+
+        self.graphs_images = []
+        self.graphs_class_map = []
+
+        # metrics
+        self.single_segmentation_metric = []
+        self.segmentation_metric = None
+        self.classification_metric = None
+        self.graph_classification_metric = None
+        self.segmentation_classification_metric = None
+        self.graph_segmentation_classification_metric = None
+        
+    def add_batch(
+        self, 
+        images, 
+        true_masks, 
+        pred_masks,
+        true_class_map=None,
+        pred_class_map=None,
+        pred_class_map_improved=None,
+        graphs=None,
+        graphs_class_map=None,
+    ) -> None:
+        """Add a batch to the report.
+        
+        Args:
+            images (torch.Tensor): The images.
+            true_masks (torch.Tensor): The true masks.
+            pred_masks (torch.Tensor): The predicted masks.
+            true_class_map (torch.Tensor): The true class map.
+            pred_class_map (torch.Tensor): The predicted class map.
+            pred_class_map_improved (torch.Tensor): The improved predicted class map.
+            graphs (torch.Tensor): The graphs.
+            graphs_class_map (): The graphs class map.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
+        if self.imgs_to_display > 0:
+            for i in range(min(self.imgs_to_display, len(images))):
+                # save images and masks
+                self.images.append(images[i].cpu())
+                self.true_masks.append(true_masks[i])
+                self.predicted_masks.append(pred_masks[i])
+                self.single_segmentation_metric.append(matching(true_masks[i], pred_masks[i]))
+                if true_class_map is not None:
+                    self.true_class_map.append(true_class_map[i].cpu().numpy())
+                    self.pred_class_map.append(pred_class_map[i].cpu().numpy())
+                    self.pred_class_map_improved.append(pred_class_map_improved[i].cpu().numpy())
+                    if graphs is not None:
+                        self.graphs_images.append(
+                            self._draw_graph(graphs[i], pred_class_map_improved[i].cpu().numpy())
+                        )
+                        self.graphs_class_map.append(graphs_class_map[i])
+            self.imgs_to_display = max(0, self.imgs_to_display - len(images))
+
+    def add_final_metrics(
+        self, 
+        segmentation_metric, 
+        classification_metric, 
+        graph_classification_metric,
+        segmentation_classification_metric,
+        graph_segmentation_classification_metric
+    ) -> None:
+        """Add final metrics to the report.
+        
+        Args:
+            segmentation_metric (dict): The segmentation metric.
+            classification_metric (dict): The classification metric.
+            graph_classification_metric (dict): The graph classification metric.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
+        self.segmentation_metric = segmentation_metric
+        self.classification_metric = classification_metric
+        self.graph_classification_metric = graph_classification_metric
+        self.segmentation_classification_metric = segmentation_classification_metric
+        self.graph_segmentation_classification_metric = graph_segmentation_classification_metric
 
     def generate_md(self) -> None:
         """Generate a markdown file with the report.
@@ -74,47 +154,115 @@ class ReportGenerator:
 
         # create MD report containing images and metrics
         md = "# Test results\n\n"
-        md += "## Global metrics\n\n"
-        md += "| Metric | Value |\n"
-        md += "| :--- | :---: |\n"
-        for metric in self.test_values:
-            md += (
-                f"| {metric} | {torch.tensor(self.test_values[metric]).mean():.4f} |\n"
-            )
-        if self.classification:
+
+        # add metrics
+        md = self._get_simple_metric_table("Segmentation Metrics", self.segmentation_metric, md)
+        if self.segmentation_classification_metric is not None:
+            md = self._get_per_class_metric_table("Segmentation Metrics per class", self.segmentation_classification_metric, md)
+        if self.graph_segmentation_classification_metric is not None:
+            md = self._get_per_class_metric_table("Segmentation Metrics per class after graph improvement", self.graph_segmentation_classification_metric, md)
+
+        if self.n_classes > 1:
             md += "## Classification metrics\n\n"
             md += "| Metric | Value |\n"
             md += "| :--- | :---: |\n"
-            for metric in self.test_classes:
-                md += f"| {metric} | {self.test_classes[metric].compute().item()} |\n"
+            for metric in self.classification_metric:
+                md += f"| {metric} | {self.classification_metric[metric].compute().item()} |\n"
+            md += "\n"
+        if self.graph_classification_metric is not None:
+            md += "## Classification metrics after graph improvement\n\n"
+            md += "| Metric | Value |\n"
+            md += "| :--- | :---: |\n"
+            for metric in self.graph_classification_metric:
+                md += f"| {metric} | {self.graph_classification_metric[metric].compute().item()} |\n"
+            md += "\n"
+
         if len(self.images) > 0:
             md += "## Images\n\n"
             for i in range(len(self.images)):
                 md += "### Image " + str(i + 1) + "\n\n"
                 md += f"![](images/test_image_{i}.png)\n"
-                md += "| Metric | Value |\n"
-                md += "| :--- | :---: |\n"
-                md += f"| FP | {self.image_metric[i].fp} |\n"
-                md += f"| TP | {self.image_metric[i].tp} |\n"
-                md += f"| FN | {self.image_metric[i].fn} |\n"
-                md += f"| Precision | {self.image_metric[i].precision} |\n"
-                md += f"| Recall | {self.image_metric[i].recall} |\n"
-                md += f"| Accuracy | {self.image_metric[i].accuracy} |\n"
-                md += f"| F1 | {self.image_metric[i].f1} |\n"
-                md += f"| n_true | {self.image_metric[i].n_true} |\n"
-                md += f"| n_pred | {self.image_metric[i].n_pred} |\n"
-                md += f"| mean_true_score | {self.image_metric[i].mean_true_score} |\n"
-                md += f"| mean_matched_score | {self.image_metric[i].mean_matched_score} |\n"
-                md += (
-                    f"| panoptic_quality | {self.image_metric[i].panoptic_quality} |\n"
-                )
-                if self.classification:
+                md = self._get_simple_metric_table("Personal segmentation Metrics", self.single_segmentation_metric[i], md)
+                if self.n_classes > 1:
                     md += f"\n![](images/test_image_{i}_classes.png)\n"
                     md += f"\n![](images/test_image_{i}_graph.png)\n"
                     md += f"\n![](images/test_image_{i}_diff.png)\n"
         with open(f"{self.output_dir}test_results.md", "w") as f:
             f.write(md)
         print("Done.")
+
+    def _get_simple_metric_table(self, title: str, metrics: dict, md: str) -> str:
+        """Get a simple metric table.
+
+        Args:
+            title (str): The title of the table.
+            metrics (dict): The metrics.
+            md (str): The markdown string.
+
+        Returns:
+            str: The markdown string.
+
+        Raises:
+            None.
+        """
+        md += f"## {title}\n\n"
+        md += "| Metric | Value |\n"
+        md += "| :--- | :---: |\n"
+        md += f"| FP | {metrics.fp} |\n"
+        md += f"| TP | {metrics.tp} |\n"
+        md += f"| FN | {metrics.fn} |\n"
+        md += f"| Precision | {metrics.precision} |\n"
+        md += f"| Recall | {metrics.recall} |\n"
+        md += f"| Accuracy | {metrics.accuracy} |\n"
+        md += f"| F1 | {metrics.f1} |\n"
+        md += f"| n_true | {metrics.n_true} |\n"
+        md += f"| n_pred | {metrics.n_pred} |\n"
+        md += f"| mean_true_score | {metrics.mean_true_score} |\n"
+        md += f"| mean_matched_score | {metrics.mean_matched_score} |\n"
+        md += (
+            f"| panoptic_quality | {metrics.panoptic_quality} |\n"
+        )
+        return md
+
+    def _get_per_class_metric_table(self, title: str, metrics: dict, md: str) -> str:
+        """Get a per class metric table.
+
+        Args:
+            title (str): The title of the table.
+            metrics (dict): The metrics.
+            md (str): The markdown string.
+
+        Returns:
+            str: The markdown string.
+
+        Raises:
+            None.
+        """
+        md += f"## {title}\n\n"
+        md += "| Metric |"
+        for i in range(1, self.n_classes):
+            md += f" {get_class_name()[i]} |"
+        md += "\n"
+        md += "| :--- |"
+        for i in range(1, self.n_classes):
+            md += " :---: |"
+        md += "\n"
+        md += "| FP |" + ' '.join([f"{metrics[i].fp:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| TP |" + ' '.join([f"{metrics[i].tp:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| FN |" + ' '.join([f"{metrics[i].fn:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| Precision |" + ' '.join([f"{metrics[i].precision:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| Recall |" + ' '.join([f"{metrics[i].recall:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| Accuracy |" + ' '.join([f"{metrics[i].accuracy:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| F1 |" + ' '.join([f"{metrics[i].f1:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| n_true |" + ' '.join([f"{metrics[i].n_true:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| n_pred |" + ' '.join([f"{metrics[i].n_pred:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| mean_true_score |" + ' '.join([f"{metrics[i].mean_true_score:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += f"| mean_matched_score |" + ' '.join([f"{metrics[i].mean_matched_score:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        md += (
+            f"| panoptic_quality |" + ' '.join([f"{metrics[i].panoptic_quality:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+        )
+        
+        return md
 
     def _generate_images(self):
         """Generate images for the report.
@@ -140,23 +288,23 @@ class ReportGenerator:
                 f"test_image_{i}",
             )
 
-            if self.classification:
+            if self.n_classes > 1:
                 # save true and predicted classes
                 self._save_images(
                     [
-                        self.true_classes[i],
-                        self.predicted_classes[i],
-                        self.improved_class[i],
+                        self.true_class_map[i],
+                        self.pred_class_map[i],
+                        self.pred_class_map_improved[i],
                     ],
-                    ["True Class", "Predicted Class", "Predicted class after cleaning"],
+                    ["True Class map", "Predicted Class map", "Predicted class map improved"],
                     f"test_image_{i}_classes",
                     legend=True,
                 )
 
                 # save graph of class map
                 self._save_images(
-                    [self.graphs[i], self.graphs_masks[i]],
-                    ["Graph", "Graph with mask"],
+                    [self.graphs_images[i], self.graphs_class_map[i]],
+                    ["Graph", "Graph Class map"],
                     f"test_image_{i}_graph",
                     legend=True,
                 )
@@ -164,19 +312,19 @@ class ReportGenerator:
                 # save differences between true and predicted maps
                 diff_imgs = {}
                 diff_imgs["class mask differences"] = np.zeros_like(
-                    self.true_classes[i]
+                    self.true_class_map[i]
                 )
                 diff_imgs["class mask differences"][
-                    self.true_classes[i] != self.improved_class[i]
+                    self.true_class_map[i] != self.pred_class_map_improved[i]
                 ] = 1
                 diff_imgs["graph class mask differences"] = np.zeros_like(
-                    self.true_classes[i]
+                    self.true_class_map[i]
                 )
                 diff_imgs["graph class mask differences"][
-                    self.true_classes[i] != self.graphs_masks[i]
+                    self.true_class_map[i] != self.graphs_class_map[i]
                 ] = 1
                 diff_imgs["class/graph mask differences"] = np.zeros_like(
-                    self.true_classes[i]
+                    self.true_class_map[i]
                 )
                 diff_imgs["class/graph mask differences"][
                     diff_imgs["class mask differences"]
@@ -228,3 +376,17 @@ class ReportGenerator:
         # saving
         plt.savefig(f"{self.output_dir}images/{file_name}.png")
         plt.close()
+
+    def _draw_graph(self, graph, class_map):
+        p = graph["pos"]
+        ei = graph["edge_index"]
+        transform = T.ToPILImage()
+        img = transform(class_map.astype(np.uint8))
+        draw = ImageDraw.Draw(img)
+        for e in range(ei.shape[1]):
+            draw.line(
+                (p[ei[0][e]][1], p[ei[0][e]][0], p[ei[1][e]][1], p[ei[1][e]][0]),
+                fill=(5),
+            )
+        img = np.array(img)
+        return img

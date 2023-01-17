@@ -216,11 +216,12 @@ def get_graph(
 
     # add target to graph
     if true_class_map is not None:
+        # 
         # get points with target
         y = []
         for i in range(points.shape[0]):
             if type(points[i, 0]) == int:
-                y.append(true_class_map[points[i, 0], points[i, 1]])
+                yi = true_class_map[points[i, 0], points[i, 1]]
             else:
                 # get the 4 nearest points in the class map
                 yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
@@ -243,6 +244,7 @@ def get_graph(
                     yi = 3
                 elif (yi == 5) | (yi == 6) | (yi == 7):
                     yi = 4
+            y.append(yi)
         graph["y"] = torch.Tensor(y)
 
     return graph

@@ -12,7 +12,6 @@ import pickle
 import random
 import time
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import scipy.io as sio
@@ -26,6 +25,7 @@ IMAGE_EXTENSION = "png"
 OUTPUT_BASE_NAME = "data_0.9_split"
 PATCH_SIZE = 540
 PATCH_STEP = 200
+SEPARATE_SAVE = True
 
 
 def extract_annotation_patches(annotation_file, annotations, patch_size, patch_step):
@@ -64,11 +64,20 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
         # keep only values present in the patch
         nuclei_id = np.squeeze(mat_file["id"]).tolist()
         classes = np.squeeze(mat_file["class"]).tolist()
-        classes = []
+        nuclei_in_patch = []
+        class_in_patch = []
+        centroid_in_patch = []
         class_map = np.zeros(value.shape)
         for v in patch_id:
             idx = nuclei_id.index(v)
-            class_map[value == v] = mat_file["class"][idx]
+            class_i = mat_file["class"][idx]
+            centroid_i = mat_file["centroid"][idx].copy()
+            centroid_i[0] = min(max(0, centroid_i[0] - int(key.split("_")[3])), patch_size-1)
+            centroid_i[1] = min(max(0, centroid_i[1] - int(key.split("_")[2])), patch_size-1)
+            nuclei_in_patch.append(v)
+            class_in_patch.append(class_i)
+            centroid_in_patch.append(centroid_i)
+            class_map[value == v] = class_i
         # add the new patch to the dataframe
         annotations = pd.concat(
             [
@@ -78,8 +87,9 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
                         "id": [key],
                         "inst_map": [value],
                         "class_map": [class_map],
-                        "nuclei_id": [nuclei_id],
-                        "classes": [classes],
+                        "nuclei_id": [nuclei_in_patch],
+                        "classes": [class_in_patch],
+                        "centroid": [centroid_in_patch],
                     }
                 ),
             ],
@@ -284,6 +294,9 @@ def extract_data(args):
             "id",
             "inst_map",
             "class_map",
+            "nuclei_id",
+            "classes",
+            "centroid",
         ]
     )
     # Get all the annotations from the folder list
@@ -345,22 +358,76 @@ def extract_data(args):
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
     print("5. Saving File...\n")
-    save_train = (
-        "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
-    )
-    save_valid = (
-        "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
-    )
-    save_test = "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
-    with open(save_train, "wb") as f:
-        pickle.dump(cleaned_train_data, f)
-    print(f"Cleaned train data saved in {save_train}")
-    with open(save_valid, "wb") as f:
-        pickle.dump(cleaned_valid_data, f)
-    print(f"Cleaned valid data saved in {save_valid}")
-    with open(save_test, "wb") as f:
-        pickle.dump(cleaned_test_data, f)
-    print(f"Cleaned test data saved in {save_test}")
+
+    if SEPARATE_SAVE:
+        save_images_train = (
+            "data/Lizard_dataset_split/patches/Lizard_Images_train"
+        )
+        save_images_valid = (
+            "data/Lizard_dataset_split/patches/Lizard_Images_valid"
+        )
+        save_images_test = "data/Lizard_dataset_split/patches/Lizard_Images_test"
+        for path in [save_images_train, save_images_valid, save_images_test]:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        for img in cleaned_train_data["images"]:
+            im = Image.fromarray(cleaned_train_data["images"][img])
+            im.save(save_images_train + f"/{img}.png")
+        for img in cleaned_valid_data["images"]:
+            im = Image.fromarray(cleaned_valid_data["images"][img])
+            im.save(save_images_valid + f"/{img}.png")
+        for img in cleaned_test_data["images"]:
+            im = Image.fromarray(cleaned_test_data["images"][img])
+            im.save(save_images_test + f"/{img}.png")
+        print(f"Images saved in {save_images_train}, {save_images_valid} and {save_images_test} folders")
+
+        save_train = "data/Lizard_dataset_split/patches/Lizard_Labels_train"
+        save_valid = "data/Lizard_dataset_split/patches/Lizard_Labels_valid"
+        save_test = "data/Lizard_dataset_split/patches/Lizard_Labels_test"
+        for path in [save_train, save_valid, save_test]:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        # save back to mat files
+        for idx in cleaned_train_data["images"]:
+            dic = cleaned_train_data["annotations"][cleaned_train_data["annotations"]["id"] == idx].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_train + f"/{idx}.mat",
+                dic,
+            )
+        for idx in cleaned_valid_data["images"]:
+            dic = cleaned_valid_data["annotations"][cleaned_valid_data["annotations"]["id"] == idx].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_valid + f"/{idx}.mat",
+                dic,
+            )
+        for idx in cleaned_test_data["images"]:
+            dic = cleaned_test_data["annotations"][cleaned_test_data["annotations"]["id"]  == idx].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_test + f"/{idx}.mat",
+                dic,
+            )
+        print(f"Annotations saved in {save_train}, {save_valid} and {save_test} folders")
+    else:
+        save_train = (
+            "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
+        )
+        save_valid = (
+            "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+        )
+        save_test = "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
+        with open(save_train, "wb") as f:
+            pickle.dump(cleaned_train_data, f)
+        print(f"Cleaned train data saved in {save_train}")
+        with open(save_valid, "wb") as f:
+            pickle.dump(cleaned_valid_data, f)
+        print(f"Cleaned valid data saved in {save_valid}")
+        with open(save_test, "wb") as f:
+            pickle.dump(cleaned_test_data, f)
+        print(f"Cleaned test data saved in {save_test}")
 
 
 if __name__ == "__main__":

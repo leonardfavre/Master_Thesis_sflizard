@@ -23,7 +23,7 @@ class LizardGraphDataset(Dataset):
         stardist_checkpoint: str = None,
         x_type: str = "ll",  # ll: last_layer, c: classification, p: position, a:area
         root="data/graph",
-        concep_data=False,
+        consep_data=False,
     ):
         self.df = df
         self.data = data
@@ -32,7 +32,7 @@ class LizardGraphDataset(Dataset):
         self.distance = distance
         self.stardist_checkpoint = stardist_checkpoint
         self.x_type = x_type
-        self.concep_data = concep_data
+        self.consep_data = consep_data
         root = f"{root}/{distance}/{x_type}/{name}"
         super().__init__(root, transform, pre_transform)
 
@@ -77,8 +77,9 @@ class LizardGraphDataset(Dataset):
                 stardist_checkpoint=self.stardist_checkpoint,
                 image=image,
                 x_type=self.x_type,
-                concep_data=self.concep_data,
+                consep_data=self.consep_data,
             )
+            print(graph["x"].shape, graph["y"].shape, graph["pos"].shape, graph["edge_index"].shape, graph["edge_attr"].shape)
             processed_data = Data(
                 x=graph["x"],
                 y=graph["y"],
@@ -100,6 +101,7 @@ class LizardGraphDataset(Dataset):
 
 def LizardGraphDataModule(
     train_data: pd.DataFrame,
+    valid_data: pd.DataFrame,
     test_data: pd.DataFrame = None,
     batch_size: int = 32,
     num_workers: int = 4,
@@ -108,7 +110,7 @@ def LizardGraphDataModule(
     x_type="ll",
     distance=45,
     root="data/graph",
-    concep_data=False,
+    consep_data=False,
 ):
     """Data module to create dataloaders for graph training job.
 
@@ -125,17 +127,14 @@ def LizardGraphDataModule(
 
     """
 
-    train_df, valid_df = train_test_split(
-        train_data,
-        test_size=0.2,
-        random_state=seed,
-    )
+    # train_df, valid_df = train_test_split(
+    #     train_data,
+    #     test_size=0.2,
+    #     random_state=seed,
+    # )
 
-    train_df.reset_index(drop=True, inplace=True)
-    valid_df.reset_index(drop=True, inplace=True)
-
+    train_df = train_data.reset_index(drop=True)
     images = train_data["images"] if "images" in train_data.columns else None
-
     train_ds = LizardGraphDataset(
         df=train_df,
         data=images,
@@ -144,8 +143,11 @@ def LizardGraphDataModule(
         distance=distance,
         x_type=x_type,
         root=root,
-        concep_data=concep_data,
+        consep_data=consep_data,
     )
+
+    valid_df = valid_data.reset_index(drop=True)
+    images = valid_data["images"] if "images" in valid_data.columns else None
     valid_ds = LizardGraphDataset(
         df=valid_df,
         data=images,
@@ -154,8 +156,9 @@ def LizardGraphDataModule(
         distance=distance,
         x_type=x_type,
         root=root,
-        concep_data=concep_data,
+        consep_data=consep_data,
     )
+
     if test_data is not None:
         test_df = test_data.reset_index(drop=True)
         images = test_data["images"] if "images" in test_data.columns else None
@@ -167,7 +170,7 @@ def LizardGraphDataModule(
             distance=distance,
             x_type=x_type,
             root=root,
-            concep_data=concep_data,
+            consep_data=consep_data,
         )
         return LightningDataset(
             train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers

@@ -34,7 +34,7 @@ LEARNING_RATE = 5e-4
 SEED = 303
 DEFAULT_ROOT_DIR = os.getcwd()
 NUM_CLASSES = 7
-LOSS_POWER_SCALER = 0.0
+LOSS_POWER_SCALER = 1.0
 
 DIMH = 1024
 NUM_LAYERS = 4
@@ -89,11 +89,12 @@ def init_stardist_training(args, device, debug=False):
         seed=args.seed,
         device=device,
         wandb_log=True,
+        max_epochs=args.max_epochs,
     )
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb",
-        filename=f"final2-{args.model}-rotate" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -191,7 +192,7 @@ def full_training(args):
     datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if "stardist" in args.model:
         trainer.save_checkpoint(
-            f"models/final2_stardist_rotate_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
+            f"models/final3_stardist_crop-cosine_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
         trainer.save_checkpoint(
@@ -204,7 +205,7 @@ def full_training(args):
         if trainer.is_global_zero:
             trainer = pl.Trainer(gpus=1)
 
-    trainer.test(model, dm)
+    # trainer.test(model, dm)
 
 
 if __name__ == "__main__":

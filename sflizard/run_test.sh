@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "Starting test" > test_results_stardist_aug.txt
+echo "Starting test" > test_results_stardist_cos.txt
 
-for checkp in final_stardist_shuffle_noaug_200epochs_0.0losspower_0.0005lr.ckpt stardist_shuffle_rotate_200epochs_0.0losspower_0.0005lr.ckpt final_stardist_shuffle_1000epochs_0.0losspower_0.0005lr.ckpt final_stardist_shuffle_crop_1000epochs_0.0losspower_0.0005lr.ckpt loss_cb/stardist_class-shuffle-noaug-loss-epoch=161-val_loss=1.92.ckpt loss_cb/stardist_class-shuffle-rotate-loss-epoch=151-val_loss=2.05.ckpt loss_cb/stardist_class-shuffle-loss-epoch=141-val_loss=2.04.ckpt loss_cb/stardist_class-shuffle-crop-loss-epoch=165-val_loss=2.08.ckpt 
+for checkp in loss_cb/final3-stardist_class-1.0losspower_0.0005lr-crop-cosine-loss-epoch=186-val_loss=3.39.ckpt final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt
 do
 
 
@@ -17,8 +17,8 @@ do
 # for distance in 30 35 40 45 50 55 60
 # do
 #echo $numlayer-$dimh-$xtype  >> test_results.txt
-echo $checkp >> test_results_stardist_aug.txt
-python sflizard/test_pipeline.py --stardist_weights models/${checkp} >> test_results_stardist_aug.txt #--graph_weights_path models/${model}_${dimh}_${numlayer}_${xtype}_${distance}dist_500epochs_0.0005lr.ckpt >> test_results.txt
+echo $checkp >> test_results_stardist_cos.txt
+python sflizard/run_test_pipeline.py --stardist_weights models/${checkp} >> test_results_stardist_cos.txt #--graph_weights_path models/${model}_${dimh}_${numlayer}_${xtype}_${distance}dist_500epochs_0.0005lr.ckpt >> test_results.txt
 done
 # done
 # done

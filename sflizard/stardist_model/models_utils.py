@@ -6,42 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from stardist import non_maximum_suppression, polygons_to_label
 
-
-class MaskStardist:
-    """class for masking images using stardist model."""
-
-    def __init__(self, weights_path: str) -> None:
-        """Init the function."""
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = UNetStar(1, 32)
-        self.model.load_state_dict(torch.load(weights_path))
-        self.model = self.model.to(self.device)
-
-    def eval(
-        self,
-        images: Union[torch.Tensor, list],
-        multiple: bool = False,
-        channels: list = None,
-    ) -> Union[np.ndarray, list]:
-        """Get a mask from the image."""
-        # convert to tensor if needed
-        if isinstance(images, list):
-            images = torch.Tensor(np.array(images))
-        # we want the ndim to be equal to 4
-        if images.ndim == 3:
-            images = images.unsqueeze(1)
-        elif images.ndim == 5:
-            images = images[:, :, 0, :, :]
-
-        tensors = images.to(self.device)
-
-        dist, prob = self.model(tensors)
-
-        star_labels = self.model.compute_star_label(tensors, dist, prob, multiple)
-
-        return star_labels
-
-
 class MyL1BCELoss(torch.nn.Module):
     def __init__(self, scale=[1, 1]):
         super(MyL1BCELoss, self).__init__()
