@@ -12,7 +12,7 @@ from metrics.stats_utils import (
     pair_coordinates,
     remap_label,
 )
-
+from tqdm import tqdm
 
 def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True):
     """GT must be exhaustively annotated for instance location (detection).
@@ -46,7 +46,7 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
         true_info = sio.loadmat(os.path.join(true_dir, basename + ".mat"))
         # dont squeeze, may be 1 instance exist
         true_centroid = (true_info["centroid"]).astype("float32")
-        true_inst_type = (true_info["class"]).astype("int32")
+        true_inst_type = (true_info["classes"]).astype("int32")
 
         if true_centroid.shape[0] != 0:
             true_inst_type = true_inst_type[:, 0]
@@ -176,14 +176,14 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
 
 def run_nuclei_inst_stat(pred_dir, true_dir, print_img_stats=False, ext=".mat"):
     # print stats of each image
-    print(pred_dir)
 
     file_list = glob.glob("%s/*%s" % (pred_dir, ext))
     file_list.sort()  # ensure same order
 
     metrics = [[], [], [], [], [], []]
-    for filename in file_list[:]:
+    for filename in tqdm(file_list[:]):
         filename = os.path.basename(filename)
+        print(filename)
         basename = filename.split(".")[0]
 
         true = sio.loadmat(os.path.join(true_dir, basename + ".mat"))

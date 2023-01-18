@@ -127,12 +127,6 @@ def LizardGraphDataModule(
 
     """
 
-    # train_df, valid_df = train_test_split(
-    #     train_data,
-    #     test_size=0.2,
-    #     random_state=seed,
-    # )
-
     train_df = train_data.reset_index(drop=True)
     images = train_data["images"] if "images" in train_data.columns else None
     train_ds = LizardGraphDataset(

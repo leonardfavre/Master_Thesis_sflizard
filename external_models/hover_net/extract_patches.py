@@ -31,17 +31,17 @@ if __name__ == "__main__":
     # a dictionary to specify where the dataset path should be
     dataset_info = {
         "train": {
-            "img": (".png", "data/Lizard_dataset_test_split/Lizard_Images_train/"),
+            "img": (".png", "data/Lizard_dataset_split/Lizard_Images_train2/"),
             "ann": (
                 ".mat",
-                "data/Lizard_dataset_test_split/Lizard_Labels_train/Labels/",
+                "data/Lizard_dataset_split/Lizard_Labels_train2/",
             ),
         },
         "valid": {
-            "img": (".png", "data/Lizard_dataset_test_split/Lizard_Images_test/"),
+            "img": (".png", "data/Lizard_dataset_split/Lizard_Images_test"),
             "ann": (
                 ".mat",
-                "data/Lizard_dataset_test_split/Lizard_Labels_test/Labels/",
+                "data/Lizard_dataset_split/Lizard_Labels_test",
             ),
         },
     }

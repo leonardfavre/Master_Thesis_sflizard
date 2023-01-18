@@ -104,7 +104,6 @@ class UNetStar(nn.Module):
         image: torch.Tensor,
         dist: torch.Tensor,
         prob: torch.Tensor,
-        multiple: bool = True,
     ):
         """Compute the stare label of images according dist and prob."""
         star_labels = []
@@ -118,26 +117,7 @@ class UNetStar(nn.Module):
             star_label = polygons_to_label(
                 dists, points, (image.shape[3], image.shape[2]), probs
             )
-            if not multiple:
-                # keep only the largest connected component
-                labels, count = np.unique(star_label, return_counts=True)
 
-                # biggest count is background
-                background_id = np.argmax(count)
-
-                labels = np.delete(labels, background_id)
-                count = np.delete(count, background_id)
-
-                # the label we want to keed comes after the background
-                if len(labels) > 0:
-                    best_label = labels[np.argmax(count)]
-
-                    # replace all other labels with background (set to 0), replace the label by the number 1
-                    for i in range(star_label.shape[0]):
-                        for j in range(star_label.shape[1]):
-                            star_label[i][j] = (
-                                0 if star_label[i][j] != best_label else 1
-                            )
             star_labels.append(star_label)
         star_labels = np.array(star_labels)
         return star_labels

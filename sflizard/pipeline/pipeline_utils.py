@@ -67,12 +67,15 @@ def improve_class_map(class_map, predicted_masks):
     improved_class_map = np.zeros_like(class_map)
     for i in range(1, np.unique(predicted_masks).shape[0]):
         present_class = np.unique(class_map[predicted_masks == i])
-        if len(present_class) == 0:
-            best_class = 0
-        for j in range(len(present_class)):
-            best_class = present_class[j]
-            if best_class != 0:
-                break
+        best_class = 0
+        possible_class = [x for x in present_class if x != 0]
+        if len(possible_class) > 0:
+            best_class = max(set(possible_class), key=possible_class.count)
+        
+        # for j in range(len(present_class)):
+        #     best_class = present_class[j]
+        #     if best_class != 0:
+        #         break
         improved_class_map[predicted_masks == i] = best_class
     return improved_class_map
 

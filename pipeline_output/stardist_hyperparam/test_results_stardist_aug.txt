@@ -1,5 +1,7 @@
 Starting test
 
+# NO AUG 
+
 loss_cb/final2-stardist_class-noaug-loss-epoch=198-val_loss=2.05.ckpt
 Testing pipeline...
 Using device: cuda
@@ -41,6 +43,7 @@ Results:
 └──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
 
 ------------------------------------------------------------
+# NO AUG BEST
 
 final2_stardist_noaug_200epochs_0.0losspower_0.0005lr.ckpt
 Testing pipeline...
@@ -83,6 +86,8 @@ Results:
 └──────────────────┴────────────┴────────────┴────────────┴────────┴────────────┴───────────────────┘
 
 ------------------------------------------------------------
+
+
 
 loss_cb/final2-stardist_class-rotate-loss-epoch=197-val_loss=2.00.ckpt
 Testing pipeline...
