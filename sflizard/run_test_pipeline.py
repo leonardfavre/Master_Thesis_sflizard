@@ -14,7 +14,7 @@ OUTPUT_DIR = None # "./test_pipeline_output/full_training_stardist_class_1000_11
 IMGS_TO_DISPLAY = 10
 
 DISTANCE = 45
-MODE = "test"
+MODE = "valid"
 
 
 

@@ -221,9 +221,11 @@ def get_graph(
         y = []
         for i in range(points.shape[0]):
             if type(points[i, 0]) == int:
+                # stardist points input: 0, 1
                 yi = true_class_map[points[i, 0], points[i, 1]]
             else:
                 # get the 4 nearest points in the class map
+                # dataset input centroid: 1, 0 
                 yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
                 yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
                 yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])

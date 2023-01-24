@@ -36,6 +36,10 @@ class Stardist(pl.LightningModule):
         self.input_size = input_size
         self.seed = seed
 
+        self.val_acc_dist = torchmetrics.Accuracy()
+        self.val_acc_class = torchmetrics.Accuracy()
+        self.val_acc_class_macro = torchmetrics.Accuracy()
+
         self.classification = n_classes > 1
 
         if self.classification:
@@ -90,9 +94,30 @@ class Stardist(pl.LightningModule):
         if name == "train":
             self.log("train_loss", loss)
         elif name == "val":
+            self.val_acc_class(torch.index_select(outputs, 1, [2]), classes)
+            self.val_acc_class_macro(torch.index_select(outputs, 1, [2]), classes)
+            self.val_acc_dist(torch.index_select(outputs, 1, [0]), distances)
             self.log(
                 "val_loss",
                 loss,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                "val_acc_dist",
+                self.val_acc_dist,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                "val_acc_class",
+                self.val_acc_class,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                "val_acc_class_macro",
+                self.val_acc_class_macro,
                 on_step=False,
                 on_epoch=True,
             )
@@ -131,8 +156,6 @@ class Stardist(pl.LightningModule):
         optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.learning_rate,
-            # betas=(0.9, 0.999),
-            # eps=1e-08,
             weight_decay=5e-5,
         )
         scheduler = LinearWarmupCosineAnnealingLR(

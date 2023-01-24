@@ -27,7 +27,7 @@ TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 MODEL = "graph_sage"
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 NUM_WORKERS = 8
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
@@ -138,7 +138,7 @@ def init_graph_training(args):
         model=args.model,
         learning_rate=args.learning_rate,
         num_features=NUM_FEATURES[args.x_type],
-        num_classes=args.num_classes,  # - 1,
+        num_classes=args.num_classes,
         seed=args.seed,
         max_epochs=args.max_epochs,
         dim_h=args.dimh,
