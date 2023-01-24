@@ -36,6 +36,10 @@ class Stardist(pl.LightningModule):
         self.input_size = input_size
         self.seed = seed
 
+        # self.val_mse_dist = torchmetrics.MeanSquaredError()
+        # self.val_acc_class = torchmetrics.Accuracy(num_classes=n_classes, average="micro", mdmc_average="global")
+        # self.val_acc_class_macro = torchmetrics.Accuracy(num_classes=n_classes, average="macro", mdmc_average="global")
+
         self.classification = n_classes > 1
 
         if self.classification:
@@ -90,12 +94,36 @@ class Stardist(pl.LightningModule):
         if name == "train":
             self.log("train_loss", loss)
         elif name == "val":
+            # self.val_acc_class(torch.index_select(torch.tensor(outputs), 1, 2), classes)
+            # self.val_acc_class_macro(torch.index_select(torch.tensor(outputs), 1, torch.tensor([2])), classes)
+            # self.val_mse_dist(torch.index_select(torch.tensor(outputs), 1, torch.tensor([0])), distances)
+            # self.val_acc_class(outputs[2], classes)
+            # self.val_acc_class_macro(outputs[2], classes)
+            # self.val_mse_dist(outputs[0], distances)
             self.log(
                 "val_loss",
                 loss,
                 on_step=False,
                 on_epoch=True,
             )
+            # self.log(
+            #     "val_mse_dist",
+            #     self.val_mse_dist,
+            #     on_step=False,
+            #     on_epoch=True,
+            # )
+            # self.log(
+            #     "val_acc_class",
+            #     self.val_acc_class,
+            #     on_step=False,
+            #     on_epoch=True,
+            # )
+            # self.log(
+            #     "val_acc_class_macro",
+            #     self.val_acc_class_macro,
+            #     on_step=False,
+            #     on_epoch=True,
+            # )
 
         else:
             raise ValueError(f"Invalid step name given: {name}")

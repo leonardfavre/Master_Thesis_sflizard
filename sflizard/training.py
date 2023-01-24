@@ -26,9 +26,9 @@ N_RAYS = 32
 TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
-MODEL = "graph_sage"
-BATCH_SIZE = 4
-NUM_WORKERS = 8
+MODEL = "graph_custom"
+BATCH_SIZE = 64
+NUM_WORKERS = 16
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
 SEED = 303
@@ -47,8 +47,8 @@ NUM_FEATURES = {
     "4ll+c": 540,
     "4ll+c+x": 548,
 }
-STARDIST_CHECKPOINT = "models/stardist_1000epochs_0.0losspower_0.0005lr.ckpt"
-X_TYPE = "ll+c"
+STARDIST_CHECKPOINT = "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+X_TYPE = "4ll+c"
 DISTANCE = 45
 
 
@@ -100,36 +100,68 @@ def init_stardist_training(args, device, debug=False):
         save_top_k=1,
     )
 
+    # acc_dist_callback = pl.callbacks.ModelCheckpoint(
+    #     dirpath="models/cp_acc",
+    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-msedist-{epoch}-{val_acc:.4f}",
+    #     monitor="val_mse_dist",
+    #     mode="min",
+    #     save_top_k=1,
+    # )
+
+    # acc_callback = pl.callbacks.ModelCheckpoint(
+    #     dirpath="models/cp_acc",
+    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-acc-{epoch}-{val_acc:.4f}",
+    #     monitor="val_acc_class",
+    #     mode="max",
+    #     save_top_k=1,
+    # )
+
+    # acc_macro_callback = pl.callbacks.ModelCheckpoint(
+    #     dirpath="models/cp_acc",
+    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+    #     monitor="val_acc_class_macro",
+    #     mode="max",
+    #     save_top_k=1,
+    # )
+
     if debug:
         print("init_stardist_training: model initialized.")
 
-    return dm, model, [loss_callback]
+    return dm, model, [loss_callback] #, acc_dist_callback] # , acc_callback, acc_macro_callback]
 
 
 def init_graph_training(args):
     """Init the training for the graphSage model."""
     # get the train data
-    train_data_path = Path(args.data_path)
+    train_data_path = Path(args.train_data_path)
     with train_data_path.open("rb") as f:
         train_data = pickle.load(f)
-    train_data = train_data["annotations"]
+    # train_data = train_data["annotations"]
+
+    # get the valid data
+    valid_data_path = Path(args.valid_data_path)
+    with valid_data_path.open("rb") as f:
+        valid_data = pickle.load(f)
+        # valid_data = valid_data["annotations"]
 
     # get the test data
     test_data_path = Path(args.test_data_path)
     with test_data_path.open("rb") as f:
         test_data = pickle.load(f)
-        test_data = test_data["annotations"]
+        # test_data = test_data["annotations"]
 
     # create the datamodule
     dm = LizardGraphDataModule(
         train_data=train_data,
-        test_data_path=test_data,
+        valid_data=valid_data,
+        test_data=test_data,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         seed=args.seed,
         stardist_checkpoint=STARDIST_CHECKPOINT,
         x_type=args.x_type,
         distance=args.distance,
+        light=True,
     )
     dm.setup()
 
@@ -155,7 +187,23 @@ def init_graph_training(args):
         save_top_k=1,
     )
 
-    return dm, model, loss_callback
+    acc_callback = pl.callbacks.ModelCheckpoint(
+        dirpath="models/cp_acc_graph",
+        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-acc-{epoch}-{val_acc:.4f}",
+        monitor="val_acc",
+        mode="max",
+        save_top_k=1,
+    )
+
+    acc_macro_callback = pl.callbacks.ModelCheckpoint(
+        dirpath="models/cp_acc_graph",
+        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+        monitor="val_acc_macro",
+        mode="max",
+        save_top_k=1,
+    )
+
+    return dm, model, [loss_callback, acc_callback, acc_macro_callback]
 
 
 def full_training(args):

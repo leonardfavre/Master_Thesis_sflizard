@@ -5,12 +5,12 @@ from sflizard import TestPipeline
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 STARDIST_WEIGHTS_PATH = "models/final2_stardist_rotate_brigth_200epochs_0.0losspower_0.0005lr.ckpt"
-GRAPH_WEIGHTS_PATH = "models/old/graph_sage_512dh_2lay_4ll+c_500epochs_0.0005lr.ckpt"
+GRAPH_WEIGHTS_PATH = None # "models/old/graph_sage_512dh_2lay_4ll+c_500epochs_0.0005lr.ckpt"
 N_RAYS = 32
 N_CLASSES = 7
 BATCH_SIZE = 4
 SEED = 303
-OUTPUT_DIR = "./test_pipeline_output/full_training_stardist_class_1000_111_1e-4/"
+OUTPUT_DIR = None # "./test_pipeline_output/full_training_stardist_class_1000_111_1e-4/"
 IMGS_TO_DISPLAY = 10
 
 DISTANCE = 45
@@ -45,6 +45,7 @@ if __name__ == "__main__":
         "-gwp",
         "--graph_weights_path",
         type=str,
+        nargs="+",
         default=GRAPH_WEIGHTS_PATH,
         help="Path to the file containing the graph model weights.",
     )

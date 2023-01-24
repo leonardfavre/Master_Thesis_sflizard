@@ -220,7 +220,7 @@ def get_graph(
         # get points with target
         y = []
         for i in range(points.shape[0]):
-            if type(points[i, 0]) == int:
+            if type(points[i, 0]) == np.int64:
                 yi = true_class_map[points[i, 0], points[i, 1]]
             else:
                 # get the 4 nearest points in the class map
