@@ -5,6 +5,7 @@ import scipy.io as sio
 import pickle
 from tqdm import tqdm
 import numpy as np
+import subprocess
 
 # config of training
 TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
@@ -56,10 +57,10 @@ class HoverNetMetricTool:
         # get the dataloader
         if mode == "test":
             print("-- test mode")
-            self.dataloader = iter(dm.test_dataloader())
+            self.dataloader = dm.test_dataloader()
         elif mode == "valid":
             print("-- validation mode")
-            self.dataloader = iter(dm.val_dataloader())
+            self.dataloader = dm.val_dataloader()
         print("Data loaded.")
 
         # get the checkpoints
@@ -67,19 +68,20 @@ class HoverNetMetricTool:
         weights_paths = self.get_weights_path(weights_selector)
         print(f"Checkpoints found: {len(weights_paths)}")
         for wp in weights_paths:
-            print(f" -- {wp}: {weights_paths[wp]}")
+            print(f" -- {wp}")
 
 
         # run the conversion for each model
-        print("\nRunning inference...")
-        for wp in weights_paths:
-            print(f" -- {wp}...\n...")
-            # load graph model
-            graph_model = self.init_graph_inference(weights_paths[wp])
-            # run the inference on data
-            self.save_mat(graph_model, wp)
-            print("...done.")
-        print("Inference done.")
+        # print("\nRunning inference...")
+        # for wp in weights_paths:
+        #     print(f" -- {wp}...\n...")
+        #     # load graph model
+        #     graph_model = self.init_graph_inference(weights_paths[wp])
+        #     # run the inference on data
+        #     self.save_mat(graph_model, wp)
+        #     print("...done.")
+            
+        # print("Inference done.")
 
         # create script to run the evaluation
         print("\nCreating evaluation script...")
@@ -88,7 +90,7 @@ class HoverNetMetricTool:
 
         print("\nAll done.")
         print("Activate hovernet environment with: conda activate hovernet")
-        print(f"Run the evaluation script with: .{self.base_save_path}/eval.sh")
+        print(f"Run the evaluation script with: ./{self.base_save_path}/eval.sh")
         
 
     def init_graph_inference(self, weights_path: str) -> None:
@@ -102,11 +104,14 @@ class HoverNetMetricTool:
 
     def create_eval_script(self, weights_paths: dict) -> None:
         with Path(f"{self.base_save_path}/eval.sh").open("w") as f:
-            f.write("#!/bin/bash")
+            f.write("#!/bin/bash\n")
             for wp in weights_paths:
-                f.write(f"echo {wp}")
+                f.write(f"\necho {wp}\n")
                 save_path = self.base_save_path + f"{wp}/"
-                f.write(f"python compute_stats.py --pred_dir {save_path} --true_dir {TRUE_DATA_PATH_START}{self.mode}/ --mode type")
+                f.write(f"python external_models/hover_net/compute_stats.py --pred_dir {save_path} --true_dir {TRUE_DATA_PATH_START}{self.mode}/ --mode type\n")
+
+        subprocess.run(["chmod", "+x", f"{self.base_save_path}/eval.sh"])
+
 
     def get_weights_path(self, weights_selector: dict) -> dict:
         weights_path = {}
@@ -132,15 +137,16 @@ class HoverNetMetricTool:
         # create a folder for the results
         save_path = self.base_save_path + f"/{save_folder}/"
         Path(save_path).mkdir(parents=True, exist_ok=True)
-        
+
+
+        loader = iter(self.dataloader)
         # convert data
-        for i in tqdm(range(len(self.dataloader))):  # type: ignore
+        for i in tqdm(range(len(loader))):  # type: ignore
 
             # get next test batch
-            batch = next(self.dataloader)
+            batch = next(loader)
             batch = batch.to(self.device)
             for b in range(len(batch)):
-                print(batch[b].image_idx)
                 # run inference
                 x, edge_index = batch[b].x, batch[b].edge_index
                 with torch.no_grad():
@@ -161,5 +167,6 @@ class HoverNetMetricTool:
                 
                 # save the results
                 sio.savemat(f"{save_path}{batch[b].image_idx}.mat", mat)
+            
 
             
