@@ -80,13 +80,14 @@ class LizardGraphDataset(Dataset):
                 image=image,
                 x_type=self.x_type,
                 consep_data=self.consep_data,
+                hovernet_metric=not self.light,
             )
             if self.light:
                 processed_data = Data(
                     x=graph["x"],
                     y=graph["y"],
                     edge_index=graph["edge_index"],
-                    image_idx = idx,
+                    image_idx = self.df.iloc[idx].id,
                     #original_img=image,
                     #class_map=class_map,
                 )
@@ -95,9 +96,11 @@ class LizardGraphDataset(Dataset):
                     x=graph["x"],
                     y=graph["y"],
                     edge_index=graph["edge_index"],
-                    image_idx = idx,
+                    pos=graph["pos"],
+                    image_idx = self.df.iloc[idx].id,
                     original_img=image,
                     class_map=class_map,
+                    inst_map=graph["inst_map"],
                 )
             torch.save(processed_data, osp.join(self.processed_dir, f"data_{idx}.pt"))
 
@@ -110,8 +113,8 @@ class LizardGraphDataset(Dataset):
 
 
 def LizardGraphDataModule(
-    train_data: pd.DataFrame,
-    valid_data: pd.DataFrame,
+    train_data: pd.DataFrame = None,
+    valid_data: pd.DataFrame = None,
     test_data: pd.DataFrame = None,
     batch_size: int = 32,
     num_workers: int = 4,
@@ -138,41 +141,37 @@ def LizardGraphDataModule(
 
     """
 
-    # train_df, valid_df = train_test_split(
-    #     train_data,
-    #     test_size=0.2,
-    #     random_state=seed,
-    # )
-
     # train_df = train_data.reset_index(drop=True)
-    train_df = train_data["annotations"] if type(train_data) == dict and "annotations" in train_data else train_data.reset_index(drop=True)
-    images = train_data["images"] if type(train_data) == dict and "images" in train_data else None
-    train_ds = LizardGraphDataset(
-        df=train_df,
-        data=images,
-        name="train",
-        stardist_checkpoint=stardist_checkpoint,
-        distance=distance,
-        x_type=x_type,
-        root=root,
-        consep_data=consep_data,
-        light=light,
-    )
+    if train_data is not None:
+        train_df = train_data["annotations"] if type(train_data) == dict and "annotations" in train_data else train_data.reset_index(drop=True)
+        images = train_data["images"] if type(train_data) == dict and "images" in train_data else None
+        train_ds = LizardGraphDataset(
+            df=train_df,
+            data=images,
+            name="train",
+            stardist_checkpoint=stardist_checkpoint,
+            distance=distance,
+            x_type=x_type,
+            root=root,
+            consep_data=consep_data,
+            light=light,
+        )
 
     # valid_df = valid_data.reset_index(drop=True)
-    valid_df = valid_data["annotations"] if type(valid_data) == dict and "annotations" in valid_data else valid_data.reset_index(drop=True)
-    images = valid_data["images"] if type(valid_data) == dict and "images" in valid_data else None
-    valid_ds = LizardGraphDataset(
-        df=valid_df,
-        data=images,
-        name="valid",
-        stardist_checkpoint=stardist_checkpoint,
-        distance=distance,
-        x_type=x_type,
-        root=root,
-        consep_data=consep_data,
-        light=light,
-    )
+    if valid_data is not None:
+        valid_df = valid_data["annotations"] if type(valid_data) == dict and "annotations" in valid_data else valid_data.reset_index(drop=True)
+        images = valid_data["images"] if type(valid_data) == dict and "images" in valid_data else None
+        valid_ds = LizardGraphDataset(
+            df=valid_df,
+            data=images,
+            name="valid",
+            stardist_checkpoint=stardist_checkpoint,
+            distance=distance,
+            x_type=x_type,
+            root=root,
+            consep_data=consep_data,
+            light=light,
+        )
 
     if test_data is not None:
         # test_df = test_data.reset_index(drop=True)
@@ -189,10 +188,40 @@ def LizardGraphDataModule(
             consep_data=consep_data,
             light=light,
         )
-        return LightningDataset(
-            train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers
-        )
+
+    if train_data is not None:
+        if valid_data is not None:
+            if test_data is not None:
+                return LightningDataset(
+                    train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers
+                )
+            else:
+                return LightningDataset(
+                    train_ds, valid_ds, batch_size=batch_size, num_workers=num_workers
+                )
+        else:
+            if test_data is not None:
+                return LightningDataset(
+                    train_ds, test_ds, batch_size=batch_size, num_workers=num_workers
+                )
+            else:
+                return LightningDataset(
+                    train_ds, batch_size=batch_size, num_workers=num_workers
+                )
     else:
-        return LightningDataset(
-            train_ds, valid_ds, batch_size=batch_size, num_workers=num_workers
-        )
+        if valid_data is not None:
+            if test_data is not None:
+                return LightningDataset(
+                    valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers
+                )
+            else:
+                return LightningDataset(
+                    valid_ds, batch_size=batch_size, num_workers=num_workers
+                )
+        else:
+            if test_data is not None:
+                return LightningDataset(
+                    test_ds, batch_size=batch_size, num_workers=num_workers
+                )
+            else:
+                raise ValueError("No dataset provided")

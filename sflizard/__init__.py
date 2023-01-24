@@ -22,3 +22,4 @@ from sflizard.pipeline.pipeline_utils import rotate_and_pred, improve_class_map,
 from sflizard.pipeline.report import ReportGenerator  # noqa: F401
 from sflizard.pipeline.segmentation_metric_tool import SegmentationMetricTool # noqa: F401
 from sflizard.pipeline.test_pipeline import TestPipeline  # noqa: F401
+from sflizard.pipeline.hovernet_metric_tool import HoverNetMetricTool # noqa: F401

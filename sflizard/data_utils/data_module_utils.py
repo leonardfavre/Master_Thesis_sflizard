@@ -111,6 +111,7 @@ def get_graph(
     image=None,
     x_type="ll",
     consep_data=False,
+    hovernet_metric=False,
 ):
     """Get the graph from the instance map.
 
@@ -167,6 +168,9 @@ def get_graph(
             input = torch.Tensor(image).unsqueeze(0).float().to("cuda")
             dist, prob, _ = model_c(input)
             points, _, _ = compute_stardist(dist, prob)
+            # get instance map
+            if hovernet_metric:
+                graph["inst_map"] = model_c.compute_star_label(input, dist, prob)
 
         if points.shape[0] == 0:
             graph["x"] = torch.Tensor([])

@@ -180,7 +180,7 @@ def init_graph_training(args):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
         + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
@@ -189,7 +189,7 @@ def init_graph_training(args):
 
     acc_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-acc-{epoch}-{val_acc:.4f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-acc-{epoch}-{val_acc:.4f}",
         monitor="val_acc",
         mode="max",
         save_top_k=1,
@@ -197,7 +197,7 @@ def init_graph_training(args):
 
     acc_macro_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"final2-{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
         monitor="val_acc_macro",
         mode="max",
         save_top_k=1,
@@ -244,7 +244,7 @@ def full_training(args):
         )
     else:
         trainer.save_checkpoint(
-            f"models/{args.model}_{args.dimh}dh_{args.num_layers}lay_{args.x_type}_{args.distance}dist_{args.max_epochs}epochs_{args.learning_rate}lr.ckpt"
+            f"models/{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}-{args.max_epochs}.ckpt"
         )
 
     # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
