@@ -94,7 +94,8 @@ def init_stardist_training(args, device, debug=False):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb",
-        filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-loss-{epoch}-{val_loss:.2f}",
+        filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine"
+        + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,

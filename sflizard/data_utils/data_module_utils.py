@@ -216,7 +216,7 @@ def get_graph(
 
     # add target to graph
     if true_class_map is not None:
-        # 
+        #
         # get points with target
         y = []
         for i in range(points.shape[0]):
@@ -225,7 +225,7 @@ def get_graph(
                 yi = true_class_map[points[i, 0], points[i, 1]]
             else:
                 # get the 4 nearest points in the class map
-                # dataset input centroid: 1, 0 
+                # dataset input centroid: 1, 0
                 yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
                 yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
                 yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])

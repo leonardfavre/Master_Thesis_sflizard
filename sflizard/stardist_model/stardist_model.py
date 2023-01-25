@@ -1,10 +1,6 @@
 import pytorch_lightning as pl
 import torch
 import torchmetrics
-from rich.console import Console
-from rich.table import Table
-from stardist.matching import matching_dataset
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
 import wandb
@@ -159,10 +155,10 @@ class Stardist(pl.LightningModule):
             weight_decay=5e-5,
         )
         scheduler = LinearWarmupCosineAnnealingLR(
-                optimizer,
-                warmup_epochs=int(self.max_epochs / 10),
-                max_epochs=self.max_epochs,
-            )
+            optimizer,
+            warmup_epochs=int(self.max_epochs / 10),
+            max_epochs=self.max_epochs,
+        )
         return [optimizer], [scheduler]
         # scheduler = ReduceLROnPlateau(
         #     optimizer,
