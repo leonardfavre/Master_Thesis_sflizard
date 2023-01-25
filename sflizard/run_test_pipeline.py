@@ -50,6 +50,7 @@ if __name__ == "__main__":
         "-gwp",
         "--graph_weights_path",
         type=str,
+        nargs="+",
         default=GRAPH_WEIGHTS_PATH,
         help="Path to the file containing the graph model weights.",
     )

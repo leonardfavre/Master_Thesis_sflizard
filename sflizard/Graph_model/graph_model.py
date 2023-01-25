@@ -9,10 +9,9 @@ from PIL import Image
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
 from torch_geometric.nn import (
+    GCN,
     GAT,
     GIN,
-    RECT_L,
-    GCNConv,
     GraphSAGE,
     JumpingKnowledge,
     SAGEConv,
@@ -20,138 +19,28 @@ from torch_geometric.nn import (
 import torchmetrics
 
 
-class CustomGCN(torch.nn.Module):
-    def __init__(
-        self,
-        layer_type,
-        dim_in,
-        dim_h,
-        dim_out,
-        num_layers=0,
-    ):
+class GraphCustom(torch.nn.Module):
+    def __init__(self, dim_in, dim_h, dim_out, num_layers, layer_type):
         super().__init__()
-
-        self.conv1 = layer_type(dim_in, dim_h)
-        self.convh = torch.nn.ModuleList()
-        for i in range(num_layers - 1):
-            self.convh.append(layer_type(dim_h, dim_h))
-        self.conv2 = layer_type(dim_h, dim_out)
-
-    def forward(self, x, edge_index, edge_attr):
-        x = F.elu(self.conv1(x, edge_index))
-        for i in range(len(self.convh)):
-            x = F.dropout(x, p=0.5, training=self.training)
-            x = F.elu(self.convh[i](x, edge_index))
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.conv2(x, edge_index)
-        return torch.sigmoid(x)
-
-
-class CustomGATGraph(torch.nn.Module):
-    def __init__(self, layer_type, dim_in, dim_h, dim_out, heads, num_layers):
-        super().__init__()
-        self.conv1 = layer_type(dim_in, dim_h, heads, dropout=0.6)
-        self.convh = torch.nn.ModuleList()
-        for i in range(num_layers - 1):
-            self.convh.append(layer_type(dim_h * heads, dim_h, heads, dropout=0.6))
-        self.conv2 = layer_type(
-            dim_h * heads,
-            dim_out,
-            heads=1,
-            dropout=0.6,
-        )
-
-    def forward(self, x, edge_index, edge_attr):
-        x = F.elu(self.conv1(x, edge_index))
-        for i in range(len(self.convh)):
-            x = F.dropout(x, p=0.5, training=self.training)
-            x = F.elu(self.convh[i](x, edge_index))
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.conv2(x, edge_index)
-        return x
-
-
-class GraphSAGEModel(torch.nn.Module):
-    """GraphSAGE"""
-
-    def __init__(self, dim_in, dim_h, dim_out, num_layers):
-        super().__init__()
-        self.sage1 = SAGEConv(dim_in, dim_h)
-        self.sageh = torch.nn.ModuleList()
-        for i in range(num_layers - 1):
-            self.sageh.append(SAGEConv(dim_h, dim_h))
-        self.sage2 = SAGEConv(dim_h, dim_out)
-
-    def forward(self, x, edge_index, edge_attr):
-        x = self.sage1(x, edge_index).relu()
-        for i in range(len(self.sageh)):
-            x = F.dropout(x, p=0.5, training=self.training)
-            x = F.elu(self.sageh[i](x, edge_index))
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.sage2(x, edge_index)
-        return F.log_softmax(x, dim=1)
-
-
-class GraphTest(torch.nn.Module):
-    def __init__(self, dim_in, dim_h, dim_out, layer_type):
-        super().__init__()
-
+        self.num_layers = num_layers
         self.model = torch.nn.ModuleList()
         self.model.append(Linear(dim_in, 1024))
         self.model.append(Linear(1024, 1024))
         self.model.append(Linear(1024, dim_h))
-        for i in range(3):
+        for _ in range(self.num_layers):
             self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(JumpingKnowledge("cat", dim_h))
-            self.model.append(Linear(4 * dim_h, dim_h))
+        # self.model.append(JumpingKnowledge("cat", dim_h))
+        self.model.append(Linear(dim_h, dim_h))
         self.model.append(Linear(dim_h, dim_out))
 
-    def forward(self, x, edge_index, edge_attr):
-        x = self.model[0](x).relu()
+    def forward(self, x, edge_index):
+        x = self.model[0](x).sigmoid()
         x = self.model[1](x).relu()
         x = self.model[2](x).relu()
-        for i in range(3):
-            xa = self.model[6 * i + 3](x, edge_index).relu()
-            xb = self.model[6 * i + 4](xa, edge_index).relu()
-            xc = self.model[6 * i + 5](xb, edge_index).relu()
-            xd = self.model[6 * i + 6](xc, edge_index).relu()
-            x = self.model[6 * i + 7]([xa, xb, xc, xd])
-            x = self.model[6 * i + 8](x).relu()
-        x = self.model[-1](x)
-        return x
-
-
-class GraphTestBest(torch.nn.Module):
-    def __init__(self, dim_in, dim_h, dim_out, layer_type):
-        super().__init__()
-        self.model = torch.nn.ModuleList()
-        self.model.append(Linear(dim_in, 1024))
-        self.model.append(Linear(1024, 1024))
-        self.model.append(Linear(1024, dim_h))
-        for i in range(3):
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(layer_type(dim_h, dim_h))
-            self.model.append(JumpingKnowledge("cat", dim_h))
-            self.model.append(Linear(4 * dim_h, dim_h))
-        self.model.append(Linear(dim_h, dim_out))
-
-    def forward(self, x, edge_index, edge_attr):
-        x = self.model[0](x).relu()
-        x = self.model[1](x).relu()
-        x = self.model[2](x).relu()
-        for i in range(3):
-            xa = self.model[6 * i + 3](x, edge_index).relu()
-            xb = self.model[6 * i + 4](xa, edge_index).relu()
-            xc = self.model[6 * i + 5](xb, edge_index).relu()
-            xd = self.model[6 * i + 6](xc, edge_index).relu()
-            x = self.model[6 * i + 7]([xa, xb, xc, xd])
-            x = self.model[6 * i + 8](x).relu()
-        x = self.model[-1](x)
+        for i in range(self.num_layers):
+            x = self.model[3+i](x, edge_index).relu()
+        x = self.model[-2](x).relu()
+        x = self.model[-1](x).relu()
         return x
 
 
@@ -194,7 +83,6 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
-                jk="cat",
             )
         elif "graph_gin" in model:
             self.model = GIN(
@@ -202,15 +90,13 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
-                jk="cat",
             )
         elif "GCN" in model:
-            self.model = CustomGCN(
-                layer_type=GCNConv,
-                dim_in=self.num_features,
-                dim_h=dim_h,
-                dim_out=self.num_classes,
+            self.model = GCN(
+                in_channels=self.num_features,
+                hidden_channels=dim_h,
                 num_layers=num_layers,
+                out_channels=self.num_classes,
             )
         elif model == "graph_sage":
             self.model = GraphSAGE(
@@ -219,12 +105,13 @@ class Graph(pl.LightningModule):
                 num_layers=num_layers,
                 out_channels=self.num_classes,
             )
-        elif model == "graph_test":
-            self.model = GraphTestBest(
+        elif model == "graph_custom":
+            self.model = GraphCustom(
                 dim_in=num_features,
                 dim_h=dim_h,
                 dim_out=num_classes,
-                layer_type=SAGEConv,  # GraphConv,
+                num_layers=num_layers,
+                layer_type=SAGEConv, 
             )
         self.seed = seed
         self.max_epochs = max_epochs
@@ -244,21 +131,26 @@ class Graph(pl.LightningModule):
 
     def _step(self, batch, batch_idx, name):
         x, edge_index = batch.x, batch.edge_index
-        label = batch.y
+        label = batch.y 
         label = label.long()
 
         outputs = self.model(x, edge_index)
         loss = self.loss(outputs, label)
         pred = outputs.argmax(-1)
-        # accuracy = (pred == label).sum() / pred.shape[0]
 
         if name == "train":
             self.log("train_loss", loss)
-            # self.log("train_acc", accuracy)
-            # return loss
+            return loss
         elif name == "val":
             self.val_acc(pred, label)
             self.val_acc_macro(pred, label)
+            self.log(
+                "val_loss",
+                loss,
+                prog_bar=True,
+                on_step=False,
+                on_epoch=True,
+            )
             self.log(
                 "val_acc",
                 self.val_acc,

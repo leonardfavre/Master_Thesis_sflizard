@@ -5,6 +5,7 @@ import torch
 from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
+from typing import List
 
 from sflizard import (
     Graph,
@@ -35,7 +36,7 @@ class TestPipeline:
         valid_data_path: str,
         test_data_path: str,
         stardist_weights_path: str,
-        graph_weights_path: str,
+        graph_weights_path: List[str],
         graph_distance: int,
         n_rays: int,
         n_classes: int,
@@ -107,11 +108,15 @@ class TestPipeline:
 
     def __init_graph_inference(self, weights_path: str) -> None:
         print("Loading graph model...")
-        model = Graph.load_from_checkpoint(
-            weights_path,
-        )
-        self.x_type = X_TYPE[model.num_features]
-        self.graph = model.model.to(self.device)
+        if isinstance(weights_path, str):
+            weights_path = [weights_path]
+        self.graph = {}
+        for w in weights_path:
+            model = Graph.load_from_checkpoint(
+                w,
+            )
+            self.x_type = X_TYPE[model.num_features]
+            self.graph[w] = model.model.to(self.device)
         print("Graph model loaded.")
 
     def test(self, output_dir=None, imgs_to_display=0) -> None:
@@ -121,7 +126,9 @@ class TestPipeline:
         self.star_smt = SegmentationMetricTool(self.n_classes, self.device)
 
         if self.compute_graph:
-            self.graph_smt = SegmentationMetricTool(self.n_classes, self.device)
+            self.graph_smt = {}
+            for g in self.graph:
+                self.graph_smt[g] = SegmentationMetricTool(self.n_classes, self.device)
 
         # init report tool
         if output_dir is not None:
@@ -202,21 +209,24 @@ class TestPipeline:
                     inputs, self.graph_distance, self.stardist_weights_path, self.x_type
                 )
 
-                with torch.no_grad():
-                    graph_pred = []
-                    for j in range(len(graphs)):
-                        if len(graphs[j]["x"]) > 0:
-                            out = self.graph(
-                                graphs[j]["x"].to(self.device),
-                                graphs[j]["edge_index"].to(self.device),
-                            )
-                            graph_pred.append(out.argmax(-1))
-                        else:
-                            graph_pred.append(None)
+                graphs_class_map = {}
 
-                    graphs_class_map = get_class_map_from_graph(
-                        graphs, pred_mask, graph_pred, pred_class_map_improved
-                    )
+                with torch.no_grad():
+                    for g in self.graph:
+                        graph_pred = []
+                        for j in range(len(graphs)):
+                            if len(graphs[j]["x"]) > 0:
+                                out = self.graph[g](
+                                    graphs[j]["x"].to(self.device),
+                                    graphs[j]["edge_index"].to(self.device),
+                                )
+                                graph_pred.append(out.argmax(-1))
+                            else:
+                                graph_pred.append(None)
+
+                        graphs_class_map[g] = get_class_map_from_graph(
+                            graphs, pred_mask, graph_pred, pred_class_map_improved
+                        )
 
             # metrics gattering
             self.star_smt.add_batch(i, true_mask, pred_mask)
@@ -228,11 +238,12 @@ class TestPipeline:
                     pred_class_map_improved.detach().int().cpu().numpy()
                 )
                 if self.compute_graph:
-                    self.graph_smt.add_batch_class(
-                        i, 
-                        true_class_map.detach().int().cpu().numpy(), 
-                        np.array(graphs_class_map)
-                    )
+                    for g in self.graph_smt:
+                        self.graph_smt[g].add_batch_class(
+                            i, 
+                            true_class_map.detach().int().cpu().numpy(), 
+                            np.array(graphs_class_map[g])
+                        )
 
             if output_dir is not None:
                 self.report_generator.add_batch(
@@ -243,13 +254,14 @@ class TestPipeline:
                     pred_class_map, 
                     pred_class_map_improved,
                     graphs,
-                    graphs_class_map,
+                    graphs_class_map[list(graphs_class_map.keys())[0]],
                 )
 
         # compute metrics
         self.star_smt.compute_metrics()
         if self.compute_graph:
-            self.graph_smt.compute_metrics()
+            for g in self.graph_smt:
+                self.graph_smt[g].compute_metrics()
 
         print("Test done.\n\nResults:\n")
 
@@ -259,16 +271,17 @@ class TestPipeline:
         self.star_smt.log_results(console)
         if self.compute_graph:
             print("\nGraph results:\n")
-            self.graph_smt.log_results(console)
+            for g in self.graph_smt:
+                self.graph_smt[g].log_results(console)
 
         # generate report
         if output_dir is not None:
             self.report_generator.add_final_metrics(
                 self.star_smt.seg_metrics[0],
                 self.star_smt.classes_metrics if self.classification else None,
-                self.graph_smt.classes_metrics if self.compute_graph else None,
+                self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics if self.compute_graph else None,
                 self.star_smt.seg_metrics if self.classification else None,
-                self.graph_smt.seg_metrics if self.compute_graph else None,
+                self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics if self.compute_graph else None,
             )
 
             self.report_generator.generate_md()
