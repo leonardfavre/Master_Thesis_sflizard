@@ -1,22 +1,12 @@
 from typing import List
 
-import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from PIL import Image
+import torchmetrics
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
-from torch_geometric.nn import (
-    GCN,
-    GAT,
-    GIN,
-    GraphSAGE,
-    JumpingKnowledge,
-    SAGEConv,
-)
-import torchmetrics
+from torch_geometric.nn import GAT, GCN, GIN, GraphSAGE, SAGEConv
 
 
 class GraphCustom(torch.nn.Module):
@@ -38,7 +28,7 @@ class GraphCustom(torch.nn.Module):
         x = self.model[1](x).relu()
         x = self.model[2](x).relu()
         for i in range(self.num_layers):
-            x = self.model[3+i](x, edge_index).relu()
+            x = self.model[3 + i](x, edge_index).relu()
         x = self.model[-2](x).relu()
         x = self.model[-1](x).relu()
         return x
@@ -66,7 +56,7 @@ class Graph(pl.LightningModule):
             0.01929911238667816,
             0.06729488533622548,
             0.515399722585458,
-            0.018063861886878453
+            0.018063861886878453,
         ],
     ):
 
@@ -111,13 +101,15 @@ class Graph(pl.LightningModule):
                 dim_h=dim_h,
                 dim_out=num_classes,
                 num_layers=num_layers,
-                layer_type=SAGEConv, 
+                layer_type=SAGEConv,
             )
         self.seed = seed
         self.max_epochs = max_epochs
 
         self.val_acc = torchmetrics.Accuracy()
-        self.val_acc_macro = torchmetrics.Accuracy(num_classes=self.num_classes, average="macro", mdmc_average="global")
+        self.val_acc_macro = torchmetrics.Accuracy(
+            num_classes=self.num_classes, average="macro", mdmc_average="global"
+        )
 
         if class_weights is not None:
             class_weights = torch.tensor(class_weights).to("cuda")
@@ -131,7 +123,7 @@ class Graph(pl.LightningModule):
 
     def _step(self, batch, batch_idx, name):
         x, edge_index = batch.x, batch.edge_index
-        label = batch.y 
+        label = batch.y
         label = label.long()
 
         outputs = self.model(x, edge_index)
@@ -246,7 +238,7 @@ class Graph(pl.LightningModule):
     #     """Output results."""
     #     x, edge_index = batch.x, batch.edge_index
 
-    #     outputs = self.model(x, edge_index) 
+    #     outputs = self.model(x, edge_index)
     #     pred = outputs.argmax(-1)
 
     #     class_map = batch.class_map[0]

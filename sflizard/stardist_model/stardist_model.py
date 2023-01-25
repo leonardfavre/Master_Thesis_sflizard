@@ -1,6 +1,5 @@
 import pytorch_lightning as pl
 import torch
-import torchmetrics
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
 import wandb

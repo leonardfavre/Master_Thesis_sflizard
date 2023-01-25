@@ -47,7 +47,9 @@ NUM_FEATURES = {
     "4ll+c": 540,
     "4ll+c+x": 548,
 }
-STARDIST_CHECKPOINT = "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+STARDIST_CHECKPOINT = (
+    "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+)
 X_TYPE = "4ll+c"
 DISTANCE = 45
 
@@ -128,7 +130,11 @@ def init_stardist_training(args, device, debug=False):
     if debug:
         print("init_stardist_training: model initialized.")
 
-    return dm, model, [loss_callback] #, acc_dist_callback] # , acc_callback, acc_macro_callback]
+    return (
+        dm,
+        model,
+        [loss_callback],
+    )  # , acc_dist_callback] # , acc_callback, acc_macro_callback]
 
 
 def init_graph_training(args):
@@ -190,7 +196,8 @@ def init_graph_training(args):
 
     acc_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-acc-{epoch}-{val_acc:.4f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        + "-acc-{epoch}-{val_acc:.4f}",
         monitor="val_acc",
         mode="max",
         save_top_k=1,
@@ -198,7 +205,8 @@ def init_graph_training(args):
 
     acc_macro_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        + "-accmacro-{epoch}-{val_acc_macro:.4f}",
         monitor="val_acc_macro",
         mode="max",
         save_top_k=1,

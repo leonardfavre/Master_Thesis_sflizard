@@ -3,7 +3,6 @@ import os.path as osp
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.model_selection import train_test_split
 from torch_geometric.data import Data, Dataset, LightningDataset
 from tqdm import tqdm
 
@@ -34,7 +33,7 @@ class LizardGraphDataset(Dataset):
         self.stardist_checkpoint = stardist_checkpoint
         self.x_type = x_type
         self.consep_data = consep_data
-        self.light=light
+        self.light = light
         root = f"{root}/{distance}/{x_type}/{'light' if light else 'w_img'}/{name}"
         super().__init__(root, transform, pre_transform)
 
@@ -87,9 +86,9 @@ class LizardGraphDataset(Dataset):
                     x=graph["x"],
                     y=graph["y"],
                     edge_index=graph["edge_index"],
-                    image_idx = self.df.iloc[idx].id,
-                    #original_img=image,
-                    #class_map=class_map,
+                    image_idx=self.df.iloc[idx].id,
+                    # original_img=image,
+                    # class_map=class_map,
                 )
             else:
                 processed_data = Data(
@@ -97,7 +96,7 @@ class LizardGraphDataset(Dataset):
                     y=graph["y"],
                     edge_index=graph["edge_index"],
                     pos=graph["pos"],
-                    image_idx = self.df.iloc[idx].id,
+                    image_idx=self.df.iloc[idx].id,
                     original_img=image,
                     class_map=class_map,
                     inst_map=graph["inst_map"],
@@ -143,8 +142,16 @@ def LizardGraphDataModule(
 
     # train_df = train_data.reset_index(drop=True)
     if train_data is not None:
-        train_df = train_data["annotations"] if type(train_data) == dict and "annotations" in train_data else train_data.reset_index(drop=True)
-        images = train_data["images"] if type(train_data) == dict and "images" in train_data else None
+        train_df = (
+            train_data["annotations"]
+            if type(train_data) == dict and "annotations" in train_data
+            else train_data.reset_index(drop=True)
+        )
+        images = (
+            train_data["images"]
+            if type(train_data) == dict and "images" in train_data
+            else None
+        )
         train_ds = LizardGraphDataset(
             df=train_df,
             data=images,
@@ -159,8 +166,16 @@ def LizardGraphDataModule(
 
     # valid_df = valid_data.reset_index(drop=True)
     if valid_data is not None:
-        valid_df = valid_data["annotations"] if type(valid_data) == dict and "annotations" in valid_data else valid_data.reset_index(drop=True)
-        images = valid_data["images"] if type(valid_data) == dict and "images" in valid_data else None
+        valid_df = (
+            valid_data["annotations"]
+            if type(valid_data) == dict and "annotations" in valid_data
+            else valid_data.reset_index(drop=True)
+        )
+        images = (
+            valid_data["images"]
+            if type(valid_data) == dict and "images" in valid_data
+            else None
+        )
         valid_ds = LizardGraphDataset(
             df=valid_df,
             data=images,
@@ -175,8 +190,16 @@ def LizardGraphDataModule(
 
     if test_data is not None:
         # test_df = test_data.reset_index(drop=True)
-        test_df = test_data["annotations"] if type(test_data) == dict and "annotations" in test_data else test_data.reset_index(drop=True)
-        images = test_data["images"] if type(test_data) == dict and "images" in test_data else None
+        test_df = (
+            test_data["annotations"]
+            if type(test_data) == dict and "annotations" in test_data
+            else test_data.reset_index(drop=True)
+        )
+        images = (
+            test_data["images"]
+            if type(test_data) == dict and "images" in test_data
+            else None
+        )
         test_ds = LizardGraphDataset(
             df=test_df,
             data=images,
@@ -193,7 +216,11 @@ def LizardGraphDataModule(
         if valid_data is not None:
             if test_data is not None:
                 return LightningDataset(
-                    train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers
+                    train_ds,
+                    valid_ds,
+                    test_ds,
+                    batch_size=batch_size,
+                    num_workers=num_workers,
                 )
             else:
                 return LightningDataset(
