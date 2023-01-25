@@ -174,6 +174,7 @@ def get_graph(
 
         if points.shape[0] == 0:
             graph["x"] = torch.Tensor([])
+            return None
         else:
             # init models
             if "ll" in x_type:

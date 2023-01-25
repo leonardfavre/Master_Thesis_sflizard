@@ -57,10 +57,10 @@ class HoverNetMetricTool:
         # get the dataloader
         if mode == "test":
             print("-- test mode")
-            self.dataloader = dm.test_dataloader()
+            self.dataloader = dm.val_dataloader()
         elif mode == "valid":
             print("-- validation mode")
-            self.dataloader = dm.val_dataloader()
+            self.dataloader = dm.train_dataloader()
         print("Data loaded.")
 
         # get the checkpoints
@@ -72,14 +72,14 @@ class HoverNetMetricTool:
 
 
         # run the conversion for each model
-        # print("\nRunning inference...")
-        # for wp in weights_paths:
-        #     print(f" -- {wp}...\n...")
-        #     # load graph model
-        #     graph_model = self.init_graph_inference(weights_paths[wp])
-        #     # run the inference on data
-        #     self.save_mat(graph_model, wp)
-        #     print("...done.")
+        print("\nRunning inference...")
+        for wp in weights_paths:
+            print(f" -- {wp}...\n...")
+            # load graph model
+            graph_model = self.init_graph_inference(weights_paths[wp])
+            # run the inference on data
+            self.save_mat(graph_model, wp)
+            print("...done.")
             
         # print("Inference done.")
 
@@ -107,7 +107,7 @@ class HoverNetMetricTool:
             f.write("#!/bin/bash\n")
             for wp in weights_paths:
                 f.write(f"\necho {wp}\n")
-                save_path = self.base_save_path + f"{wp}/"
+                save_path = self.base_save_path + f"/{wp}/"
                 f.write(f"python external_models/hover_net/compute_stats.py --pred_dir {save_path} --true_dir {TRUE_DATA_PATH_START}{self.mode}/ --mode type\n")
 
         subprocess.run(["chmod", "+x", f"{self.base_save_path}/eval.sh"])
@@ -158,6 +158,7 @@ class HoverNetMetricTool:
                 inst_centroid = batch[b].pos.cpu().numpy().astype(np.float64)
                 inst_type = np.expand_dims(graph_pred.cpu().numpy().astype(np.int64), axis=1)
                 inst_uid = np.array([[inst_map[int(i[0])][int(i[1])]] for i in inst_centroid]).astype(np.int32)
+                inst_centroid[:, [1, 0]] = inst_centroid[:, [0, 1]]
                 mat = {
                     "inst_map": inst_map,
                     "inst_uid": inst_uid,

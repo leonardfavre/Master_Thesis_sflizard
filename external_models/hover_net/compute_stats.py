@@ -46,7 +46,8 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
         true_info = sio.loadmat(os.path.join(true_dir, basename + ".mat"))
         # dont squeeze, may be 1 instance exist
         true_centroid = (true_info["centroid"]).astype("float32")
-        true_inst_type = (true_info["class"]).astype("int32")
+        true_inst_type = (true_info["classes"]).astype("int32")
+
 
         if true_centroid.shape[0] != 0:
             true_inst_type = true_inst_type[:, 0]
@@ -62,6 +63,7 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
         # dont squeeze, may be 1 instance exist
         pred_centroid = (pred_info["inst_centroid"]).astype("float32")
         pred_inst_type = (pred_info["inst_type"]).astype("int32")
+
 
         if pred_centroid.shape[0] != 0:
             pred_inst_type = pred_inst_type[:, 0]

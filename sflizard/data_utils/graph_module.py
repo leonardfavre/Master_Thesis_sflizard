@@ -82,27 +82,30 @@ class LizardGraphDataset(Dataset):
                 consep_data=self.consep_data,
                 hovernet_metric=not self.light,
             )
-            if self.light:
-                processed_data = Data(
-                    x=graph["x"],
-                    y=graph["y"],
-                    edge_index=graph["edge_index"],
-                    image_idx = self.df.iloc[idx].id,
-                    #original_img=image,
-                    #class_map=class_map,
-                )
+            if graph is None:
+                print(f"No cell detected for this image: {self.df.iloc[idx].id}")
             else:
-                processed_data = Data(
-                    x=graph["x"],
-                    y=graph["y"],
-                    edge_index=graph["edge_index"],
-                    pos=graph["pos"],
-                    image_idx = self.df.iloc[idx].id,
-                    original_img=image,
-                    class_map=class_map,
-                    inst_map=graph["inst_map"],
-                )
-            torch.save(processed_data, osp.join(self.processed_dir, f"data_{idx}.pt"))
+                if self.light:
+                    processed_data = Data(
+                        x=graph["x"],
+                        y=graph["y"],
+                        edge_index=graph["edge_index"],
+                        image_idx = self.df.iloc[idx].id,
+                        #original_img=image,
+                        #class_map=class_map,
+                    )
+                else:
+                    processed_data = Data(
+                        x=graph["x"],
+                        y=graph["y"],
+                        edge_index=graph["edge_index"],
+                        pos=graph["pos"],
+                        image_idx = self.df.iloc[idx].id,
+                        original_img=image,
+                        class_map=class_map,
+                        inst_map=graph["inst_map"],
+                    )
+                torch.save(processed_data, osp.join(self.processed_dir, f"data_{idx}.pt"))
 
     def len(self):
         return len(self.df)
