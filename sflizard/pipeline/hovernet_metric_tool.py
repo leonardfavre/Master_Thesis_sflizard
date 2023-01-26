@@ -123,7 +123,14 @@ class HoverNetMetricTool:
                 with self.log_file.open("a") as f:
                     f.write(f"\n{wp}: ValueError.\n\n{str(e)}\nskiped.")
                 print("...skipped.")
+            except FileNotFoundError as e:
+                print(f"FileNotFoundError... see log in {self.base_save_path}/log.txt")
+                # save error to file
+                with self.log_file.open("a") as f:
+                    f.write(f"\n{wp}: FileNotFoundError.\n\n{str(e)}\nskiped.")
+                print("...skipped.")
             break
+            
 
         # save the result table
         self.save_result_to_file()
@@ -242,13 +249,9 @@ class HoverNetMetricTool:
                         self.result_table[model][ckpt][head] = {}
                         for dh in weights_selector["dimh"]:
                             self.result_table[model][ckpt][head][dh] = {}
-                            # for nl in weights_selector["num_layers"]:
-                            #     self.result_table[model][ckpt][head][dh][nl] = 
                 else:
                     for dh in weights_selector["dimh"]:
                         self.result_table[model][ckpt][dh] = {}
-                        # for nl in weights_selector["num_layers"]:
-                        #     self.result_table[model][ckpt][dh][nl] = {}
         self.result_file = Path(self.base_save_path) / "result_table.pkl"
         Path(self.result_file).touch(exist_ok=True)
 
@@ -280,7 +283,7 @@ class HoverNetMetricTool:
                                 f.write(f"\t[ # {dh}\n")
                                 for nl in self.result_table[m][c][h][dh]:
                                     val = self.result_table[m][c][h][dh][nl].split("\n")[1]
-                                    val.replace("  ", ", ")
+                                    val = val.replace("  ", ", ")
                                     f.write(f"\t\t{val}, # {nl}\n")
                                 f.write("\t],\n")
                             f.write("]\n")
@@ -290,7 +293,7 @@ class HoverNetMetricTool:
                             f.write(f"\t[ # {dh}\n")
                             for nl in self.result_table[m][c][dh]:
                                 val = self.result_table[m][c][dh][nl].split("\n")[1]
-                                val.replace("  ", ", ")
+                                val = val.replace("  ", ", ")
                                 f.write(f"\t\t{val}, # {nl}\n")
                             f.write("\t],\n")
                         f.write("]\n")

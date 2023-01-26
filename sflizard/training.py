@@ -187,9 +187,14 @@ def init_graph_training(args):
         heads=args.heads,
     )
 
+    if model == "graph_gat":
+        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+    else:
+        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        filename=name
         + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
@@ -198,7 +203,7 @@ def init_graph_training(args):
 
     acc_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        filename=name
         + "-acc-{epoch}-{val_acc:.4f}",
         monitor="val_acc",
         mode="max",
@@ -207,7 +212,7 @@ def init_graph_training(args):
 
     acc_macro_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        filename=name
         + "-accmacro-{epoch}-{val_acc_macro:.4f}",
         monitor="val_acc_macro",
         mode="max",
@@ -254,8 +259,13 @@ def full_training(args):
             f"models/final3_stardist_crop-cosine_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
+        if model == "graph_gat":
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        else:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+
         trainer.save_checkpoint(
-            f"models/{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}-{args.max_epochs}.ckpt"
+            f"models/{name}-{args.max_epochs}.ckpt"
         )
 
     # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
