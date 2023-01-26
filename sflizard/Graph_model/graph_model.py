@@ -17,6 +17,7 @@ from torch_geometric.nn import (
     SAGEConv,
 )
 import torchmetrics
+import wandb
 
 
 class GraphCustom(torch.nn.Module):
@@ -67,22 +68,8 @@ class Graph(pl.LightningModule):
             0.06729488533622548,
             0.515399722585458,
             0.018063861886878453
-
-            # 1,
-            # 90.18723210806598,
-            # 2.0900540911512655,
-            # 4.68720951818412,
-            # 16.344027681335106,
-            # 125.17604110329907,
-            # 4.38720204716698,
-            # 1 / 0.8435234983048621,
-            # 1 / 0.0015844697497448515,
-            # 1 / 0.09702835179125052,
-            # 1 / 0.018770678077839286,
-            # 1 / 0.005716505874930195,
-            # 1 / 0.0011799091886332306,
-            # 1 / 0.03219658701273987,
         ],
+        wandb_log=False,
     ):
 
         super().__init__()
@@ -98,6 +85,8 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
+                v2=True,
+                heads=heads,
             )
         elif "graph_gin" in model:
             self.model = GIN(
@@ -128,6 +117,8 @@ class Graph(pl.LightningModule):
                 num_layers=num_layers,
                 layer_type=SAGEConv, 
             )
+        if self.wandb_log:
+            wandb.watch(self.model)
         self.seed = seed
         self.max_epochs = max_epochs
 
@@ -148,13 +139,14 @@ class Graph(pl.LightningModule):
         x, edge_index = batch.x, batch.edge_index
         label = batch.y 
         label = label.long()
+        logger_batch_size = len(batch.y)
 
         outputs = self.model(x, edge_index)
         loss = self.loss(outputs, label)
         pred = outputs.argmax(-1)
 
         if name == "train":
-            self.log("train_loss", loss)
+            self.log("train_loss", loss, batch_size=logger_batch_size)
             return loss
         elif name == "val":
             self.val_acc(pred, label)
@@ -165,6 +157,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size
             )
             self.log(
                 "val_acc",
@@ -172,6 +165,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size
             )
             self.log(
                 "val_acc_macro",
@@ -179,6 +173,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size
             )
             return loss #, accuracy
         elif name == "test":
@@ -200,28 +195,24 @@ class Graph(pl.LightningModule):
         #     self.output_results(batch) # only work with batch size 1   aw     s
         return self._step(batch, batch_idx, "test")
 
-    # def _epoch_end(self, outputs, name):
-    #     """Epoch end."""
+    def _epoch_end(self, outputs, name):
+        """Epoch end."""
+        if name in ["train", "val"]:
+            if self.wandb_log:
+                wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
+                if name == "val":
+                    wandb.log({f"{name}_acc": self.val_acc})
+                    wandb.log({f"{name}_acc_macro": self.val_acc_macro})
+        else:
+            raise ValueError(f"Invalid step name given: {name}")
 
-    #     # loss = 0.0
-    #     # accuracy = 0
-    #     # batch_nbr = 0
+    def training_epoch_end(self, outputs):
+        """Training epoch end."""
+        # outputs = [x["loss"] for x in outputs if x is not None]
+        self._epoch_end(outputs, "train")
 
-    #     # for lo, a in outputs:
-    #     #     if lo == lo:
-    #     #         loss += lo
-    #     #     if a == a:
-    #     #         accuracy += a
-    #     #     batch_nbr += 1
-
-    #     # loss /= batch_nbr
-    #     # accuracy /= batch_nbr
-
-    #     # self.log(f"{name}_acc", accuracy)
-    #     # self.log(f"{name}_loss", loss)
-
-    # def validation_epoch_end(self, outputs):
-    #     self._epoch_end(outputs, "val")
+    def validation_epoch_end(self, outputs):
+        self._epoch_end(outputs, "val")
 
     # def test_epoch_end(self, outputs):
     #     self._epoch_end(outputs, "test")

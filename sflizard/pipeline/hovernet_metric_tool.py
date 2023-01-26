@@ -26,6 +26,7 @@ class HoverNetMetricTool:
             "model": [],
             "dimh": [],
             "num_layers": [],
+            "heads": [],
         }, 
         distance: int = 45, 
         x_type: str = "ll"
@@ -121,16 +122,26 @@ class HoverNetMetricTool:
         for model in weights_selector["model"]:
             for dimh in weights_selector["dimh"]:
                 for num_layers in weights_selector["num_layers"]:
-                    for checkpoint in available_checkpoints:
-                        if f"{model}-{dimh}-{num_layers}" in str(checkpoint):
-                            if "epochs" in str(checkpoint):
-                                weights_path[f"{model}-{dimh}-{num_layers}-final"] = checkpoint
-                            elif "loss" in str(checkpoint):
-                                weights_path[f"{model}-{dimh}-{num_layers}-loss"] = checkpoint
-                            elif "acc_macro" in str(checkpoint):
-                                weights_path[f"{model}-{dimh}-{num_layers}-acc_macro"] = checkpoint
-                            elif "acc" in str(checkpoint):
-                                weights_path[f"{model}-{dimh}-{num_layers}-acc"] = checkpoint
+                    for heads in weights_selector["heads"]:
+                        if model != "graph_gat" and heads != weights_selector["heads"][0]:
+                            continue
+                        for checkpoint in available_checkpoints:
+                            if f"{model}-{dimh}-{num_layers}" in str(checkpoint) and model != "graph_gat":
+                                ckpt = checkpoint
+                                wp  = f"{model}-{dimh}-{num_layers}"
+                            elif f"{model}-{dimh}-{num_layers}-{heads}" in str(checkpoint) and model == "graph_gat":
+                                ckpt = checkpoint
+                                wp  = f"{model}-{dimh}-{num_layers}-{heads}"
+                            else:
+                                continue
+                            if "epochs" in str(ckpt):
+                                weights_path[f"{wp}-final"] = ckpt
+                            elif "loss" in str(ckpt):
+                                weights_path[f"{wp}-loss"] = ckpt
+                            elif "acc_macro" in str(ckpt):
+                                weights_path[f"{wp}-acc_macro"] = ckpt
+                            elif "acc" in str(ckpt):
+                                weights_path[f"{wp}-acc"] = ckpt
         return weights_path
 
     def save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
