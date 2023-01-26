@@ -12,5 +12,5 @@ if __name__ == "__main__":
         mode = "valid",
         weights_selector = WEIGHTS_SELECTOR,
         distance = 45,
-        x_type = "4ll+c",
+        x_type = "c",
     )

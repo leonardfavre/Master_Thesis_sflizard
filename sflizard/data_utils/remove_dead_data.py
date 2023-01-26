@@ -48,6 +48,7 @@ DEAD_IMAGES = [
     "crag_25_976_960",
 ]
 
+# From valid data
 # DEAD_IMAGES = [
 #     "crag_63_200_0",
 #     "crag_63_0_400",

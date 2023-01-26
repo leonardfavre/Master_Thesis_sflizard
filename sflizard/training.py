@@ -41,12 +41,13 @@ NUM_LAYERS = 4
 HEADS = 8
 NUM_FEATURES = {
     "c": 7,
+    "c+x": 9,
     "ll": 128,
     "ll+c": 135,
     "ll+c+x": 137,
     "4ll": 512,
     "4ll+c": 540,
-    "4ll+c+x": 548,
+    "4ll+c+x": 542,
 }
 STARDIST_CHECKPOINT = (
     "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
@@ -407,6 +408,8 @@ if __name__ == "__main__":
         "loss_power_scaler": args.loss_power_scaler,
         "dimh": args.dimh,
         "num_layers": args.num_layers,
+        "heads": args.heads,
+        "x_type": args.x_type,
         "data": "shuffle",
         "save_name": args.save_name,
     }

@@ -8,6 +8,8 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
 from torch_geometric.nn import GAT, GCN, GIN, GraphSAGE, SAGEConv
 
+import wandb
+
 
 class GraphCustom(torch.nn.Module):
     def __init__(self, dim_in, dim_h, dim_out, num_layers, layer_type):
@@ -58,6 +60,7 @@ class Graph(pl.LightningModule):
             0.515399722585458,
             0.018063861886878453,
         ],
+        wandb_log=False,
     ):
 
         super().__init__()
@@ -73,6 +76,8 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
+                v2=True,
+                heads=heads,
             )
         elif "graph_gin" in model:
             self.model = GIN(
@@ -103,6 +108,8 @@ class Graph(pl.LightningModule):
                 num_layers=num_layers,
                 layer_type=SAGEConv,
             )
+        if self.wandb_log:
+            wandb.watch(self.model)
         self.seed = seed
         self.max_epochs = max_epochs
 
@@ -161,10 +168,8 @@ class Graph(pl.LightningModule):
                 on_epoch=True,
                 batch_size=logger_batch_size,
             )
-            # return loss, accuracy
         elif name == "test":
             raise NotImplementedError
-            # return loss, accuracy
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
@@ -180,35 +185,26 @@ class Graph(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         """Test step."""
-        # if batch_idx == 0:
-        #     self.output_results(batch) # only work with batch size 1   aw     s
         return self._step(batch, batch_idx, "test")
 
-    # def _epoch_end(self, outputs, name):
-    #     """Epoch end."""
+    def _epoch_end(self, outputs, name):
+        """Epoch end."""
+        if name in ["train", "val"]:
+            if self.wandb_log:
+                wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
+                if name == "val":
+                    wandb.log({f"{name}_acc": self.val_acc})
+                    wandb.log({f"{name}_acc_macro": self.val_acc_macro})
+        else:
+            raise ValueError(f"Invalid step name given: {name}")
 
-    #     loss = 0.0
-    #     accuracy = 0
-    #     batch_nbr = 0
+    def training_epoch_end(self, outputs):
+        """Training epoch end."""
+        # outputs = [x["loss"] for x in outputs if x is not None]
+        self._epoch_end(outputs, "train")
 
-    #     for lo, a in outputs:
-    #         if lo == lo:
-    #             loss += lo
-    #         if a == a:
-    #             accuracy += a
-    #         batch_nbr += 1
-
-    #     loss /= batch_nbr
-    #     accuracy /= batch_nbr
-
-    #     self.log(f"{name}_acc", accuracy)
-    #     self.log(f"{name}_loss", loss)
-
-    # def validation_epoch_end(self, outputs):
-    #     self._epoch_end(outputs, "val")
-
-    # def test_epoch_end(self, outputs):
-    #     self._epoch_end(outputs, "test")
+    def validation_epoch_end(self, outputs):
+        self._epoch_end(outputs, "val")
 
     def configure_optimizers(self, scheduler="cosine"):
         optimizer = torch.optim.Adam(
@@ -237,24 +233,3 @@ class Graph(pl.LightningModule):
 
         scheduler = schedulers[scheduler]
         return [optimizer], [scheduler]
-
-    # def output_results(self, batch):
-    #     """Output results."""
-    #     x, edge_index = batch.x, batch.edge_index
-
-    #     outputs = self.model(x, edge_index)
-    #     pred = outputs.argmax(-1)
-
-    #     class_map = batch.class_map[0]
-    #     pos = batch.pos.cpu().numpy()
-    #     for idx, point in enumerate(pos):
-    #         for b in range(-2, 3):
-    #             for c in range(-2, 3):
-    #                 class_map[(int(point[0]) + b) % 540][
-    #                     (int(point[1]) + c) % 540
-    #                 ] = pred[idx]
-
-    #     class_map = class_map * 255 / 10
-    #     class_map = class_map.astype(np.uint8)
-    #     class_map_img = Image.fromarray(class_map)
-    #     class_map_img.save("outputs/class_map.png")

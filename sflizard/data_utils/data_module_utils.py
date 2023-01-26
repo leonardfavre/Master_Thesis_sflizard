@@ -291,8 +291,8 @@ def get_stardist_point_for_graph(
                 dim=1,
                 index=points[i, 1],
             )
-        if "x" in x_type:
-            xi = torch.Tensor([points[i, 0], points[i, 1]])
+        if "x" in x_type and rotate == 0:
+            xi = torch.Tensor([points[i, 0], points[i, 1]]).to("cuda")
 
         # concat everything together
         sp = torch.Tensor([]).to("cuda")
@@ -300,7 +300,7 @@ def get_stardist_point_for_graph(
             sp = torch.cat((sp, lli))
         if "c" in x_type:
             sp = torch.cat((sp, ci))
-        if "x" in x_type:
+        if "x" in x_type and rotate == 0:
             sp = torch.cat((sp, xi))
 
         stardist_points.append(sp)
