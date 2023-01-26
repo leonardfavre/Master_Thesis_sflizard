@@ -27,7 +27,7 @@ TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 MODEL = "graph_sage"
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 NUM_WORKERS = 8
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
@@ -40,6 +40,7 @@ DIMH = 1024
 NUM_LAYERS = 4
 HEADS = 8
 NUM_FEATURES = {
+    "c": 7,
     "ll": 128,
     "ll+c": 135,
     "ll+c+x": 137,
@@ -187,7 +188,7 @@ def init_graph_training(args):
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
         + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
@@ -196,7 +197,7 @@ def init_graph_training(args):
 
     acc_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
         + "-acc-{epoch}-{val_acc:.4f}",
         monitor="val_acc",
         mode="max",
@@ -205,7 +206,7 @@ def init_graph_training(args):
 
     acc_macro_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        filename=f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
         + "-accmacro-{epoch}-{val_acc_macro:.4f}",
         monitor="val_acc_macro",
         mode="max",
@@ -253,7 +254,7 @@ def full_training(args):
         )
     else:
         trainer.save_checkpoint(
-            f"models/{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}-{args.max_epochs}.ckpt"
+            f"models/{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}-{args.max_epochs}.ckpt"
         )
 
     # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)

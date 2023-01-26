@@ -15,9 +15,10 @@ pytorch-lightning-bolts==0.3.2
 ray==2.0.1
 # torch_scatter==2.0.9 # pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0+cu102.html  # --> To install manualy
 # torch_sparse==0.6.15 # pip install git+https://github.com/rusty1s/pytorch_sparse.git --> To install manualy
-
+# pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0+cu102.html && pip install git+https://github.com/rusty1s/pytorch_sparse.git
 
 # dgl==0.9.1 
 # dglgo==0.0.2 # https://www.dgl.ai/pages/start.html
 
 # to include in ci : flake8==5.0.4
+

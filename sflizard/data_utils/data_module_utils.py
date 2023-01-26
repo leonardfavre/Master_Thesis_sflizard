@@ -174,6 +174,7 @@ def get_graph(
 
         if points.shape[0] == 0:
             graph["x"] = torch.Tensor([])
+            return None
         else:
             # init models
             if "ll" in x_type:
@@ -206,6 +207,7 @@ def get_graph(
                 stardist_points = get_stardist_point_for_graph(
                     image, model_ll, model_c, points, x_type=x_type
                 )
+
             # set x for graph
             graph["x"] = stardist_points.detach().cpu()
 

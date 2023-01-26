@@ -125,13 +125,14 @@ class Graph(pl.LightningModule):
         x, edge_index = batch.x, batch.edge_index
         label = batch.y
         label = label.long()
+        logger_batch_size = len(batch.y)
 
         outputs = self.model(x, edge_index)
         loss = self.loss(outputs, label)
         pred = outputs.argmax(-1)
 
         if name == "train":
-            self.log("train_loss", loss)
+            self.log("train_loss", loss, batch_size=logger_batch_size)
             return loss
         elif name == "val":
             self.val_acc(pred, label)
@@ -142,6 +143,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size,
             )
             self.log(
                 "val_acc",
@@ -149,6 +151,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size,
             )
             self.log(
                 "val_acc_macro",
@@ -156,6 +159,7 @@ class Graph(pl.LightningModule):
                 prog_bar=True,
                 on_step=False,
                 on_epoch=True,
+                batch_size=logger_batch_size,
             )
             # return loss, accuracy
         elif name == "test":

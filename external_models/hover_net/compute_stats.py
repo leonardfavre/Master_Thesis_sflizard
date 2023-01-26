@@ -14,6 +14,7 @@ from metrics.stats_utils import (
 )
 from tqdm import tqdm
 
+
 def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True):
     """GT must be exhaustively annotated for instance location (detection).
 
