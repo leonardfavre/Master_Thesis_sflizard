@@ -153,7 +153,7 @@ class HoverNetMetricTool:
                                 ckpt = checkpoint
                                 wp = f"{model}-{dimh}-{num_layers}"
                             elif (
-                                f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
+                                f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}"#-{heads}"
                                 in str(checkpoint)
                                 and model == "graph_gat"
                             ):

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for dimh in 16 32 64 128 256
+for dimh in 16 32 64 # 128 256
 do
 for numlayer in 2 4 8
 do
