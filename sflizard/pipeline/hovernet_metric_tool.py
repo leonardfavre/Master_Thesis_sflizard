@@ -18,7 +18,7 @@ SEED = 303
 STARDIST_CHECKPOINT = (
     "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
-CHECKPOINT_PATH = ["models/"]  # , "models/cp_acc_graph/", "models/loss_cb_graph/"]
+CHECKPOINT_PATH = ["models/", "models/cp_acc_graph/", "models/loss_cb_graph/"]
 TRUE_DATA_PATH_START = "data/Lizard_dataset_split/patches/Lizard_Labels_"
 
 
@@ -37,12 +37,18 @@ class HoverNetMetricTool:
     ) -> None:
         self.mode = mode
         self.device = "cuda"
+        
         self.base_save_path = f"output/graph/{self.mode}/{distance}/{x_type}"
         Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
         self.log_file = Path(self.base_save_path) / "log.txt"
         Path(self.log_file).touch(exist_ok=True)
+        
+        # result table to store results for easier analysis
+        self.init_result_table(weights_selector)
+        
         self.distance = distance
         self.x_type = x_type
+
 
         # create the datamodule
         print("\nLoading data...")
@@ -97,6 +103,7 @@ class HoverNetMetricTool:
                 self.save_mat(graph_model, wp)
                 # run the hovernet metric tool
                 result = self.run_hovernet_metric_tool(wp)
+                self.save_result_in_table(wp, result)
                 # clean the folder
                 self.clean_folder(wp)
                 print(f"{result}...done.\n")
@@ -116,6 +123,10 @@ class HoverNetMetricTool:
                 with self.log_file.open("a") as f:
                     f.write(f"\n{wp}: ValueError.\n\n{str(e)}\nskiped.")
                 print("...skipped.")
+            break
+
+        # save the result table
+        self.save_result_to_file()
 
         print("\nAll done.")
 
@@ -219,3 +230,67 @@ class HoverNetMetricTool:
     def clean_folder(self, save_folder: str) -> None:
         save_path = self.base_save_path + f"/{save_folder}/"
         shutil.rmtree(save_path)
+
+    def init_result_table(self, weights_selector) -> None:
+        self.result_table = {}
+        for model in weights_selector["model"]:
+            self.result_table[model] = {}
+            for ckpt in ["final", "acc", "acc_macro", "loss"]:
+                self.result_table[model][ckpt] = {}
+                if model == "graph_gat":
+                    for head in weights_selector["heads"]:
+                        self.result_table[model][ckpt][head] = {}
+                        for dh in weights_selector["dimh"]:
+                            self.result_table[model][ckpt][head][dh] = {}
+                            # for nl in weights_selector["num_layers"]:
+                            #     self.result_table[model][ckpt][head][dh][nl] = 
+                else:
+                    for dh in weights_selector["dimh"]:
+                        self.result_table[model][ckpt][dh] = {}
+                        # for nl in weights_selector["num_layers"]:
+                        #     self.result_table[model][ckpt][dh][nl] = {}
+        self.result_file = Path(self.base_save_path) / "result_table.pkl"
+        Path(self.result_file).touch(exist_ok=True)
+
+    def save_result_in_table(self, save_folder: str, result: str) -> None:
+        # save result in result table
+        selector = save_folder.split("-")
+        model = selector[0]
+        dimh = int(selector[1])
+        num_layers = int(selector[2])
+        if model == "graph_gat":
+            head = int(selector[3])
+            ckpt = selector[4]
+            self.result_table[model][ckpt][head][dimh][num_layers] = result
+        else:
+            ckpt = selector[3]
+            self.result_table[model][ckpt][dimh][num_layers] = result
+
+    def save_result_to_file(self) -> None:
+        with open(self.result_file, "a") as f:
+            for m in self.result_table:
+                f.write(f"-------------------\n# {m}\n")
+                for c in self.result_table[m]:
+                    f.write(f"# {c}\n")
+                    if m == "graph_gat":
+                        for h in self.result_table[m][c]:
+                            f.write(f"# {h}\n")
+                            f.write("\ndata = [\n")
+                            for dh in self.result_table[m][c][h]:
+                                f.write(f"\t[ # {dh}\n")
+                                for nl in self.result_table[m][c][h][dh]:
+                                    val = self.result_table[m][c][h][dh][nl].split("\n")[1]
+                                    val.replace("  ", ", ")
+                                    f.write(f"\t\t{val}, # {nl}\n")
+                                f.write("\t],\n")
+                            f.write("]\n")
+                    else:
+                        f.write("\ndata = [\n")
+                        for dh in self.result_table[m][c]:
+                            f.write(f"\t[ # {dh}\n")
+                            for nl in self.result_table[m][c][dh]:
+                                val = self.result_table[m][c][dh][nl].split("\n")[1]
+                                val.replace("  ", ", ")
+                                f.write(f"\t\t{val}, # {nl}\n")
+                            f.write("\t],\n")
+                        f.write("]\n")
