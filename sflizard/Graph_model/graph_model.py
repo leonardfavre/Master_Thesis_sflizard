@@ -69,6 +69,7 @@ class Graph(pl.LightningModule):
         self.learning_rate = learning_rate
         self.num_features = num_features
         self.num_classes = num_classes
+        self.wandb_log = wandb_log
 
         if "graph_gat" in model:
             self.model = GAT(
