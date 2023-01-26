@@ -18,7 +18,7 @@ SEED = 303
 STARDIST_CHECKPOINT = (
     "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
-CHECKPOINT_PATH = ["models/", "models/cp_acc_graph/", "models/loss_cb_graph/"]
+CHECKPOINT_PATH = ["models/"]  # , "models/cp_acc_graph/", "models/loss_cb_graph/"]
 TRUE_DATA_PATH_START = "data/Lizard_dataset_split/patches/Lizard_Labels_"
 
 
@@ -118,8 +118,6 @@ class HoverNetMetricTool:
                 print("...skipped.")
 
         print("\nAll done.")
-        print("Activate hovernet environment with: conda activate hovernet")
-        print(f"Run the evaluation script with: ./{self.base_save_path}/eval.sh")
 
     def init_graph_inference(self, weights_path: str) -> None:
         print("Loading graph model...")
@@ -161,14 +159,14 @@ class HoverNetMetricTool:
                                 wp = f"{model}-{dimh}-{num_layers}-{heads}"
                             else:
                                 continue
-                            if "epochs" in str(ckpt):
-                                weights_path[f"{wp}-final"] = ckpt
-                            elif "loss" in str(ckpt):
+                            if "loss" in str(ckpt):
                                 weights_path[f"{wp}-loss"] = ckpt
                             elif "acc_macro" in str(ckpt):
                                 weights_path[f"{wp}-acc_macro"] = ckpt
                             elif "acc" in str(ckpt):
                                 weights_path[f"{wp}-acc"] = ckpt
+                            else:
+                                weights_path[f"{wp}-final"] = ckpt
         return weights_path
 
     def save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
