@@ -27,7 +27,7 @@ TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 MODEL = "graph_sage"
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 NUM_WORKERS = 8
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
@@ -187,7 +187,7 @@ def init_graph_training(args):
         heads=args.heads,
     )
 
-    if model == "graph_gat":
+    if args.model == "graph_gat":
         name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
     else:
         name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
@@ -259,7 +259,7 @@ def full_training(args):
             f"models/final3_stardist_crop-cosine_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
-        if model == "graph_gat":
+        if args.model == "graph_gat":
             name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
         else:
             name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"

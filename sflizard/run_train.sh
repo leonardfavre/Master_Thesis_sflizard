@@ -6,7 +6,7 @@ for numlayer in 2 4 8
 do
 for model in graph_gat # graph_sage graph_gat graph_gin graph_GCN # graph_custom
 do
-for xtype in c+x # 4ll
+for xtype in ll+c # 4ll
 do
 for distance in 45 # 30 # 45 # 30 45 60
 do
