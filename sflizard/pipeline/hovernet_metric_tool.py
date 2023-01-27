@@ -129,7 +129,6 @@ class HoverNetMetricTool:
                 with self.log_file.open("a") as f:
                     f.write(f"\n{wp}: FileNotFoundError.\n\n{str(e)}\nskiped.")
                 print("...skipped.")
-            break
             
 
         # save the result table
@@ -169,7 +168,7 @@ class HoverNetMetricTool:
                                 ckpt = checkpoint
                                 wp = f"{model}-{dimh}-{num_layers}"
                             elif (
-                                f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}"#-{heads}"
+                                f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
                                 in str(checkpoint)
                                 and model == "graph_gat"
                             ):
@@ -271,29 +270,31 @@ class HoverNetMetricTool:
 
     def save_result_to_file(self) -> None:
         with open(self.result_file, "a") as f:
+            f.write("{\n")
             for m in self.result_table:
-                f.write(f"-------------------\n# {m}\n")
+                # f.write(f"-------------------\n# {m}\n")
                 for c in self.result_table[m]:
                     f.write(f"# {c}\n")
                     if m == "graph_gat":
                         for h in self.result_table[m][c]:
                             f.write(f"# {h}\n")
-                            f.write("\ndata = [\n")
+                            f.write(f'\t"{m}_{h}": [\n')
                             for dh in self.result_table[m][c][h]:
-                                f.write(f"\t[ # {dh}\n")
+                                f.write(f"\t\t[ # {dh}\n")
                                 for nl in self.result_table[m][c][h][dh]:
                                     val = self.result_table[m][c][h][dh][nl].split("\n")[1]
                                     val = val.replace("  ", ", ")
-                                    f.write(f"\t\t{val}, # {nl}\n")
-                                f.write("\t],\n")
-                            f.write("]\n")
+                                    f.write(f"\t\t\t{val}, # {nl}\n")
+                                f.write("\t\t],\n")
+                            f.write("\t]\n")
                     else:
-                        f.write("\ndata = [\n")
+                        f.write(f'\t"{m}": [\n')
                         for dh in self.result_table[m][c]:
-                            f.write(f"\t[ # {dh}\n")
+                            f.write(f"\t\t[ # {dh}\n")
                             for nl in self.result_table[m][c][dh]:
                                 val = self.result_table[m][c][dh][nl].split("\n")[1]
                                 val = val.replace("  ", ", ")
-                                f.write(f"\t\t{val}, # {nl}\n")
-                            f.write("\t],\n")
-                        f.write("]\n")
+                                f.write(f"\t\t\t{val}, # {nl}\n")
+                            f.write("\t\t],\n")
+                        f.write("\t],\n")
+            f.write("}\n")
