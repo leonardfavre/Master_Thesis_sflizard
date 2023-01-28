@@ -29,7 +29,7 @@ class LizardGraphDataset(Dataset):
         consep_data: bool = False,
         light: bool = False,
     ) -> None:
-        """Initialize dataset.
+        """Initialize dataset of graphs.
 
         Args:
             transform (None): transform.
@@ -77,20 +77,21 @@ class LizardGraphDataset(Dataset):
     def process(self) -> None:
         """Process the dataset.
 
-        Compute the graph from input data and save it for speed up use of the dataset.
+        Compute the graph from input data.
         If the dataset is light, only the graph basic information is saved:
-            - x: node features
-            - edge_index: edges
-            - y: labels
-            - image_idx: image index
+            - x: node features.
+            - edge_index: edges.
+            - y: labels.
+            image_idx: image index.
         If the dataset is not light, the graph full information is saved:
-            - x: node features
-            - edge_index: edges
-            - y: labels
-            - image_idx: image index
-            - original_img: original image
-            - inst_map: instance map
-            - class_map: class map
+            - x: node features.
+            - edge_index: edges.
+            - y: labels.
+            - image_idx: image index.
+            - original_img: original image.
+            - inst_map: instance map.
+            - class_map: class map.
+        The graph is in both cases saved to speed up use of the dataset
 
         Args:
             None.
@@ -207,8 +208,9 @@ def LizardGraphDataModule(
     """Data module to create dataloaders for graph training job.
 
     Two mode possible:
-    - images and annotations dataframe contained in a dict.
-    - directly the annotation dataframe.
+        - images and annotations dataframe contained in a dict.
+        - directly the annotation dataframe.
+    In the case of direct annotation dataframe, the images are not saved.
 
     Args:
         train_data (dict or pd.DataFrame): train data.

@@ -85,6 +85,9 @@ def compute_stardist(
             - points (np.ndarray): detected cells centroid.
             - probs (np.ndarray): probability of each pixel to be a cell.
             - dists (np.ndarray): distances corresponding to the cells shape.
+
+    Raises:
+        None.
     """
     dist_numpy = dist.detach().cpu().numpy().squeeze()
     prob_numpy = prob.detach().cpu().numpy().squeeze()
