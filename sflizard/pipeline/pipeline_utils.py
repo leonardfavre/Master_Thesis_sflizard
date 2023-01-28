@@ -1,16 +1,22 @@
 import torch
 import numpy as np
 
-def rotate_and_pred(stardist, inputs, angle) -> tuple[np.ndarray, torch.Tensor]:
+def rotate_and_pred(
+    stardist: torch.nn.Module, 
+    inputs: torch.Tensor, 
+    angle: int,
+) -> tuple[np.ndarray, torch.Tensor]:
     """Rotate the input image and predict the mask with stardist.
     
     Args:
-        stardist (StarDist2D): The stardist model.
+        stardist (torch.nn.Module): The stardist model.
         inputs (torch.Tensor): The input image.
         angle (int): The angle to rotate the image.
         
     Returns:
-        tuple[np.ndarray, torch.Tensor]: The predicted mask and the predicted classes.
+        tuple: tuple containing:
+            pred_mask_rotated (np.array): The predicted mask.
+            c (torch.Tensor): The predicted classes.
             
     Raises:
         None.
@@ -26,7 +32,12 @@ def rotate_and_pred(stardist, inputs, angle) -> tuple[np.ndarray, torch.Tensor]:
         c.cpu(), -angle, [2, 3]
     )
 
-def merge_stardist_class_together(p0, p1, p2, p3):
+def merge_stardist_class_together(
+    p0: torch.Tensor,
+    p1: torch.Tensor,
+    p2: torch.Tensor,
+    p3: torch.Tensor,
+)-> torch.Tensor:
     """Merge the 4 stardist class prediction together.
 
     Args:
@@ -36,7 +47,7 @@ def merge_stardist_class_together(p0, p1, p2, p3):
         p3 (torch.Tensor): The fourth class prediction.
 
     Returns:
-        torch.Tensor: The merged class prediction.
+        class_map (torch.Tensor): The merged class prediction.
 
     Raises:
         None.
@@ -50,15 +61,15 @@ def merge_stardist_class_together(p0, p1, p2, p3):
 
     return class_map
 
-def improve_class_map(class_map, predicted_masks):
+def improve_class_map(class_map: np.array, predicted_masks: np.array)-> np.array:
     """Improve the class map by assigning the same class to each segmented object.
 
     Args:
-        class_map (np.ndarray): The class map.
-        predicted_masks (np.ndarray): The predicted masks.
+        class_map (np.array): The class map.
+        predicted_masks (np.array): The predicted masks.
 
     Returns:
-        np.ndarray: The improved class map.
+        improved_class_map (np.array): The improved class map.
 
     Raises:
         None.
@@ -71,15 +82,15 @@ def improve_class_map(class_map, predicted_masks):
         possible_class = [x for x in present_class if x != 0]
         if len(possible_class) > 0:
             best_class = max(set(possible_class), key=possible_class.count)
-        
-        # for j in range(len(present_class)):
-        #     best_class = present_class[j]
-        #     if best_class != 0:
-        #         break
         improved_class_map[predicted_masks == i] = best_class
     return improved_class_map
 
-def get_class_map_from_graph(graph, predicted_masks, graph_pred, class_pred):
+def get_class_map_from_graph(
+    graph: list,
+    predicted_masks: list,
+    graph_pred: list,
+    class_pred: list,
+)-> list:
     """Get the class map from the graph prediction.
 
     Args:
@@ -89,7 +100,7 @@ def get_class_map_from_graph(graph, predicted_masks, graph_pred, class_pred):
         class_pred (list): The class prediction.
 
     Returns:
-        list: The class map.
+        class_maps (list): The class map.
 
     Raises:
         None.

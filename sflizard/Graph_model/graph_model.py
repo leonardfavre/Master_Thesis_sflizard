@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import pytorch_lightning as pl
 import torch
@@ -12,7 +12,31 @@ import wandb
 
 
 class GraphCustom(torch.nn.Module):
-    def __init__(self, dim_in, dim_h, dim_out, num_layers, layer_type):
+    """Custom graph model adding linear layers before and after the graph layers."""
+
+    def __init__(
+        self, 
+        dim_in: int, 
+        dim_h: int, 
+        dim_out: int, 
+        num_layers: int, 
+        layer_type: torch.nn.Module,
+    )->None:
+        """Initialize the model.
+        
+        Args:
+            dim_in (int): The dimension of the input.
+            dim_h (int): The dimension of the hidden layers.
+            dim_out (int): The dimension of the output.
+            num_layers (int): The number of graph layers.
+            layer_type (torch.nn.Module): The type of graph layer to use.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         super().__init__()
         self.num_layers = num_layers
         self.model = torch.nn.ModuleList()
@@ -25,7 +49,19 @@ class GraphCustom(torch.nn.Module):
         self.model.append(Linear(dim_h, dim_h))
         self.model.append(Linear(dim_h, dim_out))
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor)->torch.Tensor:
+        """Forward pass of the model.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+            edge_index (torch.Tensor): The edge index tensor.
+
+        Returns:
+            output (torch.Tensor): The output tensor.
+
+        Raises:
+            None.
+        """
         x = self.model[0](x).sigmoid()
         x = self.model[1](x).relu()
         x = self.model[2](x).relu()
@@ -40,12 +76,14 @@ class GraphCustom(torch.nn.Module):
 
 
 class Graph(pl.LightningModule):
+    """Graph model lightning module."""
+
     def __init__(
         self,
         model: str = "graph_gat",
         learning_rate: float = 0.01,
         num_features: int = 33,
-        num_classes: int = 6,
+        num_classes: int = 7,
         seed: int = 303,
         max_epochs: int = 20,
         dim_h: int = 32,
@@ -60,8 +98,29 @@ class Graph(pl.LightningModule):
             0.515399722585458,
             0.018063861886878453,
         ],
-        wandb_log=False,
-    ):
+        wandb_log: bool=False,
+    )->None:
+        """Initialize the module.
+
+        Args:
+            model (str): The type of graph model to use.
+            learning_rate (float): The learning rate.
+            num_features (int): The number of features.
+            num_classes (int): The number of classes.
+            seed (int): The seed.
+            max_epochs (int): The maximum number of epochs.
+            dim_h (int): The dimension of the hidden layers.
+            num_layers (int): The number of graph layers.
+            heads (int): The number of heads for the graph attention layer.
+            class_weights (List[float]): The class weights.
+            wandb_log (bool): Whether to log to wandb.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
 
         super().__init__()
         self.save_hyperparameters()
@@ -125,11 +184,40 @@ class Graph(pl.LightningModule):
         else:
             self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x, edge_index):
-        """Forward pass."""
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor)-> torch.Tensor:
+        """Forward pass.
+        
+        Args:
+            x (torch.Tensor): The input tensor.
+            edge_index (torch.Tensor): The edge index tensor.
+            
+        Returns:
+            output (torch.Tensor): The output tensor.
+        
+        Raises:
+            None.
+        """
         return self.model(x, edge_index)
 
-    def _step(self, batch, batch_idx, name):
+    def _step(
+        self, 
+        batch: torch.Tensor, 
+        batch_idx: int, 
+        name: str,
+    )-> torch.Tensor:
+        """Perform a step.
+
+        Args:
+            batch (torch.Tensor): The batch.
+            batch_idx (int): The batch index.
+            name (str): The name of the step.
+
+        Returns:
+            loss (torch.Tensor): The loss.
+
+        Raises:
+            ValueError: If the name is not train or val.
+        """
         x, edge_index = batch.x, batch.edge_index
         label = batch.y
         label = label.long()
@@ -169,27 +257,66 @@ class Graph(pl.LightningModule):
                 on_epoch=True,
                 batch_size=logger_batch_size,
             )
-        elif name == "test":
-            raise NotImplementedError
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
         return loss
 
-    def training_step(self, batch, batch_idx):
-        """Training step."""
+    def training_step(
+        self, 
+        batch: torch.Tensor, 
+        batch_idx: int,
+    )-> torch.Tensor:
+        """Training step.
+        
+        Args:
+            batch (torch.Tensor): The batch.
+            batch_idx (int): The batch index.
+
+        Returns:
+            loss (torch.Tensor): The loss.
+
+        Raises:
+            None.
+        """
         return self._step(batch, batch_idx, "train")
 
-    def validation_step(self, batch, batch_idx):
-        """Validation step."""
+    def validation_step(
+        self, 
+        batch: torch.Tensor, 
+        batch_idx: int,
+    )-> torch.Tensor:
+        """Validation step.
+        
+        Args:
+            batch (torch.Tensor): The batch.
+            batch_idx (int): The batch index.
+            
+        Returns:
+            loss (torch.Tensor): The loss.
+            
+        Raises:
+            None.
+        """
         return self._step(batch, batch_idx, "val")
 
-    def test_step(self, batch, batch_idx):
-        """Test step."""
-        return self._step(batch, batch_idx, "test")
-
-    def _epoch_end(self, outputs, name):
-        """Epoch end."""
+    def _epoch_end(
+        self, 
+        outputs: List[torch.Tensor],
+        name: str,
+    )-> None:
+        """Epoch end.
+        
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+            name (str): The name of the step.
+            
+        Returns:
+            None.
+            
+        Raises:
+            ValueError: If the name is not train or val.
+        """
         if name in ["train", "val"]:
             if self.wandb_log:
                 wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
@@ -199,38 +326,57 @@ class Graph(pl.LightningModule):
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
-    def training_epoch_end(self, outputs):
-        """Training epoch end."""
-        # outputs = [x["loss"] for x in outputs if x is not None]
+    def training_epoch_end(self, outputs: List[torch.Tensor])-> None:
+        """Training epoch end.
+        
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         self._epoch_end(outputs, "train")
 
-    def validation_epoch_end(self, outputs):
+    def validation_epoch_end(self, outputs: List[torch.Tensor])-> None:
+        """Validation epoch end.
+
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self._epoch_end(outputs, "val")
 
-    def configure_optimizers(self, scheduler="cosine"):
+    def configure_optimizers(self)-> Tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]]:
+        """Configure optimizers.
+
+        Args:
+            None.
+
+        Returns:
+            tuple: tuple containing:
+                optimizers (List[torch.optim.Optimizer]): The optimizers.
+                schedulers (List[torch.optim.lr_scheduler._LRScheduler]): The schedulers.
+
+        Raises:
+            None.
+        """
         optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.learning_rate,
             weight_decay=5e-4,
         )
-        schedulers = {
-            "cosine": LinearWarmupCosineAnnealingLR(
-                optimizer,
-                warmup_epochs=int(self.max_epochs / 10),
-                max_epochs=self.max_epochs,
-            ),
-            "step": torch.optim.lr_scheduler.MultiStepLR(
-                optimizer, milestones=[5, 10], gamma=0.1
-            ),
-            "lambda": torch.optim.lr_scheduler.LambdaLR(
-                optimizer, lr_lambda=lambda epoch: 0.95**epoch
-            ),
-        }
 
-        if scheduler not in schedulers.keys():
-            raise ValueError(
-                f"Invalid scheduler given: {scheduler}. You can implement a new one by modifying the Classifier.configure_optimizers method."
-            )
-
-        scheduler = schedulers[scheduler]
+        scheduler = LinearWarmupCosineAnnealingLR(
+            optimizer,
+            warmup_epochs=int(self.max_epochs / 10),
+            max_epochs=self.max_epochs,
+        )
         return [optimizer], [scheduler]

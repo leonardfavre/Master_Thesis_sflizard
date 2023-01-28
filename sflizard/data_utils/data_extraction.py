@@ -28,7 +28,7 @@ PATCH_STEP = 200
 SEPARATE_SAVE = True
 
 
-def extract_annotation_patches(annotation_file, annotations, patch_size, patch_step):
+def extract_annotation_patches(annotation_file: str, annotations: pd.DataFrame, patch_size: int, patch_step: int) -> pd.DataFrame:
     """Extract patches from annotations.
 
     Args:
@@ -98,7 +98,7 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
     return annotations
 
 
-def extract_image_patches(image_file, patch_size, patch_step):
+def extract_image_patches(image_file: str, patch_size: int, patch_step: int)-> dict:
     """Extract patches from an image.
 
     Args:
@@ -122,7 +122,7 @@ def extract_image_patches(image_file, patch_size, patch_step):
     return images_dict
 
 
-def extract_patches(array, array_name, patch_size, patch_step):
+def extract_patches(array: np.array, array_name: str, patch_size: int, patch_step: int) -> dict:
     """Extract patches from an image or an instance map.
 
     Args:
@@ -167,7 +167,7 @@ def extract_patches(array, array_name, patch_size, patch_step):
     return array_dict
 
 
-def remove_missing_data(images, annotations, set_name):
+def remove_missing_data(images: dict, annotations: pd.DataFrame, set_name: str)-> tuple:
     """Clean data by removing image without annotations and annotations without images.
 
     Args:
@@ -176,8 +176,9 @@ def remove_missing_data(images, annotations, set_name):
         set_name (str): name of the set.
 
     Returns:
-        images (dict): dictionary of images.
-        annotations (pd.DataFrame): dataframe of annotations.
+        tuple: tuple containing:
+            - images (dict): dictionary of images.
+            - annotations (pd.DataFrame): dataframe of annotations.
 
     Raises:
         None.
@@ -197,7 +198,7 @@ def remove_missing_data(images, annotations, set_name):
     return images, annotations
 
 
-def extract_data(args):
+def extract_data(args: argparse.Namespace)-> None:
     """Extract data from the original dataset folder.
 
     Args:

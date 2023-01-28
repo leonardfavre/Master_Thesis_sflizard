@@ -5,7 +5,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 import wandb
 from sflizard.stardist_model import ClassL1BCELoss, MyL1BCELoss
 from sflizard.stardist_model import UNetStar as UNet
-
+from typing import List, Tuple
 
 class Stardist(pl.LightningModule):
     """Stardist model class."""
@@ -20,10 +20,29 @@ class Stardist(pl.LightningModule):
         loss_power_scaler: float = 0.0,
         seed: int = 303,
         device: str = "cpu",
-        wandb_log=False,
-        max_epochs=200,
-    ):
-        """Initialize the model."""
+        wandb_log: bool=False,
+        max_epochs: int=200,
+    )-> None:
+        """Initialize the model.
+        
+        Args:
+            learning_rate (float): The learning rate.
+            input_size (int): The input size.
+            in_channels (int): The number of input channels.
+            n_rays (int): The number of rays.
+            n_classes (int): The number of classes.
+            loss_power_scaler (float): The loss power scaler.
+            seed (int): The seed.
+            device (str): The device.
+            wandb_log (bool): Whether to log to wandb.
+            max_epochs (int): The maximum number of epochs.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         super().__init__()
         self.save_hyperparameters()
 
@@ -65,12 +84,33 @@ class Stardist(pl.LightningModule):
 
         self.max_epochs = max_epochs
 
-    def forward(self, x):
-        """Forward pass."""
+    def forward(self, x: torch.Tensor)-> torch.Tensor:
+        """Forward pass.
+        
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            x (torch.Tensor): The output tensor.
+
+        Raises:
+            None.
+        """
         return self.model(x)
 
-    def _step(self, batch, name):
-        """General step."""
+    def _step(self, batch: torch.Tensor, name: str)-> torch.Tensor:
+        """General step.
+        
+        Args:
+            batch (torch.Tensor): The batch.
+            name (str): The name of the step (train or val).
+            
+        Returns:
+            loss (torch.Tensor): The loss.
+            
+        Raises:
+            ValueError: If the name is not train or val.
+        """
         if self.classification:
             inputs, obj_probabilities, distances, classes = batch
             classes = classes.long()
@@ -89,68 +129,110 @@ class Stardist(pl.LightningModule):
         if name == "train":
             self.log("train_loss", loss)
         elif name == "val":
-            # self.val_acc_class(torch.index_select(torch.tensor(outputs), 1, 2), classes)
-            # self.val_acc_class_macro(torch.index_select(torch.tensor(outputs), 1, torch.tensor([2])), classes)
-            # self.val_mse_dist(torch.index_select(torch.tensor(outputs), 1, torch.tensor([0])), distances)
-            # self.val_acc_class(outputs[2], classes)
-            # self.val_acc_class_macro(outputs[2], classes)
-            # self.val_mse_dist(outputs[0], distances)
             self.log(
                 "val_loss",
                 loss,
                 on_step=False,
                 on_epoch=True,
             )
-            # self.log(
-            #     "val_mse_dist",
-            #     self.val_mse_dist,
-            #     on_step=False,
-            #     on_epoch=True,
-            # )
-            # self.log(
-            #     "val_acc_class",
-            #     self.val_acc_class,
-            #     on_step=False,
-            #     on_epoch=True,
-            # )
-            # self.log(
-            #     "val_acc_class_macro",
-            #     self.val_acc_class_macro,
-            #     on_step=False,
-            #     on_epoch=True,
-            # )
 
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
         return loss
 
-    def training_step(self, batch, batch_idx):
-        """Training step."""
+    def training_step(self, batch: torch.Tensor, batch_idx: int)-> torch.Tensor:
+        """Training step.
+        
+        Args:
+            batch (torch.Tensor): The batch.
+            batch_idx (int): The batch index.
+            
+        Returns:
+            loss (torch.Tensor): The loss.
+            
+        Raises:
+            None.
+        """
         return self._step(batch, "train")
 
-    def training_epoch_end(self, outputs):
-        """Training epoch end."""
+    def training_epoch_end(self, outputs: List[torch.Tensor])-> None:
+        """Training epoch end.
+        
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         outputs = [x["loss"] for x in outputs if x is not None]
         self._epoch_end(outputs, "train")
 
-    def validation_step(self, batch, batch_idx):
-        """Validation step."""
+    def validation_step(self, batch: torch.Tensor, batch_idx: int)-> torch.Tensor:
+        """Validation step.
+        
+        Args:
+            batch (torch.Tensor): The batch.
+            batch_idx (int): The batch index.
+            
+        Returns:
+            loss (torch.Tensor): The loss.
+            
+        Raises:
+            None.
+        """
         return self._step(batch, "val")
 
-    def validation_epoch_end(self, outputs):
-        """Validation epoch end."""
+    def validation_epoch_end(self, outputs: List[torch.Tensor])-> None:
+        """Validation epoch end.
+        
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         self._epoch_end(outputs, "val")
 
-    def _epoch_end(self, outputs, name):
-        """epoch end for train/val."""
+    def _epoch_end(self, outputs: List[torch.Tensor], name: str)-> None:
+        """epoch end for train/val.
+        
+        Args:
+            outputs (List[torch.Tensor]): The outputs.
+            name (str): The name of the step (train or val).
+            
+        Returns:
+            None.
+            
+        Raises:
+            ValueError: If the name is not train or val.
+        """
         if name in ["train", "val"]:
             if self.wandb_log:
                 wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
-    def configure_optimizers(self):
+    def configure_optimizers(self)-> Tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]]:
+        """Configure optimizers.
+
+        Args:
+            None.
+
+        Returns:
+            tuple: tuple containing:
+                optimizers (List[torch.optim.Optimizer]): The optimizers.
+                schedulers (List[torch.optim.lr_scheduler._LRScheduler]): The schedulers.
+
+        Raises:
+            None.
+        """
         optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.learning_rate,

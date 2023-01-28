@@ -13,12 +13,20 @@ from sflizard import get_class_color, get_class_name
 
 
 class ReportGenerator:
+    """MD report generator."""
 
-    def __init__(self, output_dir, imgs_to_display, n_classes):
+    def __init__(
+        self, 
+        output_dir: str, 
+        imgs_to_display: int, 
+        n_classes: int,
+    )-> None:
         """Report generator.
         
         Args:
-            None.
+            output_dir (str): The output directory.
+            imgs_to_display (int): The number of images to display.
+            n_classes (int): The number of classes.
             
         Returns:
             None.
@@ -60,26 +68,26 @@ class ReportGenerator:
         
     def add_batch(
         self, 
-        images, 
-        true_masks, 
-        pred_masks,
-        true_class_map=None,
-        pred_class_map=None,
-        pred_class_map_improved=None,
-        graphs=None,
-        graphs_class_map=None,
+        images: torch.Tensor,
+        true_masks: np.array,
+        pred_masks: np.array,
+        true_class_map: torch.Tensor=None,
+        pred_class_map: torch.Tensor=None,
+        pred_class_map_improved: torch.Tensor=None,
+        graphs: list=None,
+        graphs_class_map: np.array=None,
     ) -> None:
         """Add a batch to the report.
         
         Args:
             images (torch.Tensor): The images.
-            true_masks (torch.Tensor): The true masks.
-            pred_masks (torch.Tensor): The predicted masks.
+            true_masks (np.array): The true masks.
+            pred_masks (np.array): The predicted masks.
             true_class_map (torch.Tensor): The true class map.
             pred_class_map (torch.Tensor): The predicted class map.
             pred_class_map_improved (torch.Tensor): The improved predicted class map.
-            graphs (torch.Tensor): The graphs.
-            graphs_class_map (): The graphs class map.
+            graphs (list): The graphs.
+            graphs_class_map (np.array): The graphs class map.
             
         Returns:
             None.
@@ -107,11 +115,11 @@ class ReportGenerator:
 
     def add_final_metrics(
         self, 
-        segmentation_metric, 
-        classification_metric, 
-        graph_classification_metric,
-        segmentation_classification_metric,
-        graph_segmentation_classification_metric
+        segmentation_metric: dict, 
+        classification_metric: dict,
+        graph_classification_metric: dict,
+        segmentation_classification_metric: dict,
+        graph_segmentation_classification_metric: dict,
     ) -> None:
         """Add final metrics to the report.
         
@@ -119,6 +127,8 @@ class ReportGenerator:
             segmentation_metric (dict): The segmentation metric.
             classification_metric (dict): The classification metric.
             graph_classification_metric (dict): The graph classification metric.
+            segmentation_classification_metric (dict): The segmentation classification metric.
+            graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
             
         Returns:
             None.
@@ -200,7 +210,7 @@ class ReportGenerator:
             md (str): The markdown string.
 
         Returns:
-            str: The markdown string.
+            md (str): The markdown string with the added table.
 
         Raises:
             None.
@@ -233,7 +243,7 @@ class ReportGenerator:
             md (str): The markdown string.
 
         Returns:
-            str: The markdown string.
+            md (str): The markdown string with the added table.
 
         Raises:
             None.
@@ -264,7 +274,7 @@ class ReportGenerator:
         
         return md
 
-    def _generate_images(self):
+    def _generate_images(self)-> None:
         """Generate images for the report.
 
         Args:
@@ -340,7 +350,13 @@ class ReportGenerator:
                     f"test_image_{i}_diff",
                 )
 
-    def _save_images(self, imgs, titles, file_name, legend=False):
+    def _save_images(
+        self, 
+        imgs: list, 
+        titles: list, 
+        file_name: str, 
+        legend: bool=False
+    ) -> None:
         """Save images to png files.
 
         Args:
@@ -377,7 +393,23 @@ class ReportGenerator:
         plt.savefig(f"{self.output_dir}images/{file_name}.png")
         plt.close()
 
-    def _draw_graph(self, graph, class_map):
+    def _draw_graph(
+        self, 
+        graph: dict, 
+        class_map: np.array,
+    ) -> np.array:
+        """Draw graph on class map.
+
+        Args:
+            graph (dict): graph to draw.
+            class_map (np.array): class map.
+
+        Returns:
+            img (np.array): class map with graph drawn.
+
+        Raises:
+            None.
+        """
         p = graph["pos"]
         ei = graph["edge_index"]
         transform = T.ToPILImage()

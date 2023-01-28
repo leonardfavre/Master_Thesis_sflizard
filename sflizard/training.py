@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
+from typing import List, Tuple, Union
 
 import wandb
 from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
@@ -56,8 +57,27 @@ X_TYPE = "4ll+c"
 DISTANCE = 45
 
 
-def init_stardist_training(args, device, debug=False):
-    """Init the training for the stardist model."""
+def init_stardist_training(
+    args: argparse.Namespace, 
+    device: Union[str, torch.device], 
+    debug: bool=False
+)->Tuple[LizardDataModule, Stardist, List[pl.callbacks.Callback]]:
+    """Init the training for the stardist model.
+    
+    Args:
+        args (argparse.Namespace): the arguments from the command line.
+        device (Union[str, torch.device]): the device to use.
+        debug (bool): if True, print debug messages.
+        
+    Returns:
+        tuple: tuple containing:
+            dm (LizardDataModule): the datamodule.
+            model (Stardist): the model.
+            callbacks (List[pl.callbacks.Callback]): the callbacks.
+
+    Raises:
+        None.
+    """
 
     if debug:
         print("init_stardist_training: initialize dm...")
@@ -105,30 +125,6 @@ def init_stardist_training(args, device, debug=False):
         save_top_k=1,
     )
 
-    # acc_dist_callback = pl.callbacks.ModelCheckpoint(
-    #     dirpath="models/cp_acc",
-    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-msedist-{epoch}-{val_acc:.4f}",
-    #     monitor="val_mse_dist",
-    #     mode="min",
-    #     save_top_k=1,
-    # )
-
-    # acc_callback = pl.callbacks.ModelCheckpoint(
-    #     dirpath="models/cp_acc",
-    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-acc-{epoch}-{val_acc:.4f}",
-    #     monitor="val_acc_class",
-    #     mode="max",
-    #     save_top_k=1,
-    # )
-
-    # acc_macro_callback = pl.callbacks.ModelCheckpoint(
-    #     dirpath="models/cp_acc",
-    #     filename=f"final3-{args.model}-{args.loss_power_scaler}losspower_{args.learning_rate}lr-crop-cosine" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
-    #     monitor="val_acc_class_macro",
-    #     mode="max",
-    #     save_top_k=1,
-    # )
-
     if debug:
         print("init_stardist_training: model initialized.")
 
@@ -136,11 +132,26 @@ def init_stardist_training(args, device, debug=False):
         dm,
         model,
         [loss_callback],
-    )  # , acc_dist_callback] # , acc_callback, acc_macro_callback]
+    )
 
 
-def init_graph_training(args):
-    """Init the training for the graphSage model."""
+def init_graph_training(
+    args: argparse.Namespace
+)->Tuple[LizardGraphDataModule, Graph, List[pl.callbacks.Callback]]:
+    """Init the training for the graphSage model.
+    
+    Args:
+        args (argparse.Namespace): the arguments from the command line.
+        
+    Returns:
+        tuple: tuple containing:
+            dm (LizardGraphDataModule): the datamodule.
+            model (Graph): the model.
+            callbacks (List[pl.callbacks.Callback]): the callbacks.
+            
+    Raises:
+        None.
+    """
     # get the train data
     train_data_path = Path(args.train_data_path)
     with train_data_path.open("rb") as f:
@@ -222,8 +233,18 @@ def init_graph_training(args):
     return dm, model, [loss_callback, acc_callback, acc_macro_callback]
 
 
-def full_training(args):
-    """Train the model on the whole dataset."""
+def full_training(args: argparse.Namespace)->None:
+    """Train the model on the whole dataset.
+    
+    Args:
+        args (argparse.Namespace): the arguments from the command line.
+        
+    Returns:
+        None.
+        
+    Raises:
+        ValueError: if the model is not implemented.
+    """
 
     # get the choosen device
     device = torch.device(

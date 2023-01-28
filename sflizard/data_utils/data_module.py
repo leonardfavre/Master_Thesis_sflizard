@@ -33,23 +33,73 @@ class LizardDataset(Dataset):
         tf_augment: A.Compose,
         annotation_target: str,
         aditional_args: Optional[dict] = None,
-        test: bool = False,
-    ):
-        """Initialize dataset."""
+    )-> None:
+        """Initialize dataset.
+        
+        Args:
+            df (pd.DataFrame): dataframe containing the data.
+            data (np.ndarray): array containing the images.
+            tf_base (A.Compose): base transformation.
+            tf_augment (A.Compose): augmentation transformation.
+            annotation_target (str): annotation target.
+            aditional_args (Optional[dict]): aditional arguments. Used for nrays.
+        
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self.df = df
         self.data = data
         self.tf_base = tf_base
         self.tf_augment = tf_augment
-        self.test = test
         self.annotation_target = annotation_target
         self.aditional_args = aditional_args
 
-    def __len__(self):
-        """Get the length of the dataset."""
+    def __len__(self)-> int:
+        """Get the length of the dataset.
+        
+        Args:
+            None.
+            
+        Returns:
+            len (int): length of the dataset.
+            
+        Raises:
+            None.
+        """
         return len(self.df)
 
-    def __getitem__(self, idx):
-        """Get images and transform them if needed."""
+    def __getitem__(self, idx: int)-> tuple:
+        """Get item from the dataset. 
+        
+        In the case of a classic stardist annotation target:
+            - image
+            - obj_probabilities map
+            - distances map
+
+        In the case of a stardist annotation target with classes:
+            - image
+            - obj_probabilities map
+            - distances map
+            - classes map
+        
+        Transform them if needed.
+        
+        Args:
+            idx (int): index of the item.
+            
+        Returns:
+            tuple: tuple containing:
+                - image
+                - obj_probabilities map
+                - distances map
+                - classes map (optional)
+
+        Raises:
+            ValueError: if the annotation target is not supported.
+        """
         # retriev inputs
         image = np.array(self.data[self.df.iloc[idx].id])
 
@@ -103,8 +153,20 @@ class LizardDataModule(pl.LightningDataModule):
         input_size=540,
         seed: int = 303,
         aditional_args: Optional[dict] = None,
-    ):
-        """Initialize the dataloaders with batch size and targets."""
+    )-> None:
+        """Create the datamodule and initialize the argument for the dataloaders.
+        
+        Args:
+            train_data_path (str): path to the train data.
+            valid_data_path (str): path to the valid data.
+            test_data_path (str): path to the test data.
+            annotation_target (str): annotation target.
+            batch_size (int): batch size.
+            num_workers (int): number of workers.
+            input_size (int): input size.
+            seed (int): seed.
+            aditional_args (Optional[dict]): aditional arguments. Used for nrays.
+        """
         super().__init__()
 
         if train_data_path is not None:
@@ -130,8 +192,18 @@ class LizardDataModule(pl.LightningDataModule):
         self.seed = seed
         self.aditional_args = aditional_args
 
-    def setup(self, stage: Optional[str] = None):
-        """Data setup for training."""
+    def setup(self, stage: Optional[str] = None)-> None:
+        """Data setup for training, define transformations and datasets.
+        
+        Args:
+            stage (Optional[str]): stage.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
 
         tf_base = A.Compose(
             [
@@ -192,16 +264,46 @@ class LizardDataModule(pl.LightningDataModule):
             test=True,
         )
 
-    def train_dataloader(self):
-        """Return the training dataloader."""
+    def train_dataloader(self)-> DataLoader:
+        """Return the training dataloader.
+        
+        Args: 
+            None.
+
+        Returns: 
+            dataloader (DataLoader): the training dataloader.
+
+        Raises:
+            None.
+        """
         if self.train_data is None:
             return None
         return DataLoader(self.train_ds, **self.dataloader_arguments)
 
-    def val_dataloader(self):
-        """Return the validation dataloader."""
+    def val_dataloader(self)-> DataLoader:
+        """Return the validation dataloader.
+        
+        Args:
+            None.
+            
+        Returns:
+            dataloader (DataLoader): the validation dataloader.
+            
+        Raises:
+            None.
+        """
         return DataLoader(self.valid_ds, **self.dataloader_arguments)
 
-    def test_dataloader(self):
-        """Return the test dataloader."""
+    def test_dataloader(self)-> DataLoader:
+        """Return the test dataloader.
+        
+        Args:
+            None.
+
+        Returns:
+            dataloader (DataLoader): the test dataloader.
+
+        Raises:
+            None.
+        """
         return DataLoader(self.test_ds, **self.dataloader_arguments)

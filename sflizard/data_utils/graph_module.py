@@ -5,11 +5,13 @@ import pandas as pd
 import torch
 from torch_geometric.data import Data, Dataset, LightningDataset
 from tqdm import tqdm
-
+from typing import Union
 from sflizard.data_utils import get_graph
 
 
 class LizardGraphDataset(Dataset):
+    """Dataset object for the Graphs."""
+
     def __init__(
         self,
         transform=None,
@@ -21,10 +23,32 @@ class LizardGraphDataset(Dataset):
         distance: int = 45,
         stardist_checkpoint: str = None,
         x_type: str = "ll",  # ll: last_layer, c: classification, p: position, a:area
-        root="data/graph",
-        consep_data=False,
-        light=False,
-    ):
+        root: str="data/graph",
+        consep_data: bool=False,
+        light: bool=False,
+    )-> None:
+        """Initialize dataset.
+
+        Args:
+            transform (None): transform.
+            pre_transform (None): pre_transform.
+            df (pd.DataFrame): dataframe containing the data.
+            data (np.ndarray): array containing the images.
+            name (str): name of the dataset.
+            n_rays (int): number of rays of stardist shape.
+            distance (int): distance between 2 connected cells.
+            stardist_checkpoint (str): path to the stardist checkpoint.
+            x_type (str): type of the node feature vetor.
+            root (str): root path.
+            consep_data (bool): if the data is from consep.
+            light (bool): if the data included in the graph needs to be minimum, speed up training.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self.df = df
         self.data = data
         self.name = name
@@ -38,17 +62,43 @@ class LizardGraphDataset(Dataset):
         super().__init__(root, transform, pre_transform)
 
     @property
-    def raw_file_names(self):
+    def raw_file_names(self)-> list:
         return []
 
     @property
-    def processed_file_names(self):
+    def processed_file_names(self)-> list:
         return [f"data_{idx}.pt" for idx in range(len(self.df))]
 
-    def download(self):
+    def download(self)-> None:
         pass
 
-    def process(self):
+    def process(self)-> None:
+        """Process the dataset.
+
+        Compute the graph from input data and save it for speed up use of the dataset.
+        If the dataset is light, only the graph basic information is saved:
+            - x: node features
+            - edge_index: edges
+            - y: labels
+            - image_idx: image index
+        If the dataset is not light, the graph full information is saved:
+            - x: node features
+            - edge_index: edges
+            - y: labels
+            - image_idx: image index
+            - original_img: original image
+            - inst_map: instance map
+            - class_map: class map
+
+        Args:
+            None.
+            
+        Returns:
+            None.
+            
+        Raises:
+            None.
+        """
         for idx in tqdm(range(len(self.df)), desc=f"Processing {self.name} dataset"):
             image = (
                 torch.tensor(self.data[self.df.iloc[idx].id]).permute(2, 0, 1)
@@ -108,18 +158,40 @@ class LizardGraphDataset(Dataset):
                     processed_data, osp.join(self.processed_dir, f"data_{idx}.pt")
                 )
 
-    def len(self):
+    def len(self)-> int:
+        """Return the length of the dataset.
+        
+        Args:
+            None.
+
+        Returns:
+            int: length of the dataset.
+
+        Raises:
+            None.
+        """
         return len(self.df)
 
-    def get(self, idx):
+    def get(self, idx) -> Data:
+        """Return the data at index idx.
+
+        Args:
+            idx (int): index of the data to return.
+
+        Returns:
+            data (Data): data at index idx.
+
+        Raises:
+            None.
+        """
         data = torch.load(osp.join(self.processed_dir, f"data_{idx}.pt"))
         return data
 
 
 def LizardGraphDataModule(
-    train_data: pd.DataFrame = None,
-    valid_data: pd.DataFrame = None,
-    test_data: pd.DataFrame = None,
+    train_data: Union[dict, pd.DataFrame] = None,
+    valid_data: Union[dict, pd.DataFrame] = None,
+    test_data: Union[dict, pd.DataFrame] = None,
     batch_size: int = 32,
     num_workers: int = 4,
     seed: int = 303,
@@ -133,16 +205,28 @@ def LizardGraphDataModule(
     """Data module to create dataloaders for graph training job.
 
     Two mode possible:
-    - using pkl datapath: data must be in pkl format, with annotations and images.
-    - using mat datapath: no test set.
+    - images and annotations dataframe contained in a dict.
+    - directly the annotation dataframe.
 
     Args:
-        train
+        train_data (dict or pd.DataFrame): train data.
+        valid_data (dict or pd.DataFrame): valid data.
+        test_data (dict or pd.DataFrame): test data.
+        batch_size (int): batch size.
+        num_workers (int): number of workers.
+        seed (int): seed for random number generator.
+        stardist_checkpoint (str): path to stardist checkpoint.
+        x_type (str): type of node features.
+        distance (int): distance for graph creation.
+        root (str): root path for saving processed data.
+        consep_data (bool): if True, use consep data.
+        light (bool): if True, only save basic graph information.
 
     Returns:
+        datamodule (LightningDataset): Datamodule containing the required datasets.
 
     Raises:
-
+        ValueError: if no data is provided.
     """
 
     # train_df = train_data.reset_index(drop=True)

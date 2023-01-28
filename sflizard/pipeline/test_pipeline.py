@@ -31,6 +31,8 @@ X_TYPE = {
 STAR_4_IMPROVEMENT = False
 
 class TestPipeline:
+    """A pipeline to test the model."""
+
     def __init__(
         self,
         valid_data_path: str,
@@ -43,7 +45,27 @@ class TestPipeline:
         batch_size: int,
         seed: int,
         mode: str,
-    ):
+    )-> None:
+        """Init the pipeline.
+
+        Args:
+            valid_data_path (str): The path to the valid data.
+            test_data_path (str): The path to the test data.
+            stardist_weights_path (str): The path to the stardist weights.
+            graph_weights_path (List[str]): The path to the graph weights.
+            graph_distance (int): The distance to use for the graph.
+            n_rays (int): The number of rays to use for stardist.
+            n_classes (int): The number of classes.
+            batch_size (int): The batch size to use.
+            seed (int): The seed to use.
+            mode (str): The mode to use (test or valid).
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print("Using device:", self.device)
         self.n_classes = n_classes
@@ -65,6 +87,21 @@ class TestPipeline:
         batch_size: int = 1,
         mode: str = "valid",
     ) -> None:
+        """Init the dataloader.
+
+        Args:
+            valid_data_path (str): The path to the valid data.
+            test_data_path (str): The path to the test data.
+            seed (int): The seed to use.
+            batch_size (int): The batch size to use.
+            mode (str): The mode to use (test or valid).
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         aditional_args = {"n_rays": self.n_rays}
 
         print("Loading data...")
@@ -93,6 +130,17 @@ class TestPipeline:
         self,
         weights_path: str,
     ) -> None:
+        """Init the stardist model for inference.
+        
+        Args:
+            weights_path (str): The path to the stardist weights.
+            
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         print("Loading stardist model...")
         model = Stardist.load_from_checkpoint(
             weights_path,
@@ -107,6 +155,17 @@ class TestPipeline:
         self.classification = self.n_classes > 1
 
     def __init_graph_inference(self, weights_path: str) -> None:
+        """Init the graph model for inference.
+
+        Args:
+            weights_path (str): The path to the graph weights.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         print("Loading graph model...")
         if isinstance(weights_path, str):
             weights_path = [weights_path]
@@ -120,6 +179,18 @@ class TestPipeline:
         print("Graph model loaded.")
 
     def test(self, output_dir=None, imgs_to_display=0) -> None:
+        """Run the pipeline and test the model.
+
+        Args:
+            output_dir (str): The path to the output directory for report and images.
+            imgs_to_display (int): The number of images to display in the report.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         print("Testing...")
 
         # init metric tool 

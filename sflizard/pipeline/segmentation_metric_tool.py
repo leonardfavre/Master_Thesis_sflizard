@@ -8,9 +8,21 @@ import torch
 from sflizard import get_class_name
 
 class SegmentationMetricTool:
+    """A tool to compute metrics for segmentation."""
 
-    def __init__(self, n_classes, device) -> None:
+    def __init__(self, n_classes: int, device: str) -> None:
+        """Init the metric tool.
 
+        Args:
+            n_classes (int): The number of classes.
+            device (str): The device to use.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self.n_classes = n_classes
         self.device = device
 
@@ -38,13 +50,18 @@ class SegmentationMetricTool:
         self.true_class_map = {}
         self.pred_class_map = {}
 
-    def add_batch(self, batch_idx, true_masks, pred_masks) -> None:
+    def add_batch(
+        self, 
+        batch_idx: int, 
+        true_masks: np.array,
+        pred_masks: np.array,
+    ) -> None:
         """Add a batch to the metric tool.
         
         Args:
             batch_idx (int): The batch index.
-            true_masks (torch.Tensor): The true masks.
-            pred_masks (torch.Tensor): The predicted masks.
+            true_masks (np.array): The true masks.
+            pred_masks (np.array): The predicted masks.
             
         Returns:
             None.
@@ -70,13 +87,18 @@ class SegmentationMetricTool:
                 ]
             )
 
-    def add_batch_class(self, batch_idx, true_class_map, pred_class_map) -> None:
+    def add_batch_class(
+        self, 
+        batch_idx: int,
+        true_class_map: np.array,
+        pred_class_map: np.array,
+    ) -> None:
         """Add a batch to the metric tool.
 
         Args:
             batch_idx (int): The batch index.
-            true_class_map (torch.Tensor): The true class map.
-            pred_class_map (torch.Tensor): The predicted class map.
+            true_class_map (np.array): The true class map.
+            pred_class_map (np.array): The predicted class map.
 
         Returns:
             None.
@@ -139,7 +161,7 @@ class SegmentationMetricTool:
         """Log the results in rich tables.
 
         Args:
-            None.
+            console (Console): The rich console.
 
         Returns:
             None.
