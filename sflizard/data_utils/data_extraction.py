@@ -1,17 +1,10 @@
-"""Copyright (C) SquareFactory SA - All Rights Reserved.
-
-This source code is protected under international copyright law. All rights 
-reserved and protected by the copyright holders.
-This file is confidential and only available to authorized individuals with the
-permission of the copyright holders. If you encounter this file and do not have
-permission, please contact the copyright holders and delete this file.
-"""
 import argparse
 import glob
 import pickle
 import random
 import time
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import scipy.io as sio
@@ -28,7 +21,9 @@ PATCH_STEP = 200
 SEPARATE_SAVE = True
 
 
-def extract_annotation_patches(annotation_file: str, annotations: pd.DataFrame, patch_size: int, patch_step: int) -> pd.DataFrame:
+def extract_annotation_patches(
+    annotation_file: str, annotations: pd.DataFrame, patch_size: int, patch_step: int
+) -> pd.DataFrame:
     """Extract patches from annotations.
 
     Args:
@@ -63,7 +58,6 @@ def extract_annotation_patches(annotation_file: str, annotations: pd.DataFrame, 
         patch_id = np.unique(value).tolist()[1:]
         # keep only values present in the patch
         nuclei_id = np.squeeze(mat_file["id"]).tolist()
-        classes = np.squeeze(mat_file["class"]).tolist()
         nuclei_in_patch = []
         class_in_patch = []
         centroid_in_patch = []
@@ -72,8 +66,12 @@ def extract_annotation_patches(annotation_file: str, annotations: pd.DataFrame, 
             idx = nuclei_id.index(v)
             class_i = mat_file["class"][idx]
             centroid_i = mat_file["centroid"][idx].copy()
-            centroid_i[0] = min(max(0, centroid_i[0] - int(key.split("_")[3])), patch_size-1)
-            centroid_i[1] = min(max(0, centroid_i[1] - int(key.split("_")[2])), patch_size-1)
+            centroid_i[0] = min(
+                max(0, centroid_i[0] - int(key.split("_")[3])), patch_size - 1
+            )
+            centroid_i[1] = min(
+                max(0, centroid_i[1] - int(key.split("_")[2])), patch_size - 1
+            )
             nuclei_in_patch.append(v)
             class_in_patch.append(class_i)
             centroid_in_patch.append(centroid_i)
@@ -98,7 +96,7 @@ def extract_annotation_patches(annotation_file: str, annotations: pd.DataFrame, 
     return annotations
 
 
-def extract_image_patches(image_file: str, patch_size: int, patch_step: int)-> dict:
+def extract_image_patches(image_file: str, patch_size: int, patch_step: int) -> dict:
     """Extract patches from an image.
 
     Args:
@@ -122,7 +120,9 @@ def extract_image_patches(image_file: str, patch_size: int, patch_step: int)-> d
     return images_dict
 
 
-def extract_patches(array: np.array, array_name: str, patch_size: int, patch_step: int) -> dict:
+def extract_patches(
+    array: np.array, array_name: str, patch_size: int, patch_step: int
+) -> dict:
     """Extract patches from an image or an instance map.
 
     Args:
@@ -167,7 +167,9 @@ def extract_patches(array: np.array, array_name: str, patch_size: int, patch_ste
     return array_dict
 
 
-def remove_missing_data(images: dict, annotations: pd.DataFrame, set_name: str)-> tuple:
+def remove_missing_data(
+    images: dict, annotations: pd.DataFrame, set_name: str
+) -> tuple:
     """Clean data by removing image without annotations and annotations without images.
 
     Args:
@@ -198,7 +200,7 @@ def remove_missing_data(images: dict, annotations: pd.DataFrame, set_name: str)-
     return images, annotations
 
 
-def extract_data(args: argparse.Namespace)-> None:
+def extract_data(args: argparse.Namespace) -> None:
     """Extract data from the original dataset folder.
 
     Args:
@@ -361,12 +363,8 @@ def extract_data(args: argparse.Namespace)-> None:
     print("5. Saving File...\n")
 
     if SEPARATE_SAVE:
-        save_images_train = (
-            "data/Lizard_dataset_split/patches/Lizard_Images_train"
-        )
-        save_images_valid = (
-            "data/Lizard_dataset_split/patches/Lizard_Images_valid"
-        )
+        save_images_train = "data/Lizard_dataset_split/patches/Lizard_Images_train"
+        save_images_valid = "data/Lizard_dataset_split/patches/Lizard_Images_valid"
         save_images_test = "data/Lizard_dataset_split/patches/Lizard_Images_test"
         for path in [save_images_train, save_images_valid, save_images_test]:
             Path(path).mkdir(parents=True, exist_ok=True)
@@ -379,7 +377,9 @@ def extract_data(args: argparse.Namespace)-> None:
         for img in cleaned_test_data["images"]:
             im = Image.fromarray(cleaned_test_data["images"][img])
             im.save(save_images_test + f"/{img}.png")
-        print(f"Images saved in {save_images_train}, {save_images_valid} and {save_images_test} folders")
+        print(
+            f"Images saved in {save_images_train}, {save_images_valid} and {save_images_test} folders"
+        )
 
         save_train = "data/Lizard_dataset_split/patches/Lizard_Labels_train"
         save_valid = "data/Lizard_dataset_split/patches/Lizard_Labels_valid"
@@ -388,7 +388,9 @@ def extract_data(args: argparse.Namespace)-> None:
             Path(path).mkdir(parents=True, exist_ok=True)
         # save back to mat files
         for idx in cleaned_train_data["images"]:
-            dic = cleaned_train_data["annotations"][cleaned_train_data["annotations"]["id"] == idx].to_dict(orient="list")
+            dic = cleaned_train_data["annotations"][
+                cleaned_train_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
             for key in dic:
                 dic[key] = dic[key][0]
             sio.savemat(
@@ -396,7 +398,9 @@ def extract_data(args: argparse.Namespace)-> None:
                 dic,
             )
         for idx in cleaned_valid_data["images"]:
-            dic = cleaned_valid_data["annotations"][cleaned_valid_data["annotations"]["id"] == idx].to_dict(orient="list")
+            dic = cleaned_valid_data["annotations"][
+                cleaned_valid_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
             for key in dic:
                 dic[key] = dic[key][0]
             sio.savemat(
@@ -404,14 +408,18 @@ def extract_data(args: argparse.Namespace)-> None:
                 dic,
             )
         for idx in cleaned_test_data["images"]:
-            dic = cleaned_test_data["annotations"][cleaned_test_data["annotations"]["id"]  == idx].to_dict(orient="list")
+            dic = cleaned_test_data["annotations"][
+                cleaned_test_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
             for key in dic:
                 dic[key] = dic[key][0]
             sio.savemat(
                 save_test + f"/{idx}.mat",
                 dic,
             )
-        print(f"Annotations saved in {save_train}, {save_valid} and {save_test} folders")
+        print(
+            f"Annotations saved in {save_train}, {save_valid} and {save_test} folders"
+        )
     else:
         save_train = (
             "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
@@ -419,15 +427,17 @@ def extract_data(args: argparse.Namespace)-> None:
         save_valid = (
             "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
         )
-        save_test = "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
-        with open(save_train, "wb") as f:
-            pickle.dump(cleaned_train_data, f)
+        save_test = (
+            "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
+        )
+        with open(save_train, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_train_data, f)  # type: ignore
         print(f"Cleaned train data saved in {save_train}")
-        with open(save_valid, "wb") as f:
-            pickle.dump(cleaned_valid_data, f)
+        with open(save_valid, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_valid_data, f)  # type: ignore
         print(f"Cleaned valid data saved in {save_valid}")
-        with open(save_test, "wb") as f:
-            pickle.dump(cleaned_test_data, f)
+        with open(save_test, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_test_data, f)  # type: ignore
         print(f"Cleaned test data saved in {save_test}")
 
 

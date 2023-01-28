@@ -1,21 +1,12 @@
-"""Copyright (C) SquareFactory SA - All Rights Reserved.
-
-This source code is protected under international copyright law. All rights 
-reserved and protected by the copyright holders.
-This file is confidential and only available to authorized individuals with the
-permission of the copyright holders. If you encounter this file and do not have
-permission, please contact the copyright holders and delete this file.
-"""
-
 import argparse
 import os
 import pickle
 from datetime import datetime
 from pathlib import Path
+from typing import List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
-from typing import List, Tuple, Union
 
 import wandb
 from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
@@ -58,17 +49,15 @@ DISTANCE = 45
 
 
 def init_stardist_training(
-    args: argparse.Namespace, 
-    device: Union[str, torch.device], 
-    debug: bool=False
-)->Tuple[LizardDataModule, Stardist, List[pl.callbacks.Callback]]:
+    args: argparse.Namespace, device: Union[str, torch.device], debug: bool = False
+) -> Tuple[LizardDataModule, Stardist, List[pl.callbacks.Callback]]:
     """Init the training for the stardist model.
-    
+
     Args:
         args (argparse.Namespace): the arguments from the command line.
         device (Union[str, torch.device]): the device to use.
         debug (bool): if True, print debug messages.
-        
+
     Returns:
         tuple: tuple containing:
             dm (LizardDataModule): the datamodule.
@@ -136,19 +125,19 @@ def init_stardist_training(
 
 
 def init_graph_training(
-    args: argparse.Namespace
-)->Tuple[LizardGraphDataModule, Graph, List[pl.callbacks.Callback]]:
+    args: argparse.Namespace,
+) -> Tuple[pl.LightningDataModule, Graph, List[pl.callbacks.Callback]]:
     """Init the training for the graphSage model.
-    
+
     Args:
         args (argparse.Namespace): the arguments from the command line.
-        
+
     Returns:
         tuple: tuple containing:
             dm (LizardGraphDataModule): the datamodule.
             model (Graph): the model.
             callbacks (List[pl.callbacks.Callback]): the callbacks.
-            
+
     Raises:
         None.
     """
@@ -205,8 +194,7 @@ def init_graph_training(
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
-        filename=name
-        + "-loss-{epoch}-{val_loss:.2f}",
+        filename=name + "-loss-{epoch}-{val_loss:.2f}",
         monitor="val_loss",
         mode="min",
         save_top_k=1,
@@ -214,8 +202,7 @@ def init_graph_training(
 
     acc_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=name
-        + "-acc-{epoch}-{val_acc:.4f}",
+        filename=name + "-acc-{epoch}-{val_acc:.4f}",
         monitor="val_acc",
         mode="max",
         save_top_k=1,
@@ -223,8 +210,7 @@ def init_graph_training(
 
     acc_macro_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/cp_acc_graph",
-        filename=name
-        + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+        filename=name + "-accmacro-{epoch}-{val_acc_macro:.4f}",
         monitor="val_acc_macro",
         mode="max",
         save_top_k=1,
@@ -233,15 +219,15 @@ def init_graph_training(
     return dm, model, [loss_callback, acc_callback, acc_macro_callback]
 
 
-def full_training(args: argparse.Namespace)->None:
+def full_training(args: argparse.Namespace) -> None:
     """Train the model on the whole dataset.
-    
+
     Args:
         args (argparse.Namespace): the arguments from the command line.
-        
+
     Returns:
         None.
-        
+
     Raises:
         ValueError: if the model is not implemented.
     """
@@ -285,9 +271,7 @@ def full_training(args: argparse.Namespace)->None:
         else:
             name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
 
-        trainer.save_checkpoint(
-            f"models/{name}-{args.max_epochs}.ckpt"
-        )
+        trainer.save_checkpoint(f"models/{name}-{args.max_epochs}.ckpt")
 
     # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
     if args.gpus and args.gpus > 1:

@@ -1,23 +1,22 @@
 import copy
+from typing import List, Union
 
 import numpy as np
 import torch
 from rich.console import Console
-from rich.table import Table
 from tqdm import tqdm
-from typing import List
 
 from sflizard import (
     Graph,
     LizardDataModule,
     ReportGenerator,
-    Stardist,
     SegmentationMetricTool,
-    get_graph_for_inference,
-    rotate_and_pred,
-    improve_class_map,
+    Stardist,
     get_class_map_from_graph,
+    get_graph_for_inference,
+    improve_class_map,
     merge_stardist_class_together,
+    rotate_and_pred,
 )
 
 X_TYPE = {
@@ -29,6 +28,7 @@ X_TYPE = {
     548: "4ll+c+x",
 }
 STAR_4_IMPROVEMENT = False
+
 
 class TestPipeline:
     """A pipeline to test the model."""
@@ -45,7 +45,7 @@ class TestPipeline:
         batch_size: int,
         seed: int,
         mode: str,
-    )-> None:
+    ) -> None:
         """Init the pipeline.
 
         Args:
@@ -131,10 +131,10 @@ class TestPipeline:
         weights_path: str,
     ) -> None:
         """Init the stardist model for inference.
-        
+
         Args:
             weights_path (str): The path to the stardist weights.
-            
+
         Returns:
             None.
 
@@ -154,11 +154,11 @@ class TestPipeline:
         print("Stardist model loaded.")
         self.classification = self.n_classes > 1
 
-    def __init_graph_inference(self, weights_path: str) -> None:
+    def __init_graph_inference(self, weights_path: Union[List[str], str]) -> None:
         """Init the graph model for inference.
 
         Args:
-            weights_path (str): The path to the graph weights.
+            weights_path (List[str]): The path to the graph weights.
 
         Returns:
             None.
@@ -193,7 +193,7 @@ class TestPipeline:
         """
         print("Testing...")
 
-        # init metric tool 
+        # init metric tool
         self.star_smt = SegmentationMetricTool(self.n_classes, self.device)
 
         if self.compute_graph:
@@ -203,8 +203,9 @@ class TestPipeline:
 
         # init report tool
         if output_dir is not None:
-            self.report_generator = ReportGenerator(output_dir, imgs_to_display, self.n_classes)
-
+            self.report_generator = ReportGenerator(
+                output_dir, imgs_to_display, self.n_classes
+            )
 
         for i in tqdm(range(len(self.dataloader))):  # type: ignore
 
@@ -244,7 +245,6 @@ class TestPipeline:
                 pred_180_mask, clas_180 = rotate_and_pred(self.stardist, inputs, 2)
                 pred_270_mask, clas_270 = rotate_and_pred(self.stardist, inputs, 3)
 
-
             # stardist class mask
             if self.classification:
 
@@ -253,28 +253,31 @@ class TestPipeline:
                     pred_class_map_improved = torch.Tensor(
                         np.array(
                             [
-                                improve_class_map(
-                                    pred_class_map[b].cpu(), pred_mask[b]
-                                )
+                                improve_class_map(pred_class_map[b].cpu(), pred_mask[b])
                                 for b in range(len(pred_class_map))
                             ]
                         )
                     )
                     return pred_class_map_improved, pred_class_map
 
-                pred_class_map_improved, pred_class_map = get_class_pred(clas, pred_mask)
+                pred_class_map_improved, pred_class_map = get_class_pred(
+                    clas, pred_mask
+                )
                 if STAR_4_IMPROVEMENT:
                     class_pred_90, _ = get_class_pred(clas_90, pred_90_mask)
                     class_pred_180, _ = get_class_pred(clas_180, pred_180_mask)
                     class_pred_270, _ = get_class_pred(clas_270, pred_270_mask)
                     pred_class_map_improved = merge_stardist_class_together(
-                        pred_class_map_improved, class_pred_90, class_pred_180, class_pred_270
+                        pred_class_map_improved,
+                        class_pred_90,
+                        class_pred_180,
+                        class_pred_270,
                     )
             else:
                 pred_class_map_improved = None
 
             if self.compute_graph:
-                
+
                 # graph predicted mask
                 graphs = get_graph_for_inference(
                     inputs, self.graph_distance, self.stardist_weights_path, self.x_type
@@ -304,25 +307,25 @@ class TestPipeline:
 
             if self.classification:
                 self.star_smt.add_batch_class(
-                    i, 
-                    true_class_map.detach().int().cpu().numpy(), 
-                    pred_class_map_improved.detach().int().cpu().numpy()
+                    i,
+                    true_class_map.detach().int().cpu().numpy(),
+                    pred_class_map_improved.detach().int().cpu().numpy(),
                 )
                 if self.compute_graph:
                     for g in self.graph_smt:
                         self.graph_smt[g].add_batch_class(
-                            i, 
-                            true_class_map.detach().int().cpu().numpy(), 
-                            np.array(graphs_class_map[g])
+                            i,
+                            true_class_map.detach().int().cpu().numpy(),
+                            np.array(graphs_class_map[g]),
                         )
 
             if output_dir is not None:
                 self.report_generator.add_batch(
-                    images, 
-                    true_mask, 
-                    pred_mask, 
-                    true_class_map, 
-                    pred_class_map, 
+                    images,
+                    true_mask,
+                    pred_mask,
+                    true_class_map,
+                    pred_class_map,
                     pred_class_map_improved,
                     graphs,
                     graphs_class_map[list(graphs_class_map.keys())[0]],
@@ -350,9 +353,13 @@ class TestPipeline:
             self.report_generator.add_final_metrics(
                 self.star_smt.seg_metrics[0],
                 self.star_smt.classes_metrics if self.classification else None,
-                self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics if self.compute_graph else None,
+                self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics
+                if self.compute_graph
+                else None,
                 self.star_smt.seg_metrics if self.classification else None,
-                self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics if self.compute_graph else None,
+                self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics
+                if self.compute_graph
+                else None,
             )
 
             self.report_generator.generate_md()

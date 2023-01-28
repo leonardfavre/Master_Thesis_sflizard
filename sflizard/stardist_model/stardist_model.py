@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import pytorch_lightning as pl
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
@@ -5,7 +7,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 import wandb
 from sflizard.stardist_model import ClassL1BCELoss, MyL1BCELoss
 from sflizard.stardist_model import UNetStar as UNet
-from typing import List, Tuple
+
 
 class Stardist(pl.LightningModule):
     """Stardist model class."""
@@ -20,11 +22,11 @@ class Stardist(pl.LightningModule):
         loss_power_scaler: float = 0.0,
         seed: int = 303,
         device: str = "cpu",
-        wandb_log: bool=False,
-        max_epochs: int=200,
-    )-> None:
+        wandb_log: bool = False,
+        max_epochs: int = 200,
+    ) -> None:
         """Initialize the model.
-        
+
         Args:
             learning_rate (float): The learning rate.
             input_size (int): The input size.
@@ -36,10 +38,10 @@ class Stardist(pl.LightningModule):
             device (str): The device.
             wandb_log (bool): Whether to log to wandb.
             max_epochs (int): The maximum number of epochs.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -84,9 +86,9 @@ class Stardist(pl.LightningModule):
 
         self.max_epochs = max_epochs
 
-    def forward(self, x: torch.Tensor)-> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass.
-        
+
         Args:
             x (torch.Tensor): The input tensor.
 
@@ -98,16 +100,16 @@ class Stardist(pl.LightningModule):
         """
         return self.model(x)
 
-    def _step(self, batch: torch.Tensor, name: str)-> torch.Tensor:
+    def _step(self, batch: torch.Tensor, name: str) -> torch.Tensor:
         """General step.
-        
+
         Args:
             batch (torch.Tensor): The batch.
             name (str): The name of the step (train or val).
-            
+
         Returns:
             loss (torch.Tensor): The loss.
-            
+
         Raises:
             ValueError: If the name is not train or val.
         """
@@ -141,75 +143,75 @@ class Stardist(pl.LightningModule):
 
         return loss
 
-    def training_step(self, batch: torch.Tensor, batch_idx: int)-> torch.Tensor:
+    def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         """Training step.
-        
+
         Args:
             batch (torch.Tensor): The batch.
             batch_idx (int): The batch index.
-            
+
         Returns:
             loss (torch.Tensor): The loss.
-            
+
         Raises:
             None.
         """
         return self._step(batch, "train")
 
-    def training_epoch_end(self, outputs: List[torch.Tensor])-> None:
+    def training_epoch_end(self, outputs: List[torch.Tensor]) -> None:
         """Training epoch end.
-        
+
         Args:
             outputs (List[torch.Tensor]): The outputs.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
         outputs = [x["loss"] for x in outputs if x is not None]
         self._epoch_end(outputs, "train")
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int)-> torch.Tensor:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         """Validation step.
-        
+
         Args:
             batch (torch.Tensor): The batch.
             batch_idx (int): The batch index.
-            
+
         Returns:
             loss (torch.Tensor): The loss.
-            
+
         Raises:
             None.
         """
         return self._step(batch, "val")
 
-    def validation_epoch_end(self, outputs: List[torch.Tensor])-> None:
+    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:
         """Validation epoch end.
-        
+
         Args:
             outputs (List[torch.Tensor]): The outputs.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
         self._epoch_end(outputs, "val")
 
-    def _epoch_end(self, outputs: List[torch.Tensor], name: str)-> None:
+    def _epoch_end(self, outputs: List[torch.Tensor], name: str) -> None:
         """epoch end for train/val.
-        
+
         Args:
             outputs (List[torch.Tensor]): The outputs.
             name (str): The name of the step (train or val).
-            
+
         Returns:
             None.
-            
+
         Raises:
             ValueError: If the name is not train or val.
         """
@@ -219,7 +221,11 @@ class Stardist(pl.LightningModule):
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
-    def configure_optimizers(self)-> Tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]]:
+    def configure_optimizers(
+        self,
+    ) -> Tuple[
+        List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]
+    ]:
         """Configure optimizers.
 
         Args:

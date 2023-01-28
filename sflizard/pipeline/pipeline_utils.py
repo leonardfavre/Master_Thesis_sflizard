@@ -1,43 +1,43 @@
-import torch
 import numpy as np
+import torch
+
 
 def rotate_and_pred(
-    stardist: torch.nn.Module, 
-    inputs: torch.Tensor, 
+    stardist: torch.nn.Module,
+    inputs: torch.Tensor,
     angle: int,
 ) -> tuple[np.ndarray, torch.Tensor]:
     """Rotate the input image and predict the mask with stardist.
-    
+
     Args:
         stardist (torch.nn.Module): The stardist model.
         inputs (torch.Tensor): The input image.
         angle (int): The angle to rotate the image.
-        
+
     Returns:
         tuple: tuple containing:
             pred_mask_rotated (np.array): The predicted mask.
             c (torch.Tensor): The predicted classes.
-            
+
     Raises:
         None.
     """
     inputs_rotated = torch.rot90(inputs, angle, [2, 3])
     with torch.no_grad():
         dist, prob, c = stardist(inputs_rotated)
-    pred_mask_rotated = stardist.compute_star_label(
-        inputs_rotated, dist, prob
-    )
+    pred_mask_rotated = stardist.compute_star_label(inputs_rotated, dist, prob)
     # return rotated np array
     return np.rot90(pred_mask_rotated, -angle, [1, 2]), torch.rot90(
         c.cpu(), -angle, [2, 3]
     )
+
 
 def merge_stardist_class_together(
     p0: torch.Tensor,
     p1: torch.Tensor,
     p2: torch.Tensor,
     p3: torch.Tensor,
-)-> torch.Tensor:
+) -> torch.Tensor:
     """Merge the 4 stardist class prediction together.
 
     Args:
@@ -54,14 +54,13 @@ def merge_stardist_class_together(
     """
     class_map = torch.stack((p0, p1, p2, p3), dim=3)
     class_map = class_map.numpy().astype(int)
-    class_map = np.apply_along_axis(
-        lambda x: np.argmax(np.bincount(x)), 3, class_map
-    )
+    class_map = np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), 3, class_map)
     class_map = torch.from_numpy(class_map)
 
     return class_map
 
-def improve_class_map(class_map: np.array, predicted_masks: np.array)-> np.array:
+
+def improve_class_map(class_map: np.array, predicted_masks: np.array) -> np.array:
     """Improve the class map by assigning the same class to each segmented object.
 
     Args:
@@ -85,12 +84,13 @@ def improve_class_map(class_map: np.array, predicted_masks: np.array)-> np.array
         improved_class_map[predicted_masks == i] = best_class
     return improved_class_map
 
+
 def get_class_map_from_graph(
     graph: list,
     predicted_masks: list,
     graph_pred: list,
     class_pred: list,
-)-> list:
+) -> list:
     """Get the class map from the graph prediction.
 
     Args:
@@ -118,9 +118,7 @@ def get_class_map_from_graph(
                 # get the point in the graph included in the points
                 for idp, p in enumerate(graph_points):
                     if (p == points).all(axis=1).any():
-                        class_map[pm == i] = (
-                            graph_pred[idx][idp].int().cpu().numpy()
-                        )
+                        class_map[pm == i] = graph_pred[idx][idp].int().cpu().numpy()
                         break
             class_maps.append(class_map)
     return class_maps

@@ -1,16 +1,8 @@
-"""Copyright (C) SquareFactory SA - All Rights Reserved.
-
-This source code is protected under international copyright law. All rights 
-reserved and protected by the copyright holders.
-This file is confidential and only available to authorized individuals with the
-permission of the copyright holders. If you encounter this file and do not have
-permission, please contact the copyright holders and delete this file.
-"""
 from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import albumentations as A
 import numpy as np
@@ -33,9 +25,9 @@ class LizardDataset(Dataset):
         tf_augment: A.Compose,
         annotation_target: str,
         aditional_args: Optional[dict] = None,
-    )-> None:
+    ) -> None:
         """Initialize dataset.
-        
+
         Args:
             df (pd.DataFrame): dataframe containing the data.
             data (np.ndarray): array containing the images.
@@ -43,7 +35,7 @@ class LizardDataset(Dataset):
             tf_augment (A.Compose): augmentation transformation.
             annotation_target (str): annotation target.
             aditional_args (Optional[dict]): aditional arguments. Used for nrays.
-        
+
         Returns:
             None.
 
@@ -57,23 +49,23 @@ class LizardDataset(Dataset):
         self.annotation_target = annotation_target
         self.aditional_args = aditional_args
 
-    def __len__(self)-> int:
+    def __len__(self) -> int:
         """Get the length of the dataset.
-        
+
         Args:
             None.
-            
+
         Returns:
             len (int): length of the dataset.
-            
+
         Raises:
             None.
         """
         return len(self.df)
 
-    def __getitem__(self, idx: int)-> tuple:
-        """Get item from the dataset. 
-        
+    def __getitem__(self, idx: int) -> tuple:
+        """Get item from the dataset.
+
         In the case of a classic stardist annotation target:
             - image
             - obj_probabilities map
@@ -84,12 +76,12 @@ class LizardDataset(Dataset):
             - obj_probabilities map
             - distances map
             - classes map
-        
+
         Transform them if needed.
-        
+
         Args:
             idx (int): index of the item.
-            
+
         Returns:
             tuple: tuple containing:
                 - image
@@ -144,7 +136,7 @@ class LizardDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_data_path: str,
+        train_data_path: Union[str, None],
         valid_data_path: str,
         test_data_path: str,
         annotation_target: str = "inst",
@@ -153,9 +145,9 @@ class LizardDataModule(pl.LightningDataModule):
         input_size=540,
         seed: int = 303,
         aditional_args: Optional[dict] = None,
-    )-> None:
+    ) -> None:
         """Create the datamodule and initialize the argument for the dataloaders.
-        
+
         Args:
             train_data_path (str): path to the train data.
             valid_data_path (str): path to the valid data.
@@ -170,8 +162,8 @@ class LizardDataModule(pl.LightningDataModule):
         super().__init__()
 
         if train_data_path is not None:
-            train_data_path = Path(train_data_path)
-            with train_data_path.open("rb") as f:
+            train_data_p = Path(train_data_path)
+            with train_data_p.open("rb") as f:
                 self.train_data = pickle.load(f)
         else:
             self.train_data = None
@@ -192,15 +184,15 @@ class LizardDataModule(pl.LightningDataModule):
         self.seed = seed
         self.aditional_args = aditional_args
 
-    def setup(self, stage: Optional[str] = None)-> None:
+    def setup(self, stage: Optional[str] = None) -> None:
         """Data setup for training, define transformations and datasets.
-        
+
         Args:
             stage (Optional[str]): stage.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -261,16 +253,15 @@ class LizardDataModule(pl.LightningDataModule):
             None,
             self.annotation_target,
             self.aditional_args,
-            test=True,
         )
 
-    def train_dataloader(self)-> DataLoader:
+    def train_dataloader(self) -> DataLoader:
         """Return the training dataloader.
-        
-        Args: 
+
+        Args:
             None.
 
-        Returns: 
+        Returns:
             dataloader (DataLoader): the training dataloader.
 
         Raises:
@@ -280,23 +271,23 @@ class LizardDataModule(pl.LightningDataModule):
             return None
         return DataLoader(self.train_ds, **self.dataloader_arguments)
 
-    def val_dataloader(self)-> DataLoader:
+    def val_dataloader(self) -> DataLoader:
         """Return the validation dataloader.
-        
+
         Args:
             None.
-            
+
         Returns:
             dataloader (DataLoader): the validation dataloader.
-            
+
         Raises:
             None.
         """
         return DataLoader(self.valid_ds, **self.dataloader_arguments)
 
-    def test_dataloader(self)-> DataLoader:
+    def test_dataloader(self) -> DataLoader:
         """Return the test dataloader.
-        
+
         Args:
             None.
 

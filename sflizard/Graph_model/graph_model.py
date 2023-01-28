@@ -15,25 +15,25 @@ class GraphCustom(torch.nn.Module):
     """Custom graph model adding linear layers before and after the graph layers."""
 
     def __init__(
-        self, 
-        dim_in: int, 
-        dim_h: int, 
-        dim_out: int, 
-        num_layers: int, 
+        self,
+        dim_in: int,
+        dim_h: int,
+        dim_out: int,
+        num_layers: int,
         layer_type: torch.nn.Module,
-    )->None:
+    ) -> None:
         """Initialize the model.
-        
+
         Args:
             dim_in (int): The dimension of the input.
             dim_h (int): The dimension of the hidden layers.
             dim_out (int): The dimension of the output.
             num_layers (int): The number of graph layers.
             layer_type (torch.nn.Module): The type of graph layer to use.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -49,7 +49,7 @@ class GraphCustom(torch.nn.Module):
         self.model.append(Linear(dim_h, dim_h))
         self.model.append(Linear(dim_h, dim_out))
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor)->torch.Tensor:
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model.
 
         Args:
@@ -98,8 +98,8 @@ class Graph(pl.LightningModule):
             0.515399722585458,
             0.018063861886878453,
         ],
-        wandb_log: bool=False,
-    )->None:
+        wandb_log: bool = False,
+    ) -> None:
         """Initialize the module.
 
         Args:
@@ -184,27 +184,27 @@ class Graph(pl.LightningModule):
         else:
             self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor)-> torch.Tensor:
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Forward pass.
-        
+
         Args:
             x (torch.Tensor): The input tensor.
             edge_index (torch.Tensor): The edge index tensor.
-            
+
         Returns:
             output (torch.Tensor): The output tensor.
-        
+
         Raises:
             None.
         """
         return self.model(x, edge_index)
 
     def _step(
-        self, 
-        batch: torch.Tensor, 
-        batch_idx: int, 
+        self,
+        batch: torch.Tensor,
+        batch_idx: int,
         name: str,
-    )-> torch.Tensor:
+    ) -> torch.Tensor:
         """Perform a step.
 
         Args:
@@ -263,12 +263,12 @@ class Graph(pl.LightningModule):
         return loss
 
     def training_step(
-        self, 
-        batch: torch.Tensor, 
+        self,
+        batch: torch.Tensor,
         batch_idx: int,
-    )-> torch.Tensor:
+    ) -> torch.Tensor:
         """Training step.
-        
+
         Args:
             batch (torch.Tensor): The batch.
             batch_idx (int): The batch index.
@@ -282,38 +282,38 @@ class Graph(pl.LightningModule):
         return self._step(batch, batch_idx, "train")
 
     def validation_step(
-        self, 
-        batch: torch.Tensor, 
+        self,
+        batch: torch.Tensor,
         batch_idx: int,
-    )-> torch.Tensor:
+    ) -> torch.Tensor:
         """Validation step.
-        
+
         Args:
             batch (torch.Tensor): The batch.
             batch_idx (int): The batch index.
-            
+
         Returns:
             loss (torch.Tensor): The loss.
-            
+
         Raises:
             None.
         """
         return self._step(batch, batch_idx, "val")
 
     def _epoch_end(
-        self, 
+        self,
         outputs: List[torch.Tensor],
         name: str,
-    )-> None:
+    ) -> None:
         """Epoch end.
-        
+
         Args:
             outputs (List[torch.Tensor]): The outputs.
             name (str): The name of the step.
-            
+
         Returns:
             None.
-            
+
         Raises:
             ValueError: If the name is not train or val.
         """
@@ -326,21 +326,21 @@ class Graph(pl.LightningModule):
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
-    def training_epoch_end(self, outputs: List[torch.Tensor])-> None:
+    def training_epoch_end(self, outputs: List[torch.Tensor]) -> None:
         """Training epoch end.
-        
+
         Args:
             outputs (List[torch.Tensor]): The outputs.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
         self._epoch_end(outputs, "train")
 
-    def validation_epoch_end(self, outputs: List[torch.Tensor])-> None:
+    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:
         """Validation epoch end.
 
         Args:
@@ -354,7 +354,11 @@ class Graph(pl.LightningModule):
         """
         self._epoch_end(outputs, "val")
 
-    def configure_optimizers(self)-> Tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]]:
+    def configure_optimizers(
+        self,
+    ) -> Tuple[
+        List[torch.optim.Optimizer], List[torch.optim.lr_scheduler._LRScheduler]
+    ]:
         """Configure optimizers.
 
         Args:

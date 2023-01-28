@@ -2,6 +2,7 @@ import pickle
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import scipy.io as sio
@@ -23,7 +24,7 @@ TRUE_DATA_PATH_START = "data/Lizard_dataset_split/patches/Lizard_Labels_"
 
 
 class HoverNetMetricTool:
-    """ Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool."""
+    """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool."""
 
     def __init__(
         self,
@@ -37,7 +38,7 @@ class HoverNetMetricTool:
         distance: int = 45,
         x_type: str = "ll",
     ) -> None:
-        """ Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool.
+        """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool.
 
         Args:
             mode (str): "valid" or "test" depending on the dataset to use.
@@ -53,18 +54,17 @@ class HoverNetMetricTool:
         """
         self.mode = mode
         self.device = "cuda"
-        
+
         self.base_save_path = f"output/graph/{self.mode}/{distance}/{x_type}"
         Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
         self.log_file = Path(self.base_save_path) / "log.txt"
         Path(self.log_file).touch(exist_ok=True)
-        
+
         # result table to store results for easier analysis
         self.init_result_table(weights_selector)
-        
+
         self.distance = distance
         self.x_type = x_type
-
 
         # create the datamodule
         print("\nLoading data...")
@@ -145,22 +145,21 @@ class HoverNetMetricTool:
                 with self.log_file.open("a") as f:
                     f.write(f"\n{wp}: FileNotFoundError.\n\n{str(e)}\nskiped.")
                 print("...skipped.")
-            
 
         # save the result table
         self.save_result_to_file()
 
         print("\nAll done.")
 
-    def init_graph_inference(self, weights_path: str) -> None:
-        """ Initialize the graph model for inference.
-        
+    def init_graph_inference(self, weights_path: str) -> torch.nn.Module:
+        """Initialize the graph model for inference.
+
         Args:
             weights_path (str): path to the checkpoint.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -173,7 +172,7 @@ class HoverNetMetricTool:
         return graph
 
     def get_weights_path(self, weights_selector: dict) -> dict:
-        """ Looks for the weights path for each model available and return the one that matches the selection.
+        """Looks for the weights path for each model available and return the one that matches the selection.
 
         Args:
             weights_selector (dict): dictionary with the model parameters to select.
@@ -225,7 +224,7 @@ class HoverNetMetricTool:
         return weights_path
 
     def save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
-        """ Run the inference on the test data and save the results in a .mat file.
+        """Run the inference on the test data and save the results in a .mat file.
 
         Args:
             graph_model (torch.nn.Module): graph model to use for inference.
@@ -276,26 +275,26 @@ class HoverNetMetricTool:
                 sio.savemat(f"{save_path}{batch[b].image_idx}.mat", mat)
 
     def run_hovernet_metric_tool(self, save_folder: str) -> str:
-        """ Run the hovernet metric tool to compute the metrics.
-        
+        """Run the hovernet metric tool to compute the metrics.
+
         Args:
             save_folder (str): folder to save the results.
-            
+
         Returns:
             result (str): string with the results metrics.
-            
+
         Raises:
             None.
         """
         save_path = self.base_save_path + f"/{save_folder}/"
         compute_stat_cmd = f"python external_models/hover_net/compute_stats.py --pred_dir {save_path} --true_dir {TRUE_DATA_PATH_START}{self.mode}/ --mode type"
         command = f"conda activate hovernet; {compute_stat_cmd}; conda activate TM"
-        ret = subprocess.run(command, capture_output=True, shell=True)
+        ret = subprocess.run(command, capture_output=True, shell=True)  # nosec
         result = ret.stdout.decode()
         return result
 
     def clean_folder(self, save_folder: str) -> None:
-        """ Clean the folder with the results to save disk space.
+        """Clean the folder with the results to save disk space.
 
         Args:
             save_folder (str): folder to save the results.
@@ -310,7 +309,7 @@ class HoverNetMetricTool:
         shutil.rmtree(save_path)
 
     def init_result_table(self, weights_selector: dict) -> None:
-        """ Initialize the result table to save the results.
+        """Initialize the result table to save the results.
 
         Args:
             weights_selector (dict): dictionary with the weights to use.
@@ -321,7 +320,7 @@ class HoverNetMetricTool:
         Raises:
             None.
         """
-        self.result_table = {}
+        self.result_table: Dict[Any, Any] = {}
         for model in weights_selector["model"]:
             self.result_table[model] = {}
             for ckpt in ["final", "acc", "acc_macro", "loss"]:
@@ -338,7 +337,7 @@ class HoverNetMetricTool:
         Path(self.result_file).touch(exist_ok=True)
 
     def save_result_in_table(self, save_folder: str, result: str) -> None:
-        """ Save the result of a model in the result table.
+        """Save the result of a model in the result table.
 
         Args:
             save_folder (str): folder to save the results.
@@ -364,7 +363,7 @@ class HoverNetMetricTool:
             self.result_table[model][ckpt][dimh][num_layers] = result
 
     def save_result_to_file(self) -> None:
-        """ Save the result table to a file in a good format to use later.
+        """Save the result table to a file in a good format to use later.
 
         Args:
             None.
@@ -386,7 +385,9 @@ class HoverNetMetricTool:
                             for dh in self.result_table[m][c][h]:
                                 f.write(f"      [ # {dh}\n")
                                 for nl in self.result_table[m][c][h][dh]:
-                                    val = self.result_table[m][c][h][dh][nl].split("\n")[1]
+                                    val = self.result_table[m][c][h][dh][nl].split(
+                                        "\n"
+                                    )[1]
                                     val = val.replace("  ", ", ")
                                     f.write(f"         {val}, # {nl}\n")
                                 f.write("      ],\n")

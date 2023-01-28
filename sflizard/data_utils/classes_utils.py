@@ -4,7 +4,7 @@ import numpy as np
 import yaml  # type: ignore
 
 
-def get_class_name()->dict:
+def get_class_name() -> dict:
     """Get the class name of the cells from the yaml file.
 
     Args:
@@ -24,7 +24,7 @@ def get_class_name()->dict:
     return class_name
 
 
-def get_class_color()->list:
+def get_class_color() -> list:
     """Get the color to use for plotting for the background and the cells from the yaml file.
 
     Args:

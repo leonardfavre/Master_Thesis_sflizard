@@ -1,13 +1,13 @@
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import numpy as np
-import torch
+import torchvision.transforms as T
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
-from stardist.matching import matching
-import torchvision.transforms as T
 from PIL import ImageDraw
+from stardist.matching import matching
 
 from sflizard import get_class_color, get_class_name
 
@@ -16,21 +16,21 @@ class ReportGenerator:
     """MD report generator."""
 
     def __init__(
-        self, 
-        output_dir: str, 
-        imgs_to_display: int, 
+        self,
+        output_dir: str,
+        imgs_to_display: int,
         n_classes: int,
-    )-> None:
+    ) -> None:
         """Report generator.
-        
+
         Args:
             output_dir (str): The output directory.
             imgs_to_display (int): The number of images to display.
             n_classes (int): The number of classes.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -44,54 +44,55 @@ class ReportGenerator:
         self.n_classes = n_classes
         self.class_name = get_class_name()
         self.class_color = get_class_color()
-        
 
         # images and masks
-        self.images = []
-        self.true_masks = []
-        self.predicted_masks = []
+        self.images: List[Any] = []
+        self.true_masks: List[Any] = []
+        self.predicted_masks: List[Any] = []
 
-        self.true_class_map = []
-        self.pred_class_map = []
-        self.pred_class_map_improved = []
+        self.true_class_map: List[Any] = []
+        self.pred_class_map: List[Any] = []
+        self.pred_class_map_improved: List[Any] = []
 
-        self.graphs_images = []
-        self.graphs_class_map = []
+        self.graphs_images: List[Any] = []
+        self.graphs_class_map: List[Any] = []
 
         # metrics
-        self.single_segmentation_metric = []
-        self.segmentation_metric = None
-        self.classification_metric = None
-        self.graph_classification_metric = None
-        self.segmentation_classification_metric = None
-        self.graph_segmentation_classification_metric = None
-        
+        self.single_segmentation_metric: List[Any] = []
+        self.segmentation_metric: Union[Dict[Any, Any], None] = None
+        self.classification_metric: Union[Dict[Any, Any], None] = None
+        self.graph_classification_metric: Union[Dict[Any, Any], None] = None
+        self.segmentation_classification_metric: Union[Dict[Any, Any], None] = None
+        self.graph_segmentation_classification_metric: Union[
+            Dict[Any, Any], None
+        ] = None
+
     def add_batch(
-        self, 
-        images: torch.Tensor,
-        true_masks: np.array,
-        pred_masks: np.array,
-        true_class_map: torch.Tensor=None,
-        pred_class_map: torch.Tensor=None,
-        pred_class_map_improved: torch.Tensor=None,
-        graphs: list=None,
-        graphs_class_map: np.array=None,
+        self,
+        images: list,
+        true_masks: list,
+        pred_masks: list,
+        true_class_map: list = None,
+        pred_class_map: list = None,
+        pred_class_map_improved: list = None,
+        graphs: list = None,
+        graphs_class_map: list = None,
     ) -> None:
         """Add a batch to the report.
-        
+
         Args:
-            images (torch.Tensor): The images.
-            true_masks (np.array): The true masks.
-            pred_masks (np.array): The predicted masks.
-            true_class_map (torch.Tensor): The true class map.
-            pred_class_map (torch.Tensor): The predicted class map.
-            pred_class_map_improved (torch.Tensor): The improved predicted class map.
+            images (list): The images.
+            true_masks (list): The true masks.
+            pred_masks (list): The predicted masks.
+            true_class_map (list): The true class map.
+            pred_class_map (list): The predicted class map.
+            pred_class_map_improved (list): The improved predicted class map.
             graphs (list): The graphs.
-            graphs_class_map (np.array): The graphs class map.
-            
+            graphs_class_map (list): The graphs class map.
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -101,38 +102,48 @@ class ReportGenerator:
                 self.images.append(images[i].cpu())
                 self.true_masks.append(true_masks[i])
                 self.predicted_masks.append(pred_masks[i])
-                self.single_segmentation_metric.append(matching(true_masks[i], pred_masks[i]))
-                if true_class_map is not None:
+                self.single_segmentation_metric.append(
+                    matching(true_masks[i], pred_masks[i])
+                )
+                if (
+                    true_class_map is not None
+                    and pred_class_map is not None
+                    and pred_class_map_improved is not None
+                ):
                     self.true_class_map.append(true_class_map[i].cpu().numpy())
                     self.pred_class_map.append(pred_class_map[i].cpu().numpy())
-                    self.pred_class_map_improved.append(pred_class_map_improved[i].cpu().numpy())
-                    if graphs is not None:
+                    self.pred_class_map_improved.append(
+                        pred_class_map_improved[i].cpu().numpy()
+                    )
+                    if graphs is not None and graphs_class_map is not None:
                         self.graphs_images.append(
-                            self._draw_graph(graphs[i], pred_class_map_improved[i].cpu().numpy())
+                            self._draw_graph(
+                                graphs[i], pred_class_map_improved[i].cpu().numpy()
+                            )
                         )
                         self.graphs_class_map.append(graphs_class_map[i])
             self.imgs_to_display = max(0, self.imgs_to_display - len(images))
 
     def add_final_metrics(
-        self, 
-        segmentation_metric: dict, 
-        classification_metric: dict,
-        graph_classification_metric: dict,
-        segmentation_classification_metric: dict,
-        graph_segmentation_classification_metric: dict,
+        self,
+        segmentation_metric: Union[Dict[Any, Any], None],
+        classification_metric: Union[Dict[Any, Any], None],
+        graph_classification_metric: Union[Dict[Any, Any], None],
+        segmentation_classification_metric: Union[Dict[Any, Any], None],
+        graph_segmentation_classification_metric: Union[Dict[Any, Any], None],
     ) -> None:
         """Add final metrics to the report.
-        
+
         Args:
             segmentation_metric (dict): The segmentation metric.
             classification_metric (dict): The classification metric.
             graph_classification_metric (dict): The graph classification metric.
             segmentation_classification_metric (dict): The segmentation classification metric.
             graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -140,7 +151,9 @@ class ReportGenerator:
         self.classification_metric = classification_metric
         self.graph_classification_metric = graph_classification_metric
         self.segmentation_classification_metric = segmentation_classification_metric
-        self.graph_segmentation_classification_metric = graph_segmentation_classification_metric
+        self.graph_segmentation_classification_metric = (
+            graph_segmentation_classification_metric
+        )
 
     def generate_md(self) -> None:
         """Generate a markdown file with the report.
@@ -166,13 +179,24 @@ class ReportGenerator:
         md = "# Test results\n\n"
 
         # add metrics
-        md = self._get_simple_metric_table("Segmentation Metrics", self.segmentation_metric, md)
+        if self.segmentation_metric is not None:
+            md = self._get_simple_metric_table(
+                "Segmentation Metrics", self.segmentation_metric, md
+            )
         if self.segmentation_classification_metric is not None:
-            md = self._get_per_class_metric_table("Segmentation Metrics per class", self.segmentation_classification_metric, md)
+            md = self._get_per_class_metric_table(
+                "Segmentation Metrics per class",
+                self.segmentation_classification_metric,
+                md,
+            )
         if self.graph_segmentation_classification_metric is not None:
-            md = self._get_per_class_metric_table("Segmentation Metrics per class after graph improvement", self.graph_segmentation_classification_metric, md)
+            md = self._get_per_class_metric_table(
+                "Segmentation Metrics per class after graph improvement",
+                self.graph_segmentation_classification_metric,
+                md,
+            )
 
-        if self.n_classes > 1:
+        if self.n_classes > 1 and self.classification_metric is not None:
             md += "## Classification metrics\n\n"
             md += "| Metric | Value |\n"
             md += "| :--- | :---: |\n"
@@ -192,7 +216,11 @@ class ReportGenerator:
             for i in range(len(self.images)):
                 md += "### Image " + str(i + 1) + "\n\n"
                 md += f"![](images/test_image_{i}.png)\n"
-                md = self._get_simple_metric_table("Personal segmentation Metrics", self.single_segmentation_metric[i], md)
+                md = self._get_simple_metric_table(
+                    "Personal segmentation Metrics",
+                    self.single_segmentation_metric[i],
+                    md,
+                )
                 if self.n_classes > 1:
                     md += f"\n![](images/test_image_{i}_classes.png)\n"
                     md += f"\n![](images/test_image_{i}_graph.png)\n"
@@ -218,20 +246,18 @@ class ReportGenerator:
         md += f"## {title}\n\n"
         md += "| Metric | Value |\n"
         md += "| :--- | :---: |\n"
-        md += f"| FP | {metrics.fp} |\n"
-        md += f"| TP | {metrics.tp} |\n"
-        md += f"| FN | {metrics.fn} |\n"
-        md += f"| Precision | {metrics.precision} |\n"
-        md += f"| Recall | {metrics.recall} |\n"
-        md += f"| Accuracy | {metrics.accuracy} |\n"
-        md += f"| F1 | {metrics.f1} |\n"
-        md += f"| n_true | {metrics.n_true} |\n"
-        md += f"| n_pred | {metrics.n_pred} |\n"
-        md += f"| mean_true_score | {metrics.mean_true_score} |\n"
-        md += f"| mean_matched_score | {metrics.mean_matched_score} |\n"
-        md += (
-            f"| panoptic_quality | {metrics.panoptic_quality} |\n"
-        )
+        md += f"| FP | {metrics.fp} |\n"  # type: ignore
+        md += f"| TP | {metrics.tp} |\n"  # type: ignore
+        md += f"| FN | {metrics.fn} |\n"  # type: ignore
+        md += f"| Precision | {metrics.precision} |\n"  # type: ignore
+        md += f"| Recall | {metrics.recall} |\n"  # type: ignore
+        md += f"| Accuracy | {metrics.accuracy} |\n"  # type: ignore
+        md += f"| F1 | {metrics.f1} |\n"  # type: ignore
+        md += f"| n_true | {metrics.n_true} |\n"  # type: ignore
+        md += f"| n_pred | {metrics.n_pred} |\n"  # type: ignore
+        md += f"| mean_true_score | {metrics.mean_true_score} |\n"  # type: ignore
+        md += f"| mean_matched_score | {metrics.mean_matched_score} |\n"  # type: ignore
+        md += f"| panoptic_quality | {metrics.panoptic_quality} |\n"  # type: ignore
         return md
 
     def _get_per_class_metric_table(self, title: str, metrics: dict, md: str) -> str:
@@ -257,24 +283,95 @@ class ReportGenerator:
         for i in range(1, self.n_classes):
             md += " :---: |"
         md += "\n"
-        md += "| FP |" + ' '.join([f"{metrics[i].fp:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| TP |" + ' '.join([f"{metrics[i].tp:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| FN |" + ' '.join([f"{metrics[i].fn:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| Precision |" + ' '.join([f"{metrics[i].precision:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| Recall |" + ' '.join([f"{metrics[i].recall:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| Accuracy |" + ' '.join([f"{metrics[i].accuracy:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| F1 |" + ' '.join([f"{metrics[i].f1:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| n_true |" + ' '.join([f"{metrics[i].n_true:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| n_pred |" + ' '.join([f"{metrics[i].n_pred:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| mean_true_score |" + ' '.join([f"{metrics[i].mean_true_score:.4f} | " for i in range(1, self.n_classes)]) + "\n"
-        md += f"| mean_matched_score |" + ' '.join([f"{metrics[i].mean_matched_score:.4f} | " for i in range(1, self.n_classes)]) + "\n"
         md += (
-            f"| panoptic_quality |" + ' '.join([f"{metrics[i].panoptic_quality:.4f} | " for i in range(1, self.n_classes)]) + "\n"
+            "| FP |"
+            + " ".join([f"{metrics[i].fp:.4f} | " for i in range(1, self.n_classes)])
+            + "\n"
         )
-        
+        md += (
+            "| TP |"
+            + " ".join([f"{metrics[i].tp:.4f} | " for i in range(1, self.n_classes)])
+            + "\n"
+        )
+        md += (
+            "| FN |"
+            + " ".join([f"{metrics[i].fn:.4f} | " for i in range(1, self.n_classes)])
+            + "\n"
+        )
+        md += (
+            "| Precision |"
+            + " ".join(
+                [f"{metrics[i].precision:.4f} | " for i in range(1, self.n_classes)]
+            )
+            + "\n"
+        )
+        md += (
+            "| Recall |"
+            + " ".join(
+                [f"{metrics[i].recall:.4f} | " for i in range(1, self.n_classes)]
+            )
+            + "\n"
+        )
+        md += (
+            "| Accuracy |"
+            + " ".join(
+                [f"{metrics[i].accuracy:.4f} | " for i in range(1, self.n_classes)]
+            )
+            + "\n"
+        )
+        md += (
+            "| F1 |"
+            + " ".join([f"{metrics[i].f1:.4f} | " for i in range(1, self.n_classes)])
+            + "\n"
+        )
+        md += (
+            "| n_true |"
+            + " ".join(
+                [f"{metrics[i].n_true:.4f} | " for i in range(1, self.n_classes)]
+            )
+            + "\n"
+        )
+        md += (
+            "| n_pred |"
+            + " ".join(
+                [f"{metrics[i].n_pred:.4f} | " for i in range(1, self.n_classes)]
+            )
+            + "\n"
+        )
+        md += (
+            "| mean_true_score |"
+            + " ".join(
+                [
+                    f"{metrics[i].mean_true_score:.4f} | "
+                    for i in range(1, self.n_classes)
+                ]
+            )
+            + "\n"
+        )
+        md += (
+            "| mean_matched_score |"
+            + " ".join(
+                [
+                    f"{metrics[i].mean_matched_score:.4f} | "
+                    for i in range(1, self.n_classes)
+                ]
+            )
+            + "\n"
+        )
+        md += (
+            "| panoptic_quality |"
+            + " ".join(
+                [
+                    f"{metrics[i].panoptic_quality:.4f} | "
+                    for i in range(1, self.n_classes)
+                ]
+            )
+            + "\n"
+        )
+
         return md
 
-    def _generate_images(self)-> None:
+    def _generate_images(self) -> None:
         """Generate images for the report.
 
         Args:
@@ -306,7 +403,11 @@ class ReportGenerator:
                         self.pred_class_map[i],
                         self.pred_class_map_improved[i],
                     ],
-                    ["True Class map", "Predicted Class map", "Predicted class map improved"],
+                    [
+                        "True Class map",
+                        "Predicted Class map",
+                        "Predicted class map improved",
+                    ],
                     f"test_image_{i}_classes",
                     legend=True,
                 )
@@ -351,11 +452,7 @@ class ReportGenerator:
                 )
 
     def _save_images(
-        self, 
-        imgs: list, 
-        titles: list, 
-        file_name: str, 
-        legend: bool=False
+        self, imgs: list, titles: list, file_name: str, legend: bool = False
     ) -> None:
         """Save images to png files.
 
@@ -394,8 +491,8 @@ class ReportGenerator:
         plt.close()
 
     def _draw_graph(
-        self, 
-        graph: dict, 
+        self,
+        graph: dict,
         class_map: np.array,
     ) -> np.array:
         """Draw graph on class map.

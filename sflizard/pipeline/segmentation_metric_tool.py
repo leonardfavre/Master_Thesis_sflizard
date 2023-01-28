@@ -1,11 +1,14 @@
-from stardist.matching import matching, matching_dataset
+from typing import Any, Dict
+
+import numpy as np
+import torch
+import torchmetrics
 from rich.console import Console
 from rich.table import Table
-import numpy as np
-import torchmetrics
-import torch
+from stardist.matching import matching_dataset
 
 from sflizard import get_class_name
+
 
 class SegmentationMetricTool:
     """A tool to compute metrics for segmentation."""
@@ -27,10 +30,10 @@ class SegmentationMetricTool:
         self.device = device
 
         # init tests for segmentation for each class
-        self.seg_metrics = {}
+        self.seg_metrics: Dict[int, Any] = {}
 
         # init tests for classification
-        self.classes_metrics = {}
+        self.classes_metrics: Dict[str, Any] = {}
         self.classes_metrics["accuracy micro"] = torchmetrics.Accuracy(
             num_classes=self.n_classes, mdmc_average="global"
         ).to(self.device)
@@ -47,25 +50,25 @@ class SegmentationMetricTool:
         # init data holders
         self.true_masks = None
         self.predicted_masks = None
-        self.true_class_map = {}
-        self.pred_class_map = {}
+        self.true_class_map: Dict[int, Any] = {}
+        self.pred_class_map: Dict[int, Any] = {}
 
     def add_batch(
-        self, 
-        batch_idx: int, 
+        self,
+        batch_idx: int,
         true_masks: np.array,
         pred_masks: np.array,
     ) -> None:
         """Add a batch to the metric tool.
-        
+
         Args:
             batch_idx (int): The batch index.
             true_masks (np.array): The true masks.
             pred_masks (np.array): The predicted masks.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -88,7 +91,7 @@ class SegmentationMetricTool:
             )
 
     def add_batch_class(
-        self, 
+        self,
         batch_idx: int,
         true_class_map: np.array,
         pred_class_map: np.array,
@@ -109,7 +112,8 @@ class SegmentationMetricTool:
         if self.n_classes > 1:
             for metric in self.classes_metrics:
                 self.classes_metrics[metric](
-                    torch.Tensor(pred_class_map).int().to(self.device), torch.Tensor(true_class_map).int().to(self.device)
+                    torch.Tensor(pred_class_map).int().to(self.device),
+                    torch.Tensor(true_class_map).int().to(self.device),
                 )
 
         for j in range(1, self.n_classes):
@@ -120,17 +124,14 @@ class SegmentationMetricTool:
                 self.true_class_map[j] = ct
             else:
                 self.true_class_map[j] = np.concatenate([self.true_class_map[j], ct])
-            
+
             # save the predicted class map
             cp = np.copy(pred_class_map)
             cp[cp != j] = 0
             if batch_idx == 0:
                 self.pred_class_map[j] = cp
             else:
-                self.pred_class_map[j] = np.concatenate(
-                    [self.pred_class_map[j], cp]
-                )
-    
+                self.pred_class_map[j] = np.concatenate([self.pred_class_map[j], cp])
 
     def compute_metrics(self) -> None:
         """Compute the metrics.
@@ -154,8 +155,8 @@ class SegmentationMetricTool:
         for i in range(1, self.n_classes):
             # compute metrics for each class
             self.seg_metrics[i] = matching_dataset(
-                    self.true_class_map[i], self.pred_class_map[i], show_progress=False
-                )
+                self.true_class_map[i], self.pred_class_map[i], show_progress=False
+            )
 
     def log_results(self, console: Console) -> None:
         """Log the results in rich tables.
@@ -220,15 +221,24 @@ class SegmentationMetricTool:
                 table.add_column(f"{get_class_name()[i]}", justify="center")
             table.add_row(
                 "precision",
-                *[f"{self.seg_metrics[i].precision:.4f}" for i in range(1, self.n_classes)],
+                *[
+                    f"{self.seg_metrics[i].precision:.4f}"
+                    for i in range(1, self.n_classes)
+                ],
             )
             table.add_row(
                 "recall",
-                *[f"{self.seg_metrics[i].recall:.4f}" for i in range(1, self.n_classes)],
+                *[
+                    f"{self.seg_metrics[i].recall:.4f}"
+                    for i in range(1, self.n_classes)
+                ],
             )
             table.add_row(
                 "acc",
-                *[f"{self.seg_metrics[i].accuracy:.4f}" for i in range(1, self.n_classes)],
+                *[
+                    f"{self.seg_metrics[i].accuracy:.4f}"
+                    for i in range(1, self.n_classes)
+                ],
             )
             table.add_row(
                 "f1",
@@ -236,6 +246,9 @@ class SegmentationMetricTool:
             )
             table.add_row(
                 "panoptic_quality",
-                *[f"{self.seg_metrics[i].panoptic_quality:.4f}" for i in range(1, self.n_classes)],
+                *[
+                    f"{self.seg_metrics[i].panoptic_quality:.4f}"
+                    for i in range(1, self.n_classes)
+                ],
             )
             console.print(table)

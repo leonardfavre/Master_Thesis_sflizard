@@ -1,11 +1,13 @@
 import os.path as osp
+from typing import Union
 
 import numpy as np
 import pandas as pd
+import pytorch_lightning as pl
 import torch
 from torch_geometric.data import Data, Dataset, LightningDataset
 from tqdm import tqdm
-from typing import Union
+
 from sflizard.data_utils import get_graph
 
 
@@ -16,17 +18,17 @@ class LizardGraphDataset(Dataset):
         self,
         transform=None,
         pre_transform=None,
-        df: pd.DataFrame = None,
-        data: np.ndarray = None,
+        df: pd.DataFrame = pd.DataFrame(),
+        data: np.ndarray = np.array([]),
         name: str = "",
         n_rays: int = 32,
         distance: int = 45,
         stardist_checkpoint: str = None,
         x_type: str = "ll",  # ll: last_layer, c: classification, p: position, a:area
-        root: str="data/graph",
-        consep_data: bool=False,
-        light: bool=False,
-    )-> None:
+        root: str = "data/graph",
+        consep_data: bool = False,
+        light: bool = False,
+    ) -> None:
         """Initialize dataset.
 
         Args:
@@ -62,17 +64,17 @@ class LizardGraphDataset(Dataset):
         super().__init__(root, transform, pre_transform)
 
     @property
-    def raw_file_names(self)-> list:
+    def raw_file_names(self) -> list:
         return []
 
     @property
-    def processed_file_names(self)-> list:
+    def processed_file_names(self) -> list:
         return [f"data_{idx}.pt" for idx in range(len(self.df))]
 
-    def download(self)-> None:
+    def download(self) -> None:
         pass
 
-    def process(self)-> None:
+    def process(self) -> None:
         """Process the dataset.
 
         Compute the graph from input data and save it for speed up use of the dataset.
@@ -92,10 +94,10 @@ class LizardGraphDataset(Dataset):
 
         Args:
             None.
-            
+
         Returns:
             None.
-            
+
         Raises:
             None.
         """
@@ -158,9 +160,9 @@ class LizardGraphDataset(Dataset):
                     processed_data, osp.join(self.processed_dir, f"data_{idx}.pt")
                 )
 
-    def len(self)-> int:
+    def len(self) -> int:
         """Return the length of the dataset.
-        
+
         Args:
             None.
 
@@ -189,7 +191,7 @@ class LizardGraphDataset(Dataset):
 
 
 def LizardGraphDataModule(
-    train_data: Union[dict, pd.DataFrame] = None,
+    train_data: Union[dict, pd.DataFrame, None] = None,
     valid_data: Union[dict, pd.DataFrame] = None,
     test_data: Union[dict, pd.DataFrame] = None,
     batch_size: int = 32,
@@ -201,7 +203,7 @@ def LizardGraphDataModule(
     root="data/graph",
     consep_data=False,
     light=False,
-):
+) -> pl.LightningDataModule:
     """Data module to create dataloaders for graph training job.
 
     Two mode possible:
@@ -234,7 +236,7 @@ def LizardGraphDataModule(
         train_df = (
             train_data["annotations"]
             if type(train_data) == dict and "annotations" in train_data
-            else train_data.reset_index(drop=True)
+            else train_data
         )
         images = (
             train_data["images"]
@@ -258,7 +260,7 @@ def LizardGraphDataModule(
         valid_df = (
             valid_data["annotations"]
             if type(valid_data) == dict and "annotations" in valid_data
-            else valid_data.reset_index(drop=True)
+            else valid_data
         )
         images = (
             valid_data["images"]
@@ -282,7 +284,7 @@ def LizardGraphDataModule(
         test_df = (
             test_data["annotations"]
             if type(test_data) == dict and "annotations" in test_data
-            else test_data.reset_index(drop=True)
+            else test_data
         )
         images = (
             test_data["images"]
