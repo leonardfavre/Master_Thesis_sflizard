@@ -25,23 +25,23 @@
 
 
 # version for custom graph
-for dimh in 1024 # 256 512 1024 2048 # 256 512 1024 # 32 64 128 256
+for dimh in 256 # 256 512 1024 2048 # 256 512 1024 # 32 64 128 256
 do
 for numlayer in 4 # 16 8  # 2 4 8
 do
 for model in graph_custom # graph_sage graph_gin graph_GCN # graph_custom graph_gat
 do
-for xtype in 4ll # 4ll+c
+for xtype in 4ll+c # 4ll+c
 do
 for distance in 45 # 30 # 45 # 30 45 60
 do
-for cil in 0 1 2 3
+for cil in 0 2 3
 do
-for cih in 0 540 1024 2048 
+for cih in 0 2048 # 540 1024 2048 
 do
-for col in 0 1 2 3
+for col in 0 2 3
 do
-for coh in 0 7 16 32
+for coh in 0 32 # 7 16 32
 do
 for cwc in True False
 do

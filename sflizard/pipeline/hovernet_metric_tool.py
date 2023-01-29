@@ -372,8 +372,12 @@ class HoverNetMetricTool:
         dimh = int(selector[1])
         num_layers = int(selector[2])
         if model == "graph_custom":
-            combination = "-".join(selector[3:7])
-            ckpt = selector[7]
+            if "wide" in selector:
+                combination = "-".join(selector[3:8])
+                ckpt = selector[8]
+            else:
+                combination = "-".join(selector[3:7])
+                ckpt = selector[7]
             self.result_table[model][ckpt][combination][dimh][num_layers] = result
         elif model == "graph_gat":
             head = int(selector[3])
