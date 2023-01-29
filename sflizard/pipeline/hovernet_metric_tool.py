@@ -166,6 +166,7 @@ class HoverNetMetricTool:
         print("Loading graph model...")
         model = Graph.load_from_checkpoint(
             weights_path,
+            wandb_log=False,
         )
         graph = model.model.to(self.device)
         print("Graph model loaded.")
@@ -183,44 +184,55 @@ class HoverNetMetricTool:
         Raises:
             None.
         """
-        weights_path = {}
+
+        def save_path(ckpt: Path, wp: str, weights_path: dict) -> dict:
+            if "loss" in str(ckpt):
+                weights_path[f"{wp}-loss"] = ckpt
+            elif "acc_macro" in str(ckpt):
+                weights_path[f"{wp}-acc_macro"] = ckpt
+            elif "acc" in str(ckpt):
+                weights_path[f"{wp}-acc"] = ckpt
+            else:
+                weights_path[f"{wp}-final"] = ckpt
+            return weights_path
+
+        weights_path: Dict[Any, Any] = {}
         available_checkpoints = []
         for path in CHECKPOINT_PATH:
             available_checkpoints += list(Path(path).glob("*.ckpt"))
         for model in weights_selector["model"]:
             for dimh in weights_selector["dimh"]:
                 for num_layers in weights_selector["num_layers"]:
-                    for heads in weights_selector["heads"]:
-                        if (
-                            model != "graph_gat"
-                            and heads != weights_selector["heads"][0]
-                        ):
-                            continue
+                    if model == "graph_gat":
+                        for heads in weights_selector["heads"]:
+                            for checkpoint in available_checkpoints:
+                                if (
+                                    f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
+                                    in str(checkpoint)
+                                ):
+                                    wp = f"{model}-{dimh}-{num_layers}-{heads}"
+                                    weights_path = save_path(
+                                        checkpoint, wp, weights_path
+                                    )
+                    elif model == "graph_custom":
+                        for comb in weights_selector["custom_combinations"]:
+                            for checkpoint in available_checkpoints:
+                                if (
+                                    f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{comb}"
+                                    in str(checkpoint)
+                                ):
+                                    wp = f"{model}-{dimh}-{num_layers}-{comb}"
+                                    weights_path = save_path(
+                                        checkpoint, wp, weights_path
+                                    )
+                    else:
                         for checkpoint in available_checkpoints:
                             if (
                                 f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}"
                                 in str(checkpoint)
-                                and model != "graph_gat"
                             ):
-                                ckpt = checkpoint
                                 wp = f"{model}-{dimh}-{num_layers}"
-                            elif (
-                                f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
-                                in str(checkpoint)
-                                and model == "graph_gat"
-                            ):
-                                ckpt = checkpoint
-                                wp = f"{model}-{dimh}-{num_layers}-{heads}"
-                            else:
-                                continue
-                            if "loss" in str(ckpt):
-                                weights_path[f"{wp}-loss"] = ckpt
-                            elif "acc_macro" in str(ckpt):
-                                weights_path[f"{wp}-acc_macro"] = ckpt
-                            elif "acc" in str(ckpt):
-                                weights_path[f"{wp}-acc"] = ckpt
-                            else:
-                                weights_path[f"{wp}-final"] = ckpt
+                                weights_path = save_path(checkpoint, wp, weights_path)
         return weights_path
 
     def save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
@@ -325,7 +337,12 @@ class HoverNetMetricTool:
             self.result_table[model] = {}
             for ckpt in ["final", "acc", "acc_macro", "loss"]:
                 self.result_table[model][ckpt] = {}
-                if model == "graph_gat":
+                if model == "graph_custom":
+                    for c in weights_selector["custom_combinations"]:
+                        self.result_table[model][ckpt][c] = {}
+                        for dh in weights_selector["dimh"]:
+                            self.result_table[model][ckpt][c][dh] = {}
+                elif model == "graph_gat":
                     for head in weights_selector["heads"]:
                         self.result_table[model][ckpt][head] = {}
                         for dh in weights_selector["dimh"]:
@@ -354,7 +371,11 @@ class HoverNetMetricTool:
         model = selector[0]
         dimh = int(selector[1])
         num_layers = int(selector[2])
-        if model == "graph_gat":
+        if model == "graph_custom":
+            combination = "-".join(selector[3:7])
+            ckpt = selector[7]
+            self.result_table[model][ckpt][combination][dimh][num_layers] = result
+        elif model == "graph_gat":
             head = int(selector[3])
             ckpt = selector[4]
             self.result_table[model][ckpt][head][dimh][num_layers] = result
@@ -379,7 +400,7 @@ class HoverNetMetricTool:
             for m in self.result_table:
                 # f.write(f"-------------------\n# {m}\n")
                 for c in self.result_table[m]:
-                    if m == "graph_gat":
+                    if m == "graph_gat" or m == "graph_custom":
                         for h in self.result_table[m][c]:
                             f.write(f'   "{m}_{c}_{h}": [\n')
                             for dh in self.result_table[m][c][h]:

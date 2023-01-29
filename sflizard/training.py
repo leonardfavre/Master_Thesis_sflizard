@@ -31,6 +31,12 @@ LOSS_POWER_SCALER = 1.0
 DIMH = 1024
 NUM_LAYERS = 4
 HEADS = 8
+CUSTOM_INPUT_LAYER = 0
+CUSTOM_OUTPUT_LAYER = 0
+CUSTOM_INPUT_HIDDEN = 8
+CUSTOM_OUTPUT_HIDDEN = NUM_CLASSES
+CUSTOM_WIDE_CONNECTIONS = False
+
 NUM_FEATURES = {
     "c": 7,
     "c+x": 9,
@@ -185,10 +191,23 @@ def init_graph_training(
         dim_h=args.dimh,
         num_layers=args.num_layers,
         heads=args.heads,
+        custom_input_layer=args.custom_input_layer,
+        custom_input_hidden=args.custom_input_hidden,
+        custom_output_layer=args.custom_output_layer,
+        custom_output_hidden=args.custom_output_hidden,
+        custom_wide_connections=args.custom_wide_connections,
+        wandb_log=True,
     )
+
+    print(f"\nwide: {args.custom_wide_connections}\n")
 
     if args.model == "graph_gat":
         name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+    elif args.model == "graph_custom" and not args.custom_wide_connections:
+        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+    elif args.model == "graph_custom" and args.custom_wide_connections:
+        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+        print("\nwide")
     else:
         name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
 
@@ -268,6 +287,10 @@ def full_training(args: argparse.Namespace) -> None:
     else:
         if args.model == "graph_gat":
             name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        elif args.model == "graph_custom" and not args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+        elif args.model == "graph_custom" and args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
         else:
             name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
 
@@ -388,6 +411,41 @@ if __name__ == "__main__":
         type=int,
         default=HEADS,
         help="Number of heads in the grap model.",
+    )
+    parser.add_argument(
+        "-cil",
+        "--custom_input_layer",
+        type=int,
+        default=CUSTOM_INPUT_LAYER,
+        help="Custom linear input layer number in the custom graph model.",
+    )
+    parser.add_argument(
+        "-cih",
+        "--custom_input_hidden",
+        type=int,
+        default=CUSTOM_INPUT_HIDDEN,
+        help="Custom linear input hidden layer size in the custom graph model.",
+    )
+    parser.add_argument(
+        "-col",
+        "--custom_output_layer",
+        type=int,
+        default=CUSTOM_OUTPUT_LAYER,
+        help="Custom linear output layer number in the custom graph model.",
+    )
+    parser.add_argument(
+        "-coh",
+        "--custom_output_hidden",
+        type=int,
+        default=CUSTOM_OUTPUT_HIDDEN,
+        help="Custom linear output hidden layer size in the custom graph model.",
+    )
+    parser.add_argument(
+        "-cwc",
+        "--custom_wide_connections",
+        type=bool,
+        default=CUSTOM_WIDE_CONNECTIONS,
+        help="Custom wide connections in the custom graph model.",
     )
     parser.add_argument(
         "-xt",

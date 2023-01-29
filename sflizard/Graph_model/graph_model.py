@@ -21,6 +21,11 @@ class GraphCustom(torch.nn.Module):
         dim_out: int,
         num_layers: int,
         layer_type: torch.nn.Module,
+        custom_input_layer: int = 0,
+        custom_input_hidden: int = 8,
+        custom_output_layer: int = 0,
+        custom_output_hidden: int = 8,
+        custom_wide_connections: bool = False,
     ) -> None:
         """Initialize the model.
 
@@ -30,6 +35,11 @@ class GraphCustom(torch.nn.Module):
             dim_out (int): The dimension of the output.
             num_layers (int): The number of graph layers.
             layer_type (torch.nn.Module): The type of graph layer to use.
+            custom_input_layer (int): The number of linear input layers.
+            custom_input_hidden (int): The dimension of the linear input hidden layers.
+            custom_output_layer (int): The number of linear output layers.
+            custom_output_hidden (int): The dimension of the linear output hidden layers.
+            custom_wide_connections (bool): Whether to use wide connections.
 
         Returns:
             None.
@@ -39,15 +49,51 @@ class GraphCustom(torch.nn.Module):
         """
         super().__init__()
         self.num_layers = num_layers
+        self.custom_input_layer = custom_input_layer
+        self.custom_output_layer = custom_output_layer
+
+        # define the model
         self.model = torch.nn.ModuleList()
-        self.model.append(Linear(dim_in, 1024))
-        self.model.append(Linear(1024, 1024))
-        self.model.append(Linear(1024, dim_h))
-        for _ in range(self.num_layers):
-            self.model.append(layer_type(dim_h, dim_h))
-        # self.model.append(JumpingKnowledge("cat", dim_h))
-        self.model.append(Linear(dim_h, dim_h))
-        self.model.append(Linear(dim_h, dim_out))
+        # linear input layers
+        for i in range(self.custom_input_layer):
+            in_size = dim_in if i == 0 else custom_input_hidden
+            if i == self.custom_input_layer - 1:
+                if custom_wide_connections:
+                    out_size = dim_h
+                else:
+                    out_size = dim_in
+            else:
+                out_size = custom_input_hidden
+            self.model.append(Linear(in_size, out_size))
+        # graph layers
+        for i in range(self.num_layers):
+            if custom_wide_connections:
+                in_size = dim_in if self.custom_input_layer == 0 and i == 0 else dim_h
+                out_size = (
+                    dim_out
+                    if self.custom_output_layer == 0 and i == self.num_layers - 1
+                    else dim_h
+                )
+            else:
+                in_size = dim_in if i == 0 else dim_h
+                out_size = dim_out if i == self.num_layers - 1 else dim_h
+            self.model.append(layer_type(in_size, out_size))
+        # linear output layers
+        for i in range(self.custom_output_layer):
+            if i == 0:
+                if custom_wide_connections:
+                    in_size = dim_h
+                else:
+                    in_size = dim_out
+            else:
+                in_size = custom_output_hidden
+            out_size = (
+                dim_out if i == self.custom_output_layer - 1 else custom_output_hidden
+            )
+            self.model.append(Linear(in_size, out_size))
+
+        # log the model
+        print(self.model.__repr__())
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model.
@@ -62,13 +108,23 @@ class GraphCustom(torch.nn.Module):
         Raises:
             None.
         """
-        x = self.model[0](x).sigmoid()
-        x = self.model[1](x).relu()
-        x = self.model[2](x).relu()
-        for i in range(self.num_layers):
-            x = self.model[3 + i](x, edge_index).relu()
-        x = self.model[-2](x).relu()
-        x = self.model[-1](x).relu()
+        # linear input layers
+        for i in range(self.custom_input_layer):
+            if i == 0:
+                x = self.model[i](x).sigmoid()
+            else:
+                x = self.model[i](x).relu()
+        # graph layers
+        for i in range(
+            self.custom_input_layer, self.custom_input_layer + self.num_layers
+        ):
+            x = self.model[i](x, edge_index).relu()
+        # linear output layers
+        for i in range(
+            self.custom_input_layer + self.num_layers,
+            self.custom_input_layer + self.num_layers + self.custom_output_layer,
+        ):
+            x = self.model[i](x).relu()
         return x
 
 
@@ -99,6 +155,11 @@ class Graph(pl.LightningModule):
             0.018063861886878453,
         ],
         wandb_log: bool = False,
+        custom_input_layer: int = 0,
+        custom_input_hidden: int = 8,
+        custom_output_layer: int = 0,
+        custom_output_hidden: int = 8,
+        custom_wide_connections: bool = False,
     ) -> None:
         """Initialize the module.
 
@@ -111,9 +172,14 @@ class Graph(pl.LightningModule):
             max_epochs (int): The maximum number of epochs.
             dim_h (int): The dimension of the hidden layers.
             num_layers (int): The number of graph layers.
-            heads (int): The number of heads for the graph attention layer.
+            heads (int): The number of heads for the graph attention layer (only for graph_gat).
             class_weights (List[float]): The class weights.
             wandb_log (bool): Whether to log to wandb.
+            custom_input_layer (int): The number of linear input layers (only for graph_custom).
+            custom_input_hidden (int): The dimension of the linear input hidden layers (only for graph_custom).
+            custom_output_layer (int): The number of linear output layers (only for graph_custom).
+            custom_output_hidden (int): The dimension of the linear output hidden layers (only for graph_custom).
+            custom_wide_connections (bool): Whether to use wide connections between linear and graph layers (only for graph_custom).
 
         Returns:
             None.
@@ -167,6 +233,11 @@ class Graph(pl.LightningModule):
                 dim_out=num_classes,
                 num_layers=num_layers,
                 layer_type=SAGEConv,
+                custom_input_layer=custom_input_layer,
+                custom_input_hidden=custom_input_hidden,
+                custom_output_layer=custom_output_layer,
+                custom_output_hidden=custom_output_hidden,
+                custom_wide_connections=custom_wide_connections,
             )
         if self.wandb_log:
             wandb.watch(self.model)
@@ -229,7 +300,6 @@ class Graph(pl.LightningModule):
 
         if name == "train":
             self.log("train_loss", loss, batch_size=logger_batch_size)
-            return loss
         elif name == "val":
             self.val_acc(pred, label)
             self.val_acc_macro(pred, label)
@@ -319,10 +389,10 @@ class Graph(pl.LightningModule):
         """
         if name in ["train", "val"]:
             if self.wandb_log:
-                wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
+                # wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
                 if name == "val":
-                    wandb.log({f"{name}_acc": self.val_acc})
-                    wandb.log({f"{name}_acc_macro": self.val_acc_macro})
+                    wandb.log({f"{name}_acc": self.val_acc.compute()})
+                    wandb.log({f"{name}_acc_macro": self.val_acc_macro.compute()})
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
