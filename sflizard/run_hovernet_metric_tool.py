@@ -2,7 +2,7 @@ from sflizard import HoverNetMetricTool
 
 WEIGHTS_SELECTOR = {
     "model": ["graph_sage"],  # "graph_sage", "graph_gin", "graph_GCN"],
-    "dimh": [256, 512, 1024],
+    "dimh": [256],  # , 512, 1024],
     "num_layers": [4],
     "heads": [1],
 }
@@ -10,8 +10,8 @@ WEIGHTS_SELECTOR = {
 if __name__ == "__main__":
 
     hmt = HoverNetMetricTool(
-        mode="valid",
+        mode="test",
         weights_selector=WEIGHTS_SELECTOR,
         distance=45,
-        x_type="4ll",
+        x_type="4ll+c",
     )
