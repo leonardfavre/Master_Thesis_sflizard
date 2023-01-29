@@ -1,5 +1,8 @@
-# Master_Thesis_LeonardFavre
-Master Thesis on cell classification using message passing.
+# SF Lizard Project
+
+This project was done for the final thesis of the Master MSE in data science of Léonard Favre.
+
+
 
 ## usage
 

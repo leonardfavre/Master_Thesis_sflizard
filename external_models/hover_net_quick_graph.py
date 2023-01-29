@@ -10,21 +10,24 @@ from tqdm import tqdm
 
 from sflizard import Graph, LizardGraphDataModule
 
-###### GRAPH
+# GRAPH
 
-SEED=303
+SEED = 303
 
 CONSEP = False
-TRUE_DATA_PATH = "../data/Lizard_dataset_split/patches/Lizard_Labels_train/" # lizard
-TRUE_VALID_DATA_PATH = "../data/Lizard_dataset_split/patches/Lizard_Labels_valid/" # lizard
-TRAIN_DATA_PATH = "output/Lizard_train_out/mat/" # Lizard
-VALID_DATA_PATH = "output/Lizard_valid_out/mat/" # Lizard
+TRUE_DATA_PATH = "../data/Lizard_dataset_split/patches/Lizard_Labels_train/"  # lizard
+TRUE_VALID_DATA_PATH = (
+    "../data/Lizard_dataset_split/patches/Lizard_Labels_valid/"  # lizard
+)
+TRAIN_DATA_PATH = "output/Lizard_train_out/mat/"  # Lizard
+VALID_DATA_PATH = "output/Lizard_valid_out/mat/"  # Lizard
 NUM_CLASSES = 7  # Lizard
 
 # CONSEP = True
 # TRUE_DATA_PATH = "../data/CoNSeP/Train/Labels/" # CoNSeP
 # TRAIN_DATA_PATH = "output/CoNSeP_train_out/mat/" # CoNSeP
 # NUM_CLASSES = 5  # CoNSeP
+
 
 def get_df(true_path, data_path):
     file_list = list(Path(data_path).glob("*.mat"))
@@ -36,7 +39,7 @@ def get_df(true_path, data_path):
     print("Loading data")
     for file_path in tqdm(file_list):
         mat = sio.loadmat(file_path)
-        
+
         if len(mat["inst_centroid"]) > 0:
             points.append(mat["inst_centroid"])
             predicted_class.append(mat["inst_type"])
@@ -66,6 +69,7 @@ def get_df(true_path, data_path):
     )
     return df
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser = pl.Trainer.add_argparse_args(parser)
@@ -86,9 +90,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
-
-
 
     valid_df = get_df(TRUE_VALID_DATA_PATH, VALID_DATA_PATH)
     train_df = get_df(TRUE_DATA_PATH, TRAIN_DATA_PATH)
@@ -115,9 +116,11 @@ if __name__ == "__main__":
     dm.setup()
 
     # train the models with different parameters
-    for dim_h in [16, 32, 64, 128]: # [4, 8, 16, 32, 64, 128]:
-        for num_layers in [2, 4, 8]: #[2, 4, 8, 16]:
-            print("Creating model with dim_h = ", dim_h, " and num_layers = ", num_layers)
+    for dim_h in [16, 32, 64, 128]:  # [4, 8, 16, 32, 64, 128]:
+        for num_layers in [2, 4, 8]:  # [2, 4, 8, 16]:
+            print(
+                "Creating model with dim_h = ", dim_h, " and num_layers = ", num_layers
+            )
             # create the model
             model = Graph(
                 model="graph_sage",
@@ -132,7 +135,8 @@ if __name__ == "__main__":
 
             acc_callback = pl.callbacks.ModelCheckpoint(
                 dirpath="checkpoints/cp_acc",
-                filename=f"fin_training_hover_net_lizard_graph_{args.max_epochs}epochs_{num_layers}layer_sage_{dim_h}h" + "-acc-{epoch}-{val_acc:.4f}",
+                filename=f"fin_training_hover_net_lizard_graph_{args.max_epochs}epochs_{num_layers}layer_sage_{dim_h}h"
+                + "-acc-{epoch}-{val_acc:.4f}",
                 monitor="val_acc",
                 mode="max",
                 save_top_k=1,
@@ -140,7 +144,8 @@ if __name__ == "__main__":
 
             acc_macro_callback = pl.callbacks.ModelCheckpoint(
                 dirpath="checkpoints/cp_acc",
-                filename=f"fin_training_hover_net_lizard_graph_{args.max_epochs}epochs_{num_layers}layer_sage_{dim_h}h" + "-accmacro-{epoch}-{val_acc_macro:.4f}",
+                filename=f"fin_training_hover_net_lizard_graph_{args.max_epochs}epochs_{num_layers}layer_sage_{dim_h}h"
+                + "-accmacro-{epoch}-{val_acc_macro:.4f}",
                 monitor="val_acc_macro",
                 mode="max",
                 save_top_k=1,
@@ -149,7 +154,9 @@ if __name__ == "__main__":
             device = torch.device("cuda")
 
             # create the trainer
-            trainer = pl.Trainer.from_argparse_args(args, callbacks=[acc_callback, acc_macro_callback])
+            trainer = pl.Trainer.from_argparse_args(
+                args, callbacks=[acc_callback, acc_macro_callback]
+            )
 
             # # train the model
             trainer.fit(model, dm)

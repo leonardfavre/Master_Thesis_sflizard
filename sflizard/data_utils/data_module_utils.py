@@ -49,9 +49,9 @@ def get_stardist_data(
 
     Returns:
         tuple: tuple containing:
-            - dist (torch.Tensor): distance map.
-            - prob (torch.Tensor): probability map.
-            - classes (torch.Tensor): list of classes. If arg class_map is not None.
+            dist (torch.Tensor): distance map.
+            prob (torch.Tensor): probability map.
+            classes (torch.Tensor): list of classes, if arg class_map is not None.
 
     Raises:
         ValueError: if n_rays is not in aditional_args.
@@ -68,8 +68,6 @@ def get_stardist_data(
 
 
 # GRAPH UTILS
-
-
 def compute_stardist(
     dist: torch.Tensor,
     prob: torch.Tensor,
@@ -82,9 +80,9 @@ def compute_stardist(
 
     Returns:
         tuple: tuple containing:
-            - points (np.ndarray): detected cells centroid.
-            - probs (np.ndarray): probability of each pixel to be a cell.
-            - dists (np.ndarray): distances corresponding to the cells shape.
+            points (np.ndarray): detected cells centroid.
+            probs (np.ndarray): probability of each pixel to be a cell.
+            dists (np.ndarray): distances corresponding to the cells shape.
 
     Raises:
         None.
@@ -147,19 +145,19 @@ def get_graph(
     """Get the graph from the instance map.
 
     The graph can be computed from a Stardist checkpoint, in this case the following data are required:
-        - image: used as input for Stardist.
+        image: used as input for Stardist.
     If the hovernet_metric is True, the instance map computed by stardist is included in the returned dict.
     The x_type available for this technique is "c", "x", "ll", "c+x", "ll+x", "ll+c", "ll+x+c", "c", "4x", "4ll", "4c+x", "4ll+x", "4ll+c", "4ll+x+c".
 
     The graph can be computed from the points and predicted classes, in this case the following data are required:
-        - points: list of detected cells centroid.
-        - predicted_classes: list of predicted classes corresponding to the cells in points array.
+        points: list of detected cells centroid.
+        predicted_classes: list of predicted classes corresponding to the cells in points array.
     The x_type available for this technique is "c".
     This technique is used for the hovernet model.
 
     The graph can be computed from an instance map, in this case the following data are required:
-        - inst_map: instance map.
-        - n_rays: number of rays of stardist objects.
+        inst_map: instance map.
+        n_rays: number of rays of stardist objects.
     It will call the function compute_stardist to compute the points, probs and dists.
     The x_type available for this technique is "dist".
     This technique is deprecated.

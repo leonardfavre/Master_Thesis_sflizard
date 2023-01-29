@@ -82,7 +82,7 @@ class LizardGraphDataset(Dataset):
             - x: node features.
             - edge_index: edges.
             - y: labels.
-            image_idx: image index.
+            - image_idx: image index.
         If the dataset is not light, the graph full information is saved:
             - x: node features.
             - edge_index: edges.
@@ -91,7 +91,7 @@ class LizardGraphDataset(Dataset):
             - original_img: original image.
             - inst_map: instance map.
             - class_map: class map.
-        The graph is in both cases saved to speed up use of the dataset
+        The graph is in both cases saved to speed up use of the dataset.
 
         Args:
             None.

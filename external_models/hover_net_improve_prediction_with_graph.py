@@ -1,14 +1,14 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import scipy.io as sio
 import torch
-import pandas as pd
 
 from sflizard import Graph, get_graph
 
 
-def init_graph_inference(weights_path: str) -> None:
+def init_graph_inference(weights_path: str) -> torch.nn.Module:
     print("Loading graph model...")
     model = Graph.load_from_checkpoint(
         weights_path,
@@ -138,107 +138,107 @@ if __name__ == "__main__":
         #     "2-64-acc-macro",
         # ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_16h-acc-epoch=105-val_acc=0.8032.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_16h-acc-epoch=105-val_acc=0.8032.ckpt",
             "2-16-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_16h-accmacro-epoch=97-val_acc_macro=0.6155.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_16h-accmacro-epoch=97-val_acc_macro=0.6155.ckpt",
             "2-16-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_32h-acc-epoch=126-val_acc=0.8032.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_32h-acc-epoch=126-val_acc=0.8032.ckpt",
             "2-32-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_32h-accmacro-epoch=234-val_acc_macro=0.6143.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_32h-accmacro-epoch=234-val_acc_macro=0.6143.ckpt",
             "2-32-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-acc-epoch=187-val_acc=0.8041.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-acc-epoch=187-val_acc=0.8041.ckpt",
             "2-64-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-acc-epoch=30-val_acc=0.8042.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-acc-epoch=30-val_acc=0.8042.ckpt",
             "2-64-acc-macro-2",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-accmacro-epoch=130-val_acc_macro=0.6160.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-accmacro-epoch=130-val_acc_macro=0.6160.ckpt",
             "2-64-acc-macro-3",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-accmacro-epoch=157-val_acc_macro=0.6149.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_64h-accmacro-epoch=157-val_acc_macro=0.6149.ckpt",
             "2-64-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_128h-acc-epoch=105-val_acc=0.8038.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_128h-acc-epoch=105-val_acc=0.8038.ckpt",
             "2-128-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_128h-accmacro-epoch=143-val_acc_macro=0.6151.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_2layer_sage_128h-accmacro-epoch=143-val_acc_macro=0.6151.ckpt",
             "2-128-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_16h-acc-epoch=8-val_acc=0.8021.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_16h-acc-epoch=8-val_acc=0.8021.ckpt",
             "4-16-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_16h-accmacro-epoch=100-val_acc_macro=0.6127.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_16h-accmacro-epoch=100-val_acc_macro=0.6127.ckpt",
             "4-16-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_32h-acc-epoch=35-val_acc=0.8029.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_32h-acc-epoch=35-val_acc=0.8029.ckpt",
             "4-32-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_32h-accmacro-epoch=42-val_acc_macro=0.6085.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_32h-accmacro-epoch=42-val_acc_macro=0.6085.ckpt",
             "4-32-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_64h-acc-epoch=36-val_acc=0.8021.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_64h-acc-epoch=36-val_acc=0.8021.ckpt",
             "4-64-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_64h-accmacro-epoch=27-val_acc_macro=0.6152.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_64h-accmacro-epoch=27-val_acc_macro=0.6152.ckpt",
             "4-64-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_128h-acc-epoch=24-val_acc=0.8019.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_128h-acc-epoch=24-val_acc=0.8019.ckpt",
             "4-128-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_128h-accmacro-epoch=41-val_acc_macro=0.6140.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_4layer_sage_128h-accmacro-epoch=41-val_acc_macro=0.6140.ckpt",
             "4-128-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_16h-acc-epoch=17-val_acc=0.8021.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_16h-acc-epoch=17-val_acc=0.8021.ckpt",
             "8-16-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_16h-accmacro-epoch=17-val_acc_macro=0.6108.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_16h-accmacro-epoch=17-val_acc_macro=0.6108.ckpt",
             "8-16-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_32h-acc-epoch=34-val_acc=0.8016.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_32h-acc-epoch=34-val_acc=0.8016.ckpt",
             "8-32-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_32h-accmacro-epoch=33-val_acc_macro=0.6104.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_32h-accmacro-epoch=33-val_acc_macro=0.6104.ckpt",
             "8-32-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_64h-acc-epoch=65-val_acc=0.8007.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_64h-acc-epoch=65-val_acc=0.8007.ckpt",
             "8-64-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_64h-accmacro-epoch=15-val_acc_macro=0.6126.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_64h-accmacro-epoch=15-val_acc_macro=0.6126.ckpt",
             "8-64-acc-macro-0",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_128h-acc-epoch=81-val_acc=0.8008.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_128h-acc-epoch=81-val_acc=0.8008.ckpt",
             "8-128-acc-macro-1",
         ],
         [
-            'checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_128h-accmacro-epoch=30-val_acc_macro=0.6100.ckpt',
+            "checkpoints/cp_acc/fin_training_hover_net_lizard_graph_500epochs_8layer_sage_128h-accmacro-epoch=30-val_acc_macro=0.6100.ckpt",
             "8-128-acc-macro-0",
         ],
     ]
@@ -258,7 +258,7 @@ if __name__ == "__main__":
                     "files": file_list,
                 }
             )
-            valid_df = df.sample(frac = 0.2, random_state=SEED)
+            valid_df = df.sample(frac=0.2, random_state=SEED)
             train_df = df.drop(valid_df.index)
             file_list = valid_df["files"].tolist()
         else:
@@ -293,20 +293,21 @@ if __name__ == "__main__":
                 continue
             # graph predicted mask
             graph = get_graph(
-                points=points, 
-                predicted_classes=predicted_class, 
-                distance=45, 
-                x_type="c", 
+                points=points,
+                predicted_classes=predicted_class,
+                distance=45,
+                x_type="c",
             )
-            with torch.no_grad():
-                out = model(
-                    graph["x"].to(device),
-                    graph["edge_index"].to(device),
+            if graph is not None:
+                with torch.no_grad():
+                    out = model(
+                        graph["x"].to(device),
+                        graph["edge_index"].to(device),
+                    )
+                    graph_pred = out.argmax(-1)
+                pred["inst_type"] = graph_pred.cpu().numpy()
+                pred["inst_type"] = np.reshape(
+                    pred["inst_type"], (pred["inst_type"].shape[0], 1)
                 )
-                graph_pred = out.argmax(-1)
-            pred["inst_type"] = graph_pred.cpu().numpy()
-            pred["inst_type"] = np.reshape(
-                pred["inst_type"], (pred["inst_type"].shape[0], 1)
-            )
 
-            sio.savemat(f"{save_path}{base_name}.mat", pred)
+                sio.savemat(f"{save_path}{base_name}.mat", pred)

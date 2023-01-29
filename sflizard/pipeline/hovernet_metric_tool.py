@@ -36,7 +36,7 @@ class HoverNetMetricTool:
             "heads": [],
         },
         distance: int = 45,
-        x_type: str = "ll",
+        x_type: str = "ll+c",
     ) -> None:
         """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool.
 
@@ -333,7 +333,7 @@ class HoverNetMetricTool:
                 else:
                     for dh in weights_selector["dimh"]:
                         self.result_table[model][ckpt][dh] = {}
-        self.result_file = Path(self.base_save_path) / "result_table.pkl"
+        self.result_file = Path(self.base_save_path) / "result_table_512.pkl"
         Path(self.result_file).touch(exist_ok=True)
 
     def save_result_in_table(self, save_folder: str, result: str) -> None:
