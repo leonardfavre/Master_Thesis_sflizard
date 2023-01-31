@@ -207,11 +207,11 @@ class SegmentationMetricTool:
                 table_str = r"\begin{center}" + "\n" + r"\begin{tabular}{|c c|}"
                 table_str += "\nSegmentation metrics\\\\ \n \\hline \n"
                 table_str += "Metric & Result \\\\ \n \\hline \n"
-                table_str += f"precision & {self.seg_metrics[0].precision:.4f} \\\\ \n"
-                table_str += f"recall & {self.seg_metrics[0].recall:.4f} \\\\ \n"
-                table_str += f"acc & {self.seg_metrics[0].accuracy:.4f} \\\\ \n"
-                table_str += f"f1 & {self.seg_metrics[0].f1:.4f} \\\\ \n"
-                table_str += f"panoptic_quality & {self.seg_metrics[0].panoptic_quality:.4f} \\\\ \n"
+                table_str += f"Precision & {self.seg_metrics[0].precision:.4f} \\\\ \n"
+                table_str += f"Recall & {self.seg_metrics[0].recall:.4f} \\\\ \n"
+                table_str += f"Acc & {self.seg_metrics[0].accuracy:.4f} \\\\ \n"
+                table_str += f"F1 & {self.seg_metrics[0].f1:.4f} \\\\ \n"
+                table_str += f"Panoptic quality & {self.seg_metrics[0].panoptic_quality:.4f} \\\\ \n"
                 table_str += (
                     r"\hline" + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
                 )

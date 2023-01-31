@@ -1,19 +1,3 @@
-# run the conversion for each model
-# from sflizard.pipeline.hovernet_metric_tool import HoverNetMetricTool
-
-# weights_paths = {
-#     "mod1-b-test": "models/graph_custom-1024-4-4ll-45-0-0-3-16-wide-0.0005-acc-epoch=103-val_acc=0.7817.ckpt",
-# }
-
-# hmt = HoverNetMetricTool(
-#         mode="test",
-#         weights_selector=[],
-#         distance=45,
-#         x_type="ll",
-#         paths = weights_paths
-#     )
-
-
 import glob
 
 import numpy as np

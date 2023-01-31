@@ -397,7 +397,7 @@ def get_graph_for_inference(
     Raises:
         None.
     """
-    graphs = []
+    graphs: List[Any] = []
     for i in range(batch.shape[0]):
         graph = get_graph(
             distance=distance,
@@ -406,12 +406,15 @@ def get_graph_for_inference(
             x_type=x_type,
             hovernet_metric=True,
         )
-        processed_data = Data(
-            x=graph["x"],
-            edge_index=graph["edge_index"],
-            pos=graph["pos"],
-            original_img=batch[i],
-            inst_map=graph["inst_map"],
-        )
-        graphs.append(processed_data)
+        if graph is None:
+            graphs.append(None)
+        else:
+            processed_data = Data(
+                x=graph["x"],
+                edge_index=graph["edge_index"],
+                pos=graph["pos"],
+                original_img=batch[i],
+                inst_map=graph["inst_map"],
+            )
+            graphs.append(processed_data)
     return graphs
