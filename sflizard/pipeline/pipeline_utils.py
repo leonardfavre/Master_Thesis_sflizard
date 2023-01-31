@@ -33,39 +33,41 @@ def rotate_and_pred(
 
 
 def merge_stardist_class_together(
-    p0: torch.Tensor,
-    p1: torch.Tensor,
-    p2: torch.Tensor,
-    p3: torch.Tensor,
-) -> torch.Tensor:
+    p0: np.array,
+    p1: np.array,
+    p2: np.array,
+    p3: np.array,
+) -> np.array:
     """Merge the 4 stardist class prediction together.
 
     Args:
-        p0 (torch.Tensor): The first class prediction.
-        p1 (torch.Tensor): The second class prediction.
-        p2 (torch.Tensor): The third class prediction.
-        p3 (torch.Tensor): The fourth class prediction.
+        p0 (np.array): The first class prediction.
+        p1 (np.array): The second class prediction.
+        p2 (np.array): The third class prediction.
+        p3 (np.array): The fourth class prediction.
 
     Returns:
-        class_map (torch.Tensor): The merged class prediction.
+        class_map (np.array): The merged class prediction.
 
     Raises:
         None.
     """
-    class_map = torch.stack((p0, p1, p2, p3), dim=3)
-    class_map = class_map.numpy().astype(int)
+    class_map = np.stack((p0, p1, p2, p3), dim=3)
     class_map = np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), 3, class_map)
-    class_map = torch.from_numpy(class_map)
+    # class_map = torch.from_numpy(class_map)
 
     return class_map
 
 
-def improve_class_map(class_map: np.array, predicted_masks: np.array) -> np.array:
+def improve_class_map(
+    class_map: np.array, predicted_masks: np.array, points: np.array
+) -> np.array:
     """Improve the class map by assigning the same class to each segmented object.
 
     Args:
         class_map (np.array): The class map.
         predicted_masks (np.array): The predicted masks.
+        points (np.array): The points of the cells detected in the masks.
 
     Returns:
         improved_class_map (np.array): The improved class map.
@@ -75,50 +77,54 @@ def improve_class_map(class_map: np.array, predicted_masks: np.array) -> np.arra
     """
     # add one dim if only 2 dims
     improved_class_map = np.zeros_like(class_map)
-    for i in range(1, np.unique(predicted_masks).shape[0]):
-        present_class = np.unique(class_map[predicted_masks == i])
-        best_class = 0
-        possible_class = [x for x in present_class if x != 0]
-        if len(possible_class) > 0:
-            best_class = max(set(possible_class), key=possible_class.count)
-        improved_class_map[predicted_masks == i] = best_class
+    for p in points:
+        p_cell = predicted_masks[p[0]][p[1]]
+        if class_map[p[0]][p[1]] != 0:
+            improved_class_map[predicted_masks == p_cell] = class_map[p[0]][p[1]]
+        else:
+            improved_class_map[predicted_masks == p_cell] = np.argmax(
+                np.bincount(class_map[predicted_masks == p_cell])
+            )
     return improved_class_map
 
 
 def get_class_map_from_graph(
     graph: list,
-    predicted_masks: list,
+    inst_maps: list,
     graph_pred: list,
     class_pred: list,
-) -> list:
+) -> np.array:
     """Get the class map from the graph prediction.
 
     Args:
         graph (list): The graph.
-        predicted_masks (list): The predicted masks.
+        inst_map (list): The instance map.
         graph_pred (list): The graph prediction.
         class_pred (list): The class prediction.
 
     Returns:
-        class_maps (list): The class map.
+        class_maps (np.array): The class map.
 
     Raises:
         None.
     """
     class_maps = []
-    for idx, pm in enumerate(predicted_masks):
+    for idx, inst_map in enumerate(inst_maps):
         if graph_pred[idx] is None:
-            class_maps.append(class_pred[idx].int().cpu().numpy())
+            class_maps.append(class_pred[idx])
+            print("problem with graph prediction")
         else:
-            class_map = np.zeros_like(pm)
+            class_map = np.zeros_like(inst_map)
             graph_points = graph[idx]["pos"].int().cpu().numpy()
-            for i in range(1, np.unique(pm).shape[0]):
-                # get all points in mask with value i
-                points = np.argwhere(pm == i)
-                # get the point in the graph included in the points
-                for idp, p in enumerate(graph_points):
-                    if (p == points).all(axis=1).any():
-                        class_map[pm == i] = graph_pred[idx][idp].int().cpu().numpy()
-                        break
+            for idp, p in enumerate(graph_points):
+                id_cell = inst_map[p[0], p[1]]
+                if id_cell != 0:
+                    if idp < len(graph_pred[idx]):
+                        class_map[inst_map == id_cell] = (
+                            graph_pred[idx][idp].cpu().numpy()
+                        )
+                else:
+                    print("problem between graph and stardist")
             class_maps.append(class_map)
+    class_maps = np.array(class_maps).astype("int32")
     return class_maps

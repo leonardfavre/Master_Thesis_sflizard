@@ -39,6 +39,7 @@ class HoverNetMetricTool:
         },
         distance: int = 45,
         x_type: str = "ll+c",
+        paths: dict = {},
     ) -> None:
         """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool.
 
@@ -57,13 +58,23 @@ class HoverNetMetricTool:
         self.mode = mode
         self.device = "cuda"
 
-        self.base_save_path = f"output/graph/{self.mode}/{distance}/{x_type}"
-        Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
-        self.log_file = Path(self.base_save_path) / "log.txt"
-        Path(self.log_file).touch(exist_ok=True)
+        if len(paths) == 0:
+            quick_run = False
+        else:
+            quick_run = True
 
-        # result table to store results for easier analysis
-        self.init_result_table(weights_selector)
+        if not quick_run:
+            # create the output directory
+            self.base_save_path = f"output/graph/{self.mode}/{distance}/{x_type}"
+            Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
+            self.log_file = Path(self.base_save_path) / "log.txt"
+            Path(self.log_file).touch(exist_ok=True)
+
+            # result table to store results for easier analysis
+            self.init_result_table(weights_selector)
+        else:
+            self.base_save_path = "output/graph/manual"
+            Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
 
         self.distance = distance
         self.x_type = x_type
@@ -97,21 +108,25 @@ class HoverNetMetricTool:
             self.dataloader = dm.train_dataloader()
         print("Data loaded.")
 
-        # get the checkpoints
-        print("\nGetting checkpoints...")
-        weights_paths = self.get_weights_path(weights_selector)
-        print(f"Checkpoints found: {len(weights_paths)}")
-        for wp in weights_paths:
-            print(f" -- {wp}")
-        with self.log_file.open("a") as f:
-            f.write(f"{len(weights_paths)} checkpoints found:")
+        if not quick_run:
+            # get the checkpoints
+            print("\nGetting checkpoints...")
+            weights_paths = self.get_weights_path(weights_selector)
+            print(f"Checkpoints found: {len(weights_paths)}")
             for wp in weights_paths:
-                f.write(f"\n -- {wp}")
+                print(f" -- {wp}")
+            with self.log_file.open("a") as f:  # type: ignore
+                f.write(f"{len(weights_paths)} checkpoints found:")  # type: ignore
+                for wp in weights_paths:
+                    f.write(f"\n -- {wp}")  # type: ignore
+        else:
+            weights_paths = paths
 
         # run the conversion for each model
         print("\nRunning inference and metrics...")
-        with self.log_file.open("a") as f:
-            f.write("\n\nInference result:")
+        if not quick_run:
+            with self.log_file.open("a") as f:  # type: ignore
+                f.write("\n\nInference result:")  # type: ignore
         for wp in weights_paths:
             print(f"\n -- {wp}...")
             try:
@@ -121,35 +136,47 @@ class HoverNetMetricTool:
                 self.save_mat(graph_model, wp)
                 # run the hovernet metric tool
                 result = self.run_hovernet_metric_tool(wp)
-                self.save_result_in_table(wp, result)
-                # clean the folder
-                self.clean_folder(wp)
                 print(f"{result}...done.\n")
-                with self.log_file.open("a") as f:
-                    f.write(f"\n{wp}: {result}")
-                # clean the folder
+                if not quick_run:
+                    self.save_result_in_table(wp, result)
+                    # clean the folder
+                    self.clean_folder(wp)
+                    with self.log_file.open("a") as f:  # type: ignore
+                        f.write(f"\n{wp}: {result}")  # type: ignore
 
             except RuntimeError as e:
-                print(f"RuntimeError... see log in {self.base_save_path}/log.txt")
-                # save error to file
-                with self.log_file.open("a") as f:
-                    f.write(f"\n{wp}: RuntimeError.\n\n{str(e)}\nskiped.")
+                if not quick_run:
+                    print(f"RuntimeError... see log in {self.base_save_path}/log.txt")
+                    # save error to file
+                    with self.log_file.open("a") as f:  # type: ignore
+                        f.write(f"\n{wp}: RuntimeError.\n\n{str(e)}\nskiped.")  # type: ignore
+                else:
+                    print(e)
                 print("...skipped.")
             except ValueError as e:
-                print(f"ValueError... see log in {self.base_save_path}/log.txt")
-                # save error to file
-                with self.log_file.open("a") as f:
-                    f.write(f"\n{wp}: ValueError.\n\n{str(e)}\nskiped.")
+                if not quick_run:
+                    print(f"ValueError... see log in {self.base_save_path}/log.txt")
+                    # save error to file
+                    with self.log_file.open("a") as f:  # type: ignore
+                        f.write(f"\n{wp}: ValueError.\n\n{str(e)}\nskiped.")  # type: ignore
+                else:
+                    print(e)
                 print("...skipped.")
             except FileNotFoundError as e:
-                print(f"FileNotFoundError... see log in {self.base_save_path}/log.txt")
-                # save error to file
-                with self.log_file.open("a") as f:
-                    f.write(f"\n{wp}: FileNotFoundError.\n\n{str(e)}\nskiped.")
+                if not quick_run:
+                    print(
+                        f"FileNotFoundError... see log in {self.base_save_path}/log.txt"
+                    )
+                    # save error to file
+                    with self.log_file.open("a") as f:  # type: ignore
+                        f.write(f"\n{wp}: FileNotFoundError.\n\n{str(e)}\nskiped.")  # type: ignore
+                else:
+                    print(e)
                 print("...skipped.")
 
         # save the result table
-        self.save_result_to_file()
+        if not quick_run:
+            self.save_result_to_file()
 
         print("\nAll done.")
 
@@ -296,6 +323,7 @@ class HoverNetMetricTool:
                     "inst_type": inst_type,
                     "inst_centroid": inst_centroid,
                 }
+                print(np.unique(inst_type))
 
                 # save the results
                 sio.savemat(f"{save_path}{batch[b].image_idx}.mat", mat)

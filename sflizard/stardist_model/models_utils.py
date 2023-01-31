@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import torch
@@ -175,13 +175,15 @@ class UNetStar(nn.Module):
         image: np.array,
         dist: torch.Tensor,
         prob: torch.Tensor,
-    ) -> np.array:
+        get_points: bool = False,
+    ) -> Union[np.array, Tuple[np.array, list]]:
         """Compute the star label of images according dist and prob.
 
         Args:
             image (np.array): The image.
             dist (torch.Tensor): The distances map.
             prob (torch.Tensor): The probabilities map.
+            get_points (bool, optional): If True, the points are returned. Defaults to False.
 
         Returns:
             star_labels (np.array): The star label.
@@ -190,6 +192,7 @@ class UNetStar(nn.Module):
             None.
         """
         star_labels = []
+        points_b = []
         for i in range(image.shape[0]):
             dist_numpy = dist[i].detach().cpu().numpy().squeeze()
             prob_numpy = prob[i].detach().cpu().numpy().squeeze()
@@ -202,8 +205,13 @@ class UNetStar(nn.Module):
             )
 
             star_labels.append(star_label)
+            points_b.append(points)
         star_labels = np.array(star_labels)
-        return star_labels
+        points_b = points_b
+        if get_points:
+            return star_labels, points_b
+        else:
+            return star_labels
 
 
 # Utilities for UNetStar model

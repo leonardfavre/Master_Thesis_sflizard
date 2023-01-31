@@ -5,22 +5,21 @@ from sflizard import TestPipeline
 VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
 TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
 STARDIST_WEIGHTS_PATH = (
-    "models/final2_stardist_rotate_brigth_200epochs_0.0losspower_0.0005lr.ckpt"
+    "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
 GRAPH_WEIGHTS_PATH = (
-    None  # "models/old/graph_sage_512dh_2lay_4ll+c_500epochs_0.0005lr.ckpt"
+    "models/graph_custom-1024-4-4ll-45-0-0-3-16-wide-0.0005-acc-epoch=103-val_acc=0.7817.ckpt"
+    # "models/graph_sage-256-4-4ll+c-45-0.0005-acc-epoch=91-val_acc=0.7821.ckpt"
 )
 N_RAYS = 32
 N_CLASSES = 7
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 SEED = 303
-OUTPUT_DIR = (
-    None  # "./test_pipeline_output/full_training_stardist_class_1000_111_1e-4/"
-)
-IMGS_TO_DISPLAY = 10
+OUTPUT_DIR = "./output/stardist_pipeline/star_graph/mod1/"
+IMGS_TO_DISPLAY = 20
 
 DISTANCE = 45
-MODE = "valid"
+MODE = "test"
 
 
 if __name__ == "__main__":
