@@ -309,7 +309,6 @@ class HoverNetMetricTool:
                     "inst_type": inst_type,
                     "inst_centroid": inst_centroid,
                 }
-                print(np.unique(inst_type))
 
                 # save the results
                 sio.savemat(f"{save_path}{batch[b].image_idx}.mat", mat)
