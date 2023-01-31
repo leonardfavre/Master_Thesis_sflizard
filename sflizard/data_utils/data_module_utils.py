@@ -4,6 +4,7 @@ from typing import Any, List, Optional, Union
 import numpy as np
 import torch
 from stardist import edt_prob, non_maximum_suppression, star_dist
+from torch_geometric.data import Data
 
 from sflizard import Stardist
 
@@ -220,7 +221,10 @@ def get_graph(
             points, _, _ = compute_stardist(dist, prob)
             # get instance map
             if hovernet_metric:
-                graph["inst_map"] = model_c.compute_star_label(input, dist, prob)
+                graph["inst_map"], points = model_c.compute_star_label(
+                    input, dist, prob, get_points=True
+                )
+                points = points[0]
 
         if points.shape[0] == 0:
             graph["x"] = torch.Tensor([])
@@ -400,6 +404,14 @@ def get_graph_for_inference(
             stardist_checkpoint=stardist_checkpoint,
             image=batch[i],
             x_type=x_type,
+            hovernet_metric=True,
         )
-        graphs.append(graph)
+        processed_data = Data(
+            x=graph["x"],
+            edge_index=graph["edge_index"],
+            pos=graph["pos"],
+            original_img=batch[i],
+            inst_map=graph["inst_map"],
+        )
+        graphs.append(processed_data)
     return graphs

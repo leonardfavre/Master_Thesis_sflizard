@@ -60,8 +60,8 @@ class ReportGenerator:
         # metrics
         self.single_segmentation_metric: List[Any] = []
         self.segmentation_metric: Union[Dict[Any, Any], None] = None
-        self.classification_metric: Union[Dict[Any, Any], None] = None
-        self.graph_classification_metric: Union[Dict[Any, Any], None] = None
+        # self.classification_metric: Union[Dict[Any, Any], None] = None
+        # self.graph_classification_metric: Union[Dict[Any, Any], None] = None
         self.segmentation_classification_metric: Union[Dict[Any, Any], None] = None
         self.graph_segmentation_classification_metric: Union[
             Dict[Any, Any], None
@@ -110,16 +110,12 @@ class ReportGenerator:
                     and pred_class_map is not None
                     and pred_class_map_improved is not None
                 ):
-                    self.true_class_map.append(true_class_map[i].cpu().numpy())
-                    self.pred_class_map.append(pred_class_map[i].cpu().numpy())
-                    self.pred_class_map_improved.append(
-                        pred_class_map_improved[i].cpu().numpy()
-                    )
+                    self.true_class_map.append(true_class_map[i])
+                    self.pred_class_map.append(pred_class_map[i])
+                    self.pred_class_map_improved.append(pred_class_map_improved[i])
                     if graphs is not None and graphs_class_map is not None:
                         self.graphs_images.append(
-                            self._draw_graph(
-                                graphs[i], pred_class_map_improved[i].cpu().numpy()
-                            )
+                            self._draw_graph(graphs[i], pred_class_map_improved[i])
                         )
                         self.graphs_class_map.append(graphs_class_map[i])
             self.imgs_to_display = max(0, self.imgs_to_display - len(images))
@@ -127,8 +123,8 @@ class ReportGenerator:
     def add_final_metrics(
         self,
         segmentation_metric: Union[Dict[Any, Any], None],
-        classification_metric: Union[Dict[Any, Any], None],
-        graph_classification_metric: Union[Dict[Any, Any], None],
+        # classification_metric: Union[Dict[Any, Any], None],
+        # graph_classification_metric: Union[Dict[Any, Any], None],
         segmentation_classification_metric: Union[Dict[Any, Any], None],
         graph_segmentation_classification_metric: Union[Dict[Any, Any], None],
     ) -> None:
@@ -148,8 +144,8 @@ class ReportGenerator:
             None.
         """
         self.segmentation_metric = segmentation_metric
-        self.classification_metric = classification_metric
-        self.graph_classification_metric = graph_classification_metric
+        # self.classification_metric = classification_metric
+        # self.graph_classification_metric = graph_classification_metric
         self.segmentation_classification_metric = segmentation_classification_metric
         self.graph_segmentation_classification_metric = (
             graph_segmentation_classification_metric
@@ -196,20 +192,20 @@ class ReportGenerator:
                 md,
             )
 
-        if self.n_classes > 1 and self.classification_metric is not None:
-            md += "## Classification metrics\n\n"
-            md += "| Metric | Value |\n"
-            md += "| :--- | :---: |\n"
-            for metric in self.classification_metric:
-                md += f"| {metric} | {self.classification_metric[metric].compute().item()} |\n"
-            md += "\n"
-        if self.graph_classification_metric is not None:
-            md += "## Classification metrics after graph improvement\n\n"
-            md += "| Metric | Value |\n"
-            md += "| :--- | :---: |\n"
-            for metric in self.graph_classification_metric:
-                md += f"| {metric} | {self.graph_classification_metric[metric].compute().item()} |\n"
-            md += "\n"
+        # if self.n_classes > 1 and self.classification_metric is not None:
+        #     md += "## Classification metrics\n\n"
+        #     md += "| Metric | Value |\n"
+        #     md += "| :--- | :---: |\n"
+        #     for metric in self.classification_metric:
+        #         md += f"| {metric} | {self.classification_metric[metric].compute().item()} |\n"
+        #     md += "\n"
+        # if self.graph_classification_metric is not None:
+        #     md += "## Classification metrics after graph improvement\n\n"
+        #     md += "| Metric | Value |\n"
+        #     md += "| :--- | :---: |\n"
+        #     for metric in self.graph_classification_metric:
+        #         md += f"| {metric} | {self.graph_classification_metric[metric].compute().item()} |\n"
+        #     md += "\n"
 
         if len(self.images) > 0:
             md += "## Images\n\n"
@@ -413,12 +409,18 @@ class ReportGenerator:
                 )
 
                 # save graph of class map
-                self._save_images(
-                    [self.graphs_images[i], self.graphs_class_map[i]],
-                    ["Graph", "Graph Class map"],
-                    f"test_image_{i}_graph",
-                    legend=True,
-                )
+                if (
+                    self.graphs_class_map is not None
+                    and len(self.graphs_class_map) > i
+                    and self.graphs_images is not None
+                    and len(self.graphs_images) > i
+                ):
+                    self._save_images(
+                        [self.graphs_images[i], self.graphs_class_map[i]],
+                        ["Graph", "Graph Class map"],
+                        f"test_image_{i}_graph",
+                        legend=True,
+                    )
 
                 # save differences between true and predicted maps
                 diff_imgs = {}
@@ -428,28 +430,34 @@ class ReportGenerator:
                 diff_imgs["class mask differences"][
                     self.true_class_map[i] != self.pred_class_map_improved[i]
                 ] = 1
-                diff_imgs["graph class mask differences"] = np.zeros_like(
-                    self.true_class_map[i]
-                )
-                diff_imgs["graph class mask differences"][
-                    self.true_class_map[i] != self.graphs_class_map[i]
-                ] = 1
-                diff_imgs["class/graph mask differences"] = np.zeros_like(
-                    self.true_class_map[i]
-                )
-                diff_imgs["class/graph mask differences"][
-                    diff_imgs["class mask differences"]
-                    > diff_imgs["graph class mask differences"]
-                ] = 1
-                diff_imgs["class/graph mask differences"][
-                    diff_imgs["class mask differences"]
-                    < diff_imgs["graph class mask differences"]
-                ] = 2
-                self._save_images(
-                    list(diff_imgs.values()),
-                    list(diff_imgs.keys()),
-                    f"test_image_{i}_diff",
-                )
+                if (
+                    self.graphs_class_map is not None
+                    and len(self.graphs_class_map) > i
+                    and self.graphs_images is not None
+                    and len(self.graphs_images) > i
+                ):
+                    diff_imgs["graph class mask differences"] = np.zeros_like(
+                        self.true_class_map[i]
+                    )
+                    diff_imgs["graph class mask differences"][
+                        self.true_class_map[i] != self.graphs_class_map[i]
+                    ] = 1
+                    diff_imgs["class/graph mask differences"] = np.zeros_like(
+                        self.true_class_map[i]
+                    )
+                    diff_imgs["class/graph mask differences"][
+                        diff_imgs["class mask differences"]
+                        > diff_imgs["graph class mask differences"]
+                    ] = 1
+                    diff_imgs["class/graph mask differences"][
+                        diff_imgs["class mask differences"]
+                        < diff_imgs["graph class mask differences"]
+                    ] = 2
+                    self._save_images(
+                        list(diff_imgs.values()),
+                        list(diff_imgs.keys()),
+                        f"test_image_{i}_diff",
+                    )
 
     def _save_images(
         self, imgs: list, titles: list, file_name: str, legend: bool = False

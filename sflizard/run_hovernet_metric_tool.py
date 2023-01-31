@@ -1,8 +1,10 @@
 from sflizard import HoverNetMetricTool
 
+TEST_MODE = True
+
 WEIGHTS_SELECTOR = {
     "model": ["graph_custom"],  # "graph_sage", "graph_gin", "graph_GCN"],
-    "dimh": [256],  # , 512, 1024],
+    "dimh": [1024],  # , 512, 1024],
     "num_layers": [4],
     "heads": [8],
     "custom_combinations": [
@@ -29,11 +31,25 @@ WEIGHTS_SELECTOR = {
     ],
 }
 
+WEIGHTS_PATH = {
+    "mod1-b-test": "models/graph_custom-1024-4-4ll-45-0-0-3-16-wide-0.0005-acc-epoch=103-val_acc=0.7817.ckpt",
+}
+
 if __name__ == "__main__":
 
-    hmt = HoverNetMetricTool(
-        mode="valid",
-        weights_selector=WEIGHTS_SELECTOR,
-        distance=45,
-        x_type="4ll+c",
-    )
+    if not TEST_MODE:
+        hmt = HoverNetMetricTool(
+            mode="test",
+            weights_selector=WEIGHTS_SELECTOR,
+            distance=45,
+            x_type="4ll",
+        )
+
+    else:
+        hmt = HoverNetMetricTool(
+            mode="test",
+            weights_selector=[],
+            distance=45,
+            x_type="ll",
+            paths=WEIGHTS_PATH,
+        )

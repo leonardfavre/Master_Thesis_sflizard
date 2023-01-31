@@ -173,6 +173,7 @@ class TestPipeline:
         for w in weights_path:
             model = Graph.load_from_checkpoint(
                 w,
+                wandb_log=False,
             )
             self.x_type = X_TYPE[model.num_features]
             self.graph[w] = model.model.to(self.device)
@@ -209,16 +210,13 @@ class TestPipeline:
 
         for i in tqdm(range(len(self.dataloader))):  # type: ignore
 
-            # if i > 3:
-            #     break
-
             # get next test batch
             batch = next(self.dataloader)
             for b in range(len(batch)):
                 batch[b] = batch[b].to(self.device)
             if self.classification:
                 inputs, obj_probabilities, distances, classes = batch
-                true_class_map = classes.int()
+                true_class_map = classes.detach().cpu().numpy().astype("int32")
             else:
                 inputs, obj_probabilities, distances = batch
 
@@ -236,7 +234,9 @@ class TestPipeline:
                     dist, prob, clas = self.stardist(inputs)
                 else:
                     dist, prob = self.stardist(inputs)
-            pred_mask = self.stardist.compute_star_label(inputs, dist, prob)
+            pred_mask, points = self.stardist.compute_star_label(
+                inputs, dist, prob, get_points=True
+            )
 
             # 4 times stardist to improve mask
             if STAR_4_IMPROVEMENT:
@@ -249,15 +249,19 @@ class TestPipeline:
             if self.classification:
 
                 def get_class_pred(clas, pred_mask):
-                    pred_class_map = torch.argmax(clas, dim=1)
-                    pred_class_map_improved = torch.Tensor(
-                        np.array(
-                            [
-                                improve_class_map(pred_class_map[b].cpu(), pred_mask[b])
-                                for b in range(len(pred_class_map))
-                            ]
-                        )
+                    pred_class_map = (
+                        clas.argmax(1).detach().cpu().numpy().astype("int32")
                     )
+
+                    pred_class_map_improved = np.array(
+                        [
+                            improve_class_map(
+                                pred_class_map[b], pred_mask[b], points[b]
+                            )
+                            for b in range(len(pred_class_map))
+                        ]
+                    )
+                    pred_class_map_improved = pred_class_map_improved.astype("int32")
                     return pred_class_map_improved, pred_class_map
 
                 pred_class_map_improved, pred_class_map = get_class_pred(
@@ -276,14 +280,14 @@ class TestPipeline:
             else:
                 pred_class_map_improved = None
 
+            graphs = None
+            graphs_class_map = {}
             if self.compute_graph:
 
                 # graph predicted mask
                 graphs = get_graph_for_inference(
                     inputs, self.graph_distance, self.stardist_weights_path, self.x_type
                 )
-
-                graphs_class_map = {}
 
                 with torch.no_grad():
                     for g in self.graph:
@@ -295,9 +299,10 @@ class TestPipeline:
                                     graphs[j]["edge_index"].to(self.device),
                                 )
                                 graph_pred.append(out.argmax(-1))
-                            else:
-                                graph_pred.append(None)
 
+                            else:
+                                print("empty graph")
+                                graph_pred.append(None)
                         graphs_class_map[g] = get_class_map_from_graph(
                             graphs, pred_mask, graph_pred, pred_class_map_improved
                         )
@@ -308,15 +313,16 @@ class TestPipeline:
             if self.classification:
                 self.star_smt.add_batch_class(
                     i,
-                    true_class_map.detach().int().cpu().numpy(),
-                    pred_class_map_improved.detach().int().cpu().numpy(),
+                    true_class_map,
+                    pred_class_map_improved,
                 )
                 if self.compute_graph:
                     for g in self.graph_smt:
+                        self.graph_smt[g].add_batch(i, true_mask, pred_mask)
                         self.graph_smt[g].add_batch_class(
                             i,
-                            true_class_map.detach().int().cpu().numpy(),
-                            np.array(graphs_class_map[g]),
+                            true_class_map,
+                            graphs_class_map[g],
                         )
 
             if output_dir is not None:
@@ -328,7 +334,9 @@ class TestPipeline:
                     pred_class_map,
                     pred_class_map_improved,
                     graphs,
-                    graphs_class_map[list(graphs_class_map.keys())[0]],
+                    graphs_class_map[list(graphs_class_map.keys())[0]]
+                    if self.compute_graph
+                    else None,
                 )
 
         # compute metrics
@@ -352,10 +360,10 @@ class TestPipeline:
         if output_dir is not None:
             self.report_generator.add_final_metrics(
                 self.star_smt.seg_metrics[0],
-                self.star_smt.classes_metrics if self.classification else None,
-                self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics
-                if self.compute_graph
-                else None,
+                # self.star_smt.classes_metrics if self.classification else None,
+                # self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics
+                # if self.compute_graph
+                # else None,
                 self.star_smt.seg_metrics if self.classification else None,
                 self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics
                 if self.compute_graph
