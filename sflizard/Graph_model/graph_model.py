@@ -26,6 +26,7 @@ class GraphCustom(torch.nn.Module):
         custom_output_layer: int = 0,
         custom_output_hidden: int = 8,
         custom_wide_connections: bool = False,
+        dropout: float = 0.0,
     ) -> None:
         """Initialize the model.
 
@@ -40,6 +41,7 @@ class GraphCustom(torch.nn.Module):
             custom_output_layer (int): The number of linear output layers.
             custom_output_hidden (int): The dimension of the linear output hidden layers.
             custom_wide_connections (bool): Whether to use wide connections.
+            dropout (float): The dropout rate.
 
         Returns:
             None.
@@ -90,7 +92,12 @@ class GraphCustom(torch.nn.Module):
             out_size = (
                 dim_out if i == self.custom_output_layer - 1 else custom_output_hidden
             )
-            self.model.append(Linear(in_size, out_size))
+            if dropout > 0:
+                self.model.append(
+                    torch.nn.Sequential(nn.Dropout(dropout), Linear(in_size, out_size))
+                )
+            else:
+                self.model.append(Linear(in_size, out_size))
 
         # log the model
         print(self.model.__repr__())
@@ -160,6 +167,7 @@ class Graph(pl.LightningModule):
         custom_output_layer: int = 0,
         custom_output_hidden: int = 8,
         custom_wide_connections: bool = False,
+        dropout: float = 0.0,
     ) -> None:
         """Initialize the module.
 
@@ -180,6 +188,7 @@ class Graph(pl.LightningModule):
             custom_output_layer (int): The number of linear output layers (only for graph_custom).
             custom_output_hidden (int): The dimension of the linear output hidden layers (only for graph_custom).
             custom_wide_connections (bool): Whether to use wide connections between linear and graph layers (only for graph_custom).
+            dropout (float): The dropout rate.
 
         Returns:
             None.
@@ -204,6 +213,7 @@ class Graph(pl.LightningModule):
                 out_channels=self.num_classes,
                 v2=True,
                 heads=heads,
+                dropout=dropout,
             )
         elif "graph_gin" in model:
             self.model = GIN(
@@ -211,6 +221,7 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
+                dropout=dropout,
             )
         elif "GCN" in model:
             self.model = GCN(
@@ -218,6 +229,7 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
+                dropout=dropout,
             )
         elif model == "graph_sage":
             self.model = GraphSAGE(
@@ -225,6 +237,7 @@ class Graph(pl.LightningModule):
                 hidden_channels=dim_h,
                 num_layers=num_layers,
                 out_channels=self.num_classes,
+                dropout=dropout,
             )
         elif model == "graph_custom":
             self.model = GraphCustom(
@@ -238,6 +251,7 @@ class Graph(pl.LightningModule):
                 custom_output_layer=custom_output_layer,
                 custom_output_hidden=custom_output_hidden,
                 custom_wide_connections=custom_wide_connections,
+                dropout=dropout,
             )
         if self.wandb_log:
             wandb.watch(self.model)

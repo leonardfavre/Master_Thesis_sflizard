@@ -36,6 +36,7 @@ CUSTOM_OUTPUT_LAYER = 0
 CUSTOM_INPUT_HIDDEN = 8
 CUSTOM_OUTPUT_HIDDEN = NUM_CLASSES
 CUSTOM_WIDE_CONNECTIONS = False
+DROPOUT = 0.0
 
 NUM_FEATURES = {
     "c": 7,
@@ -197,19 +198,31 @@ def init_graph_training(
         custom_output_hidden=args.custom_output_hidden,
         custom_wide_connections=args.custom_wide_connections,
         wandb_log=True,
+        dropout=args.dropout,
     )
 
     print(f"\nwide: {args.custom_wide_connections}\n")
 
-    if args.model == "graph_gat":
-        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
-    elif args.model == "graph_custom" and not args.custom_wide_connections:
-        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
-    elif args.model == "graph_custom" and args.custom_wide_connections:
-        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
-        print("\nwide")
+    if args.dropout == 0.0:
+        if args.model == "graph_gat":
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+        elif args.model == "graph_custom" and not args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+        elif args.model == "graph_custom" and args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+        else:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
     else:
-        name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+        if args.model == "graph_gat":
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.dropout}-{args.learning_rate}"
+        elif args.model == "graph_custom" and not args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+        elif args.model == "graph_custom" and args.custom_wide_connections:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+        else:
+            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.learning_rate}"
+
+    print(f"\nname: {name}\n")
 
     loss_callback = pl.callbacks.ModelCheckpoint(
         dirpath="models/loss_cb_graph",
@@ -285,14 +298,24 @@ def full_training(args: argparse.Namespace) -> None:
             f"models/final3_stardist_crop-cosine_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
         )
     else:
-        if args.model == "graph_gat":
-            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
-        elif args.model == "graph_custom" and not args.custom_wide_connections:
-            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
-        elif args.model == "graph_custom" and args.custom_wide_connections:
-            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+        if args.dropout == 0.0:
+            if args.model == "graph_gat":
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.learning_rate}"
+            elif args.model == "graph_custom" and not args.custom_wide_connections:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+            elif args.model == "graph_custom" and args.custom_wide_connections:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+            else:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
         else:
-            name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.learning_rate}"
+            if args.model == "graph_gat":
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.heads}-{args.dropout}-{args.learning_rate}"
+            elif args.model == "graph_custom" and not args.custom_wide_connections:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-{args.learning_rate}"
+            elif args.model == "graph_custom" and args.custom_wide_connections:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.custom_input_layer}-{args.custom_input_hidden}-{args.custom_output_layer}-{args.custom_output_hidden}-wide-{args.learning_rate}"
+            else:
+                name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.learning_rate}"
 
         trainer.save_checkpoint(f"models/{name}-{args.max_epochs}.ckpt")
 
@@ -446,6 +469,13 @@ if __name__ == "__main__":
         type=bool,
         default=CUSTOM_WIDE_CONNECTIONS,
         help="Custom wide connections in the custom graph model.",
+    )
+    parser.add_argument(
+        "-do",
+        "--dropout",
+        type=float,
+        default=DROPOUT,
+        help="Dropout to use for the graph model.",
     )
     parser.add_argument(
         "-xt",

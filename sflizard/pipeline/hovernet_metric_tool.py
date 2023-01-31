@@ -22,6 +22,8 @@ STARDIST_CHECKPOINT = (
 CHECKPOINT_PATH = ["models/", "models/cp_acc_graph/", "models/loss_cb_graph/"]
 TRUE_DATA_PATH_START = "data/Lizard_dataset_split/patches/Lizard_Labels_"
 
+TEST_DROPOUT = True
+
 
 class HoverNetMetricTool:
     """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool."""
@@ -205,16 +207,28 @@ class HoverNetMetricTool:
                 for num_layers in weights_selector["num_layers"]:
                     if model == "graph_gat":
                         for heads in weights_selector["heads"]:
-                            for checkpoint in available_checkpoints:
-                                if (
-                                    f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
-                                    in str(checkpoint)
-                                ):
-                                    wp = f"{model}-{dimh}-{num_layers}-{heads}"
-                                    weights_path = save_path(
-                                        checkpoint, wp, weights_path
-                                    )
-                    elif model == "graph_custom":
+                            if "custom_combinations" in weights_selector:
+                                for comb in weights_selector["custom_combinations"]:
+                                    for checkpoint in available_checkpoints:
+                                        if (
+                                            f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}-{comb}"
+                                            in str(checkpoint)
+                                        ):
+                                            wp = f"{model}-{dimh}-{num_layers}-{heads}-{comb}"
+                                            weights_path = save_path(
+                                                checkpoint, wp, weights_path
+                                            )
+                            else:
+                                for checkpoint in available_checkpoints:
+                                    if (
+                                        f"{model}-{dimh}-{num_layers}-{self.x_type}-{self.distance}-{heads}"
+                                        in str(checkpoint)
+                                    ):
+                                        wp = f"{model}-{dimh}-{num_layers}-{heads}"
+                                        weights_path = save_path(
+                                            checkpoint, wp, weights_path
+                                        )
+                    elif "custom_combinations" in weights_selector:
                         for comb in weights_selector["custom_combinations"]:
                             for checkpoint in available_checkpoints:
                                 if (
@@ -337,11 +351,17 @@ class HoverNetMetricTool:
             self.result_table[model] = {}
             for ckpt in ["final", "acc", "acc_macro", "loss"]:
                 self.result_table[model][ckpt] = {}
-                if model == "graph_custom":
+                if "custom_combinations" in weights_selector:
                     for c in weights_selector["custom_combinations"]:
-                        self.result_table[model][ckpt][c] = {}
-                        for dh in weights_selector["dimh"]:
-                            self.result_table[model][ckpt][c][dh] = {}
+                        if model == "graph_gat":
+                            for head in weights_selector["heads"]:
+                                self.result_table[model][ckpt][c][head] = {}
+                                for dh in weights_selector["dimh"]:
+                                    self.result_table[model][ckpt][c][head][dh] = {}
+                        else:
+                            self.result_table[model][ckpt][c] = {}
+                            for dh in weights_selector["dimh"]:
+                                self.result_table[model][ckpt][c][dh] = {}
                 elif model == "graph_gat":
                     for head in weights_selector["heads"]:
                         self.result_table[model][ckpt][head] = {}
@@ -350,7 +370,7 @@ class HoverNetMetricTool:
                 else:
                     for dh in weights_selector["dimh"]:
                         self.result_table[model][ckpt][dh] = {}
-        self.result_file = Path(self.base_save_path) / "result_table_512.pkl"
+        self.result_file = Path(self.base_save_path) / "result_table.pkl"
         Path(self.result_file).touch(exist_ok=True)
 
     def save_result_in_table(self, save_folder: str, result: str) -> None:
@@ -373,16 +393,31 @@ class HoverNetMetricTool:
         num_layers = int(selector[2])
         if model == "graph_custom":
             if "wide" in selector:
-                combination = "-".join(selector[3:8])
-                ckpt = selector[8]
+                if TEST_DROPOUT:
+                    combination = "-".join(selector[4:9])
+                    ckpt = selector[9]
+                else:
+                    combination = "-".join(selector[3:8])
+                    ckpt = selector[8]
             else:
                 combination = "-".join(selector[3:7])
                 ckpt = selector[7]
             self.result_table[model][ckpt][combination][dimh][num_layers] = result
+        elif model == "graph_sage" and TEST_DROPOUT:
+            combination = selector[3]
+            ckpt = selector[4]
+            self.result_table[model][ckpt][combination][dimh][num_layers] = result
         elif model == "graph_gat":
             head = int(selector[3])
-            ckpt = selector[4]
-            self.result_table[model][ckpt][head][dimh][num_layers] = result
+            if TEST_DROPOUT:
+                combination = selector[4]
+                ckpt = selector[5]
+                self.result_table[model][ckpt][combination][head][dimh][
+                    num_layers
+                ] = result
+            else:
+                ckpt = selector[4]
+                self.result_table[model][ckpt][head][dimh][num_layers] = result
         else:
             ckpt = selector[3]
             self.result_table[model][ckpt][dimh][num_layers] = result
