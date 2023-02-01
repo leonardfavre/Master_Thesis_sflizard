@@ -8,7 +8,7 @@ from typing import List, Tuple, Union
 import pytorch_lightning as pl
 import torch
 
-import wandb
+# import wandb
 from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 # default values
@@ -502,21 +502,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # wandb logging (see: https://wandb.ai)
-    wandb_config = {
-        "model": args.model,
-        "learning_rate": args.learning_rate,
-        "epochs": args.max_epochs,
-        "batch_size": args.batch_size,
-        "num_classes": args.num_classes,
-        "loss_power_scaler": args.loss_power_scaler,
-        "dimh": args.dimh,
-        "num_layers": args.num_layers,
-        "heads": args.heads,
-        "x_type": args.x_type,
-        "data": "shuffle",
-        "save_name": args.save_name,
-    }
-    wandb.init(project="sflizard", entity="leonardfavre", config=wandb_config)
+    # wandb_config = {
+    #     "model": args.model,
+    #     "learning_rate": args.learning_rate,
+    #     "epochs": args.max_epochs,
+    #     "batch_size": args.batch_size,
+    #     "num_classes": args.num_classes,
+    #     "loss_power_scaler": args.loss_power_scaler,
+    #     "dimh": args.dimh,
+    #     "num_layers": args.num_layers,
+    #     "heads": args.heads,
+    #     "x_type": args.x_type,
+    #     "data": "shuffle",
+    #     "save_name": args.save_name,
+    # }
+    # wandb.init(project="sflizard", entity="leonardfavre", config=wandb_config)
 
     # Set seed for reproducibility
     pl.seed_everything(args.seed, workers=True)
