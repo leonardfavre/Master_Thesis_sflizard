@@ -4,14 +4,7 @@ import os
 
 import numpy as np
 import scipy.io as sio
-from metrics.stats_utils import (
-    get_dice_1,
-    get_fast_aji,
-    get_fast_aji_plus,
-    get_fast_pq,
-    pair_coordinates,
-    remap_label,
-)
+from metrics.stats_utils import get_fast_pq, pair_coordinates, remap_label
 from tqdm import tqdm
 
 
@@ -184,7 +177,6 @@ def run_nuclei_inst_stat(pred_dir, true_dir, print_img_stats=False, ext=".mat"):
     metrics = [[], [], [], [], [], []]
     for filename in tqdm(file_list[:]):
         filename = os.path.basename(filename)
-        print(filename)
         basename = filename.split(".")[0]
 
         true = sio.loadmat(os.path.join(true_dir, basename + ".mat"))
@@ -198,12 +190,12 @@ def run_nuclei_inst_stat(pred_dir, true_dir, print_img_stats=False, ext=".mat"):
         true = remap_label(true, by_size=False)
 
         pq_info = get_fast_pq(true, pred, match_iou=0.5)[0]
-        metrics[0].append(get_dice_1(true, pred))
-        metrics[1].append(get_fast_aji(true, pred))
+        metrics[0].append(0)  # get_dice_1(true, pred))
+        metrics[1].append(0)  # get_fast_aji(true, pred))
         metrics[2].append(pq_info[0])  # dq
         metrics[3].append(pq_info[1])  # sq
         metrics[4].append(pq_info[2])  # pq
-        metrics[5].append(get_fast_aji_plus(true, pred))
+        metrics[5].append(0)  # get_fast_aji_plus(true, pred))
 
         if print_img_stats:
             print(basename, end="\t")
