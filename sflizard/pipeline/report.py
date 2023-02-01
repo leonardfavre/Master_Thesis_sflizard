@@ -7,7 +7,9 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from PIL import ImageDraw
+from rich.console import Console
 from stardist.matching import matching
+from tqdm import tqdm
 
 from sflizard import get_class_color, get_class_name
 
@@ -20,6 +22,7 @@ class ReportGenerator:
         output_dir: str,
         imgs_to_display: int,
         n_classes: int,
+        console: Console,
     ) -> None:
         """Report generator.
 
@@ -34,6 +37,7 @@ class ReportGenerator:
         Raises:
             None.
         """
+        self.console = console
         self.output_dir = output_dir
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         if self.output_dir[-1] != "/":
@@ -60,8 +64,6 @@ class ReportGenerator:
         # metrics
         self.single_segmentation_metric: List[Any] = []
         self.segmentation_metric: Union[Dict[Any, Any], None] = None
-        # self.classification_metric: Union[Dict[Any, Any], None] = None
-        # self.graph_classification_metric: Union[Dict[Any, Any], None] = None
         self.segmentation_classification_metric: Union[Dict[Any, Any], None] = None
         self.graph_segmentation_classification_metric: Union[
             Dict[Any, Any], None
@@ -123,8 +125,6 @@ class ReportGenerator:
     def add_final_metrics(
         self,
         segmentation_metric: Union[Dict[Any, Any], None],
-        # classification_metric: Union[Dict[Any, Any], None],
-        # graph_classification_metric: Union[Dict[Any, Any], None],
         segmentation_classification_metric: Union[Dict[Any, Any], None],
         graph_segmentation_classification_metric: Union[Dict[Any, Any], None],
     ) -> None:
@@ -132,8 +132,6 @@ class ReportGenerator:
 
         Args:
             segmentation_metric (dict): The segmentation metric.
-            classification_metric (dict): The classification metric.
-            graph_classification_metric (dict): The graph classification metric.
             segmentation_classification_metric (dict): The segmentation classification metric.
             graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
 
@@ -144,8 +142,6 @@ class ReportGenerator:
             None.
         """
         self.segmentation_metric = segmentation_metric
-        # self.classification_metric = classification_metric
-        # self.graph_classification_metric = graph_classification_metric
         self.segmentation_classification_metric = segmentation_classification_metric
         self.graph_segmentation_classification_metric = (
             graph_segmentation_classification_metric
@@ -163,7 +159,7 @@ class ReportGenerator:
         Raises:
             None.
         """
-        print("Plotting...")
+        self.console.print("Plotting...")
 
         # create subdirectories
         Path(self.output_dir + "/images").mkdir(parents=True, exist_ok=True)
@@ -192,21 +188,6 @@ class ReportGenerator:
                 md,
             )
 
-        # if self.n_classes > 1 and self.classification_metric is not None:
-        #     md += "## Classification metrics\n\n"
-        #     md += "| Metric | Value |\n"
-        #     md += "| :--- | :---: |\n"
-        #     for metric in self.classification_metric:
-        #         md += f"| {metric} | {self.classification_metric[metric].compute().item()} |\n"
-        #     md += "\n"
-        # if self.graph_classification_metric is not None:
-        #     md += "## Classification metrics after graph improvement\n\n"
-        #     md += "| Metric | Value |\n"
-        #     md += "| :--- | :---: |\n"
-        #     for metric in self.graph_classification_metric:
-        #         md += f"| {metric} | {self.graph_classification_metric[metric].compute().item()} |\n"
-        #     md += "\n"
-
         if len(self.images) > 0:
             md += "## Images\n\n"
             for i in range(len(self.images)):
@@ -223,7 +204,7 @@ class ReportGenerator:
                     md += f"\n![](images/test_image_{i}_diff.png)\n"
         with open(f"{self.output_dir}test_results.md", "w") as f:
             f.write(md)
-        print("Done.")
+        self.console.print("Done.")
 
     def _get_simple_metric_table(self, title: str, metrics: dict, md: str) -> str:
         """Get a simple metric table.
@@ -379,7 +360,8 @@ class ReportGenerator:
         Raises:
             None.
         """
-        for i in range(len(self.images)):
+        self.console.print("Generating images for the report...")
+        for i in tqdm(range(len(self.images))):
             # save images and segmentation masks
             self._save_images(
                 [

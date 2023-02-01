@@ -7,18 +7,19 @@ from stardist.matching import matching_dataset
 
 from sflizard import get_class_name
 
-PRINT_LATEX_STRING = True
+PRINT_LATEX_STRING = False
 
 
 class SegmentationMetricTool:
     """A tool to compute metrics for segmentation."""
 
-    def __init__(self, n_classes: int, device: str) -> None:
+    def __init__(self, n_classes: int, device: str, console: Console) -> None:
         """Init the metric tool.
 
         Args:
             n_classes (int): The number of classes.
             device (str): The device to use.
+            console (Console): The rich console.
 
         Returns:
             None.
@@ -28,24 +29,10 @@ class SegmentationMetricTool:
         """
         self.n_classes = n_classes
         self.device = device
+        self.console = console
 
         # init tests for segmentation for each class
         self.seg_metrics: Dict[int, Any] = {}
-
-        # # init tests for classification
-        # self.classes_metrics: Dict[str, Any] = {}
-        # self.classes_metrics["accuracy micro"] = torchmetrics.Accuracy(
-        #     num_classes=self.n_classes, mdmc_average="global"
-        # ).to(self.device)
-        # self.classes_metrics["f1 micro"] = torchmetrics.F1Score(
-        #     num_classes=self.n_classes, mdmc_average="global"
-        # ).to(self.device)
-        # self.classes_metrics["accuracy macro"] = torchmetrics.Accuracy(
-        #     num_classes=self.n_classes, average="macro", mdmc_average="global"
-        # ).to(self.device)
-        # self.classes_metrics["f1 macro"] = torchmetrics.F1Score(
-        #     num_classes=self.n_classes, average="macro", mdmc_average="global"
-        # ).to(self.device)
 
         # init data holders
         self.true_masks = None
@@ -109,12 +96,6 @@ class SegmentationMetricTool:
         Raises:
             None.
         """
-        # if self.n_classes > 1:
-        #     for metric in self.classes_metrics:
-        #         self.classes_metrics[metric](
-        #             torch.Tensor(pred_class_map).int().to(self.device),
-        #             torch.Tensor(true_class_map).int().to(self.device),
-        #         )
 
         for j in range(1, self.n_classes):
             # save the true class map
@@ -147,12 +128,16 @@ class SegmentationMetricTool:
         """
         # compute segmentation metrics
         if self.true_masks is not None and self.predicted_masks is not None:
+            self.console.print("Computing global segmentation metrics...")
             self.seg_metrics[0] = matching_dataset(
                 self.true_masks, self.predicted_masks, show_progress=True, parallel=True
             )
 
         # compute metrics for each class
         for i in range(1, self.n_classes):
+            self.console.print(
+                f"Computing class {get_class_name()[i]} segmentation metrics..."
+            )
             # compute metrics for each class
             tm = np.copy(self.true_masks)
             tm[self.true_class_map[i] == 0] = 0
@@ -162,11 +147,11 @@ class SegmentationMetricTool:
                 tm, pm, show_progress=True, parallel=True
             )
 
-    def log_results(self, console: Console) -> None:
+    def log_results(self) -> None:
         """Log the results in rich tables.
 
         Args:
-            console (Console): The rich console.
+            None.
 
         Returns:
             None.
@@ -200,7 +185,7 @@ class SegmentationMetricTool:
                 "panoptic_quality",
                 f"{self.seg_metrics[0].panoptic_quality:.4f}",
             )
-            console.print(table)
+            self.console.print(table)
 
             # save latex table
             if PRINT_LATEX_STRING:
@@ -218,22 +203,6 @@ class SegmentationMetricTool:
                 latex_table_str.append(table_str)
 
         if self.n_classes > 1:
-            # # log classification metrics
-            # table = Table(title="Classification metrics")
-            # table.add_column("metric \\ avg", justify="center")
-            # table.add_column("micro", justify="center")
-            # table.add_column("macro", justify="center")
-            # table.add_row(
-            #     "Accuracy",
-            #     str(self.classes_metrics["accuracy micro"].compute().item()),
-            #     str(self.classes_metrics["accuracy macro"].compute().item()),
-            # )
-            # table.add_row(
-            #     "F1",
-            #     str(self.classes_metrics["f1 micro"].compute().item()),
-            #     str(self.classes_metrics["f1 macro"].compute().item()),
-            # )
-            # console.print(table)
 
             # log per class segmentation metrics
             table = Table(title="Per class metrics")
@@ -272,7 +241,7 @@ class SegmentationMetricTool:
                     for i in range(1, self.n_classes)
                 ],
             )
-            console.print(table)
+            self.console.print(table)
 
             # save latex table
             if PRINT_LATEX_STRING:

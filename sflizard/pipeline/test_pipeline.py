@@ -1,9 +1,11 @@
 import copy
-from typing import List, Union
+from typing import List
 
 import numpy as np
 import torch
 from rich.console import Console
+from rich.markdown import Markdown
+from rich.table import Table
 from tqdm import tqdm
 
 from sflizard import (
@@ -57,7 +59,7 @@ class TestPipeline:
             n_rays (int): The number of rays to use for stardist.
             n_classes (int): The number of classes.
             batch_size (int): The batch size to use.
-            seed (int): The seed to use.
+            seed (int): The seed to use for constant randomization.
             mode (str): The mode to use (test or valid).
 
         Returns:
@@ -66,18 +68,55 @@ class TestPipeline:
         Raises:
             None.
         """
+        # log
+        self.console = Console()
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print("Using device:", self.device)
         self.n_classes = n_classes
         self.n_rays = n_rays
+        self.stardist_weights_path = stardist_weights_path
+        self.graph_weights_path = graph_weights_path
+        if isinstance(self.graph_weights_path, str):
+            self.graph_weights_path = [self.graph_weights_path]
+        self.graph_distance = graph_distance
+
+        self.__log_config(mode, seed)
         self.__init_dataloader(valid_data_path, test_data_path, seed, batch_size, mode)
-        self.__init_stardist_inference(stardist_weights_path)
+        self.__init_stardist_inference()
 
         # graph initialization
-        self.compute_graph = graph_weights_path is not None
+        self.compute_graph = self.graph_weights_path is not None
         if self.compute_graph:
-            self.__init_graph_inference(graph_weights_path)
-        self.graph_distance = graph_distance
+            self.__init_graph_inference()
+
+    def __log_config(self, mode: str, seed: int) -> None:
+        """Log the config of the pipeline.
+
+        Args:
+            mode (str): The mode to use (test or valid).
+            seed (int): The seed to use for constant randomization.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        config = Table(title="Config")
+        config.add_column("Arg", justify="right", style="cyan", no_wrap=True)
+        config.add_column("Value", style="magenta")
+        config.add_row("Mode", mode)
+        config.add_row("Device", self.device)
+        config.add_row("N classes", str(self.n_classes))
+        config.add_row("Stardist ckpt", self.stardist_weights_path)
+        config.add_row("N rays", str(self.n_rays))
+        if self.graph_weights_path is not None:
+            for i in range(len(self.graph_weights_path)):
+                config.add_row(f"Graph ckpt {i}", self.graph_weights_path[i])
+            config.add_row("Graph distance", str(self.graph_distance))
+        config.add_row("Seed", str(seed))
+
+        self.console.print(config)
 
     def __init_dataloader(
         self,
@@ -104,7 +143,7 @@ class TestPipeline:
         """
         aditional_args = {"n_rays": self.n_rays}
 
-        print("Loading data...")
+        self.console.print("\n\n[bold cyan]### Loading data...[/bold cyan]")
         # create the datamodule
         dm = LizardDataModule(
             train_data_path=None,
@@ -119,21 +158,18 @@ class TestPipeline:
 
         # get the dataloader
         if mode == "test":
-            print("test mode")
             self.dataloader = iter(dm.test_dataloader())
         elif mode == "valid":
-            print("validation mode")
             self.dataloader = iter(dm.val_dataloader())
-        print("Data loaded.")
+        self.console.print("Data loaded.")
 
     def __init_stardist_inference(
         self,
-        weights_path: str,
     ) -> None:
         """Init the stardist model for inference.
 
         Args:
-            weights_path (str): The path to the stardist weights.
+            None.
 
         Returns:
             None.
@@ -141,24 +177,22 @@ class TestPipeline:
         Raises:
             None.
         """
-        print("Loading stardist model...")
+        self.console.print("\n\n[bold cyan]### Loading stardist model... [/bold cyan]")
         model = Stardist.load_from_checkpoint(
-            weights_path,
+            self.stardist_weights_path,
             wandb_log=False,
         )
-        self.stardist_weights_path = weights_path
-
         self.stardist = model.model.to(self.device)
         self.stardist_layer = copy.deepcopy(model.model).to(self.device)
         self.stardist_layer.output_last_layer = True
-        print("Stardist model loaded.")
+        self.console.print("Stardist model loaded.")
         self.classification = self.n_classes > 1
 
-    def __init_graph_inference(self, weights_path: Union[List[str], str]) -> None:
+    def __init_graph_inference(self) -> None:
         """Init the graph model for inference.
 
         Args:
-            weights_path (List[str]): The path to the graph weights.
+            None.
 
         Returns:
             None.
@@ -166,18 +200,17 @@ class TestPipeline:
         Raises:
             None.
         """
-        print("Loading graph model...")
-        if isinstance(weights_path, str):
-            weights_path = [weights_path]
+        self.console.print("\n\n[bold cyan]### Loading graph model...[/bold cyan]")
+
         self.graph = {}
-        for w in weights_path:
+        for w in self.graph_weights_path:
             model = Graph.load_from_checkpoint(
                 w,
                 wandb_log=False,
             )
             self.x_type = X_TYPE[model.num_features]
             self.graph[w] = model.model.to(self.device)
-        print("Graph model loaded.")
+        self.console.print("Graph model loaded.")
 
     def test(self, output_dir=None, imgs_to_display=0) -> None:
         """Run the pipeline and test the model.
@@ -192,20 +225,24 @@ class TestPipeline:
         Raises:
             None.
         """
-        print("Testing...")
+        self.console.print("\n\n[bold cyan]### Testing...[/bold cyan]")
 
         # init metric tool
-        self.star_smt = SegmentationMetricTool(self.n_classes, self.device)
+        self.star_smt = SegmentationMetricTool(
+            self.n_classes, self.device, self.console
+        )
 
         if self.compute_graph:
             self.graph_smt = {}
             for g in self.graph:
-                self.graph_smt[g] = SegmentationMetricTool(self.n_classes, self.device)
+                self.graph_smt[g] = SegmentationMetricTool(
+                    self.n_classes, self.device, self.console
+                )
 
         # init report tool
         if output_dir is not None:
             self.report_generator = ReportGenerator(
-                output_dir, imgs_to_display, self.n_classes
+                output_dir, imgs_to_display, self.n_classes, self.console
             )
 
         for i in tqdm(range(len(self.dataloader))):  # type: ignore
@@ -301,7 +338,7 @@ class TestPipeline:
                                 graph_pred.append(out.argmax(-1))
 
                             else:
-                                print("empty graph")
+                                self.console.print("empty graph")
                                 graph_pred.append(None)
                         graphs_class_map[g] = get_class_map_from_graph(
                             graphs, pred_mask, graph_pred, pred_class_map_improved
@@ -340,30 +377,26 @@ class TestPipeline:
                 )
 
         # compute metrics
+        self.console.print("Computing metrics...")
         self.star_smt.compute_metrics()
         if self.compute_graph:
             for g in self.graph_smt:
                 self.graph_smt[g].compute_metrics()
 
-        print("Test done.\n\nResults:\n")
+        self.console.print("Test done.\n\nResults:\n")
 
-        # log
-        console = Console()
-
-        self.star_smt.log_results(console)
+        self.console.print(Markdown("\n ## StarDist results:\n"))
+        self.star_smt.log_results()
         if self.compute_graph:
-            print("\nGraph results:\n")
+            self.console.print(Markdown("\n## Graph results:\n"))
             for g in self.graph_smt:
-                self.graph_smt[g].log_results(console)
+                self.graph_smt[g].log_results()
 
         # generate report
         if output_dir is not None:
+            self.console.print("\n\n[bold cyan]### Generating report...[/bold cyan]")
             self.report_generator.add_final_metrics(
                 self.star_smt.seg_metrics[0],
-                # self.star_smt.classes_metrics if self.classification else None,
-                # self.graph_smt[list(self.graph_smt.keys())[0]].classes_metrics
-                # if self.compute_graph
-                # else None,
                 self.star_smt.seg_metrics if self.classification else None,
                 self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics
                 if self.compute_graph
@@ -371,3 +404,4 @@ class TestPipeline:
             )
 
             self.report_generator.generate_md()
+            self.console.print("Report generated.")

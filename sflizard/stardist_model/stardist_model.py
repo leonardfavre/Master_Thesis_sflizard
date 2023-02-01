@@ -52,10 +52,6 @@ class Stardist(pl.LightningModule):
         self.input_size = input_size
         self.seed = seed
 
-        # self.val_mse_dist = torchmetrics.MeanSquaredError()
-        # self.val_acc_class = torchmetrics.Accuracy(num_classes=n_classes, average="micro", mdmc_average="global")
-        # self.val_acc_class_macro = torchmetrics.Accuracy(num_classes=n_classes, average="macro", mdmc_average="global")
-
         self.classification = n_classes > 1
 
         if self.classification:

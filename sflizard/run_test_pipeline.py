@@ -16,7 +16,7 @@ N_CLASSES = 7
 BATCH_SIZE = 8
 SEED = 303
 OUTPUT_DIR = "./output/stardist_pipeline/star_graph/mod1/"
-IMGS_TO_DISPLAY = 20
+IMGS_TO_DISPLAY = 30
 
 DISTANCE = 45
 MODE = "test"
@@ -112,7 +112,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Testing pipeline...")
+    with open("sflizard/pipeline/banner.txt", "r") as f:
+        banner = f.read()
+        print(banner)
     pipeline = TestPipeline(
         valid_data_path=args.valid_data_path,
         test_data_path=args.test_data_path,
@@ -129,3 +131,4 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         imgs_to_display=args.imgs_to_display,
     )
+    print("\nAll done!\n")
