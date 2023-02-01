@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
-import wandb
+# import wandb
 from sflizard.stardist_model import ClassL1BCELoss, MyL1BCELoss
 from sflizard.stardist_model import UNetStar as UNet
 
@@ -77,8 +77,8 @@ class Stardist(pl.LightningModule):
             self.model = UNet(in_channels, n_rays)
             self.loss = MyL1BCELoss()
         self.wandb_log = wandb_log
-        if self.wandb_log:
-            wandb.watch(self.model)
+        # if self.wandb_log:
+        #     wandb.watch(self.model)
 
         self.max_epochs = max_epochs
 
@@ -213,7 +213,8 @@ class Stardist(pl.LightningModule):
         """
         if name in ["train", "val"]:
             if self.wandb_log:
-                wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
+                # wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
+                pass
         else:
             raise ValueError(f"Invalid step name given: {name}")
 

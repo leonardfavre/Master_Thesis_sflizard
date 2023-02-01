@@ -8,7 +8,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch.nn import Linear
 from torch_geometric.nn import GAT, GCN, GIN, GraphSAGE, SAGEConv
 
-import wandb
+# import wandb
 
 
 class GraphCustom(torch.nn.Module):
@@ -253,8 +253,8 @@ class Graph(pl.LightningModule):
                 custom_wide_connections=custom_wide_connections,
                 dropout=dropout,
             )
-        if self.wandb_log:
-            wandb.watch(self.model)
+        # if self.wandb_log:
+        #     wandb.watch(self.model)
         self.seed = seed
         self.max_epochs = max_epochs
 
@@ -403,10 +403,10 @@ class Graph(pl.LightningModule):
         """
         if name in ["train", "val"]:
             if self.wandb_log:
-                # wandb.log({f"{name}_loss": torch.stack(outputs).mean()})
-                if name == "val":
-                    wandb.log({f"{name}_acc": self.val_acc.compute()})
-                    wandb.log({f"{name}_acc_macro": self.val_acc_macro.compute()})
+                # if name == "val":
+                #     wandb.log({f"{name}_acc": self.val_acc.compute()})
+                #     wandb.log({f"{name}_acc_macro": self.val_acc_macro.compute()})
+                pass
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
