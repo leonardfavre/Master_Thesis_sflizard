@@ -94,16 +94,6 @@ if __name__ == "__main__":
     valid_df = get_df(TRUE_VALID_DATA_PATH, VALID_DATA_PATH)
     train_df = get_df(TRUE_DATA_PATH, TRAIN_DATA_PATH)
 
-    # # load the true data
-    # true_data_path = TRUE_DATA_PATH
-    # # file_list = list(Path(data_path).glob("*.mat"))
-
-    # # load the predicted data
-    # data_path = TRAIN_DATA_PATH
-    # file_list = list(Path(data_path).glob("*.mat"))
-    # valid_df = df.sample(frac = 0.2, random_state=SEED)
-    # train_df = df.drop(valid_df.index)
-
     print("Creating datamodule")
     # create the datamodule
     dm = LizardGraphDataModule(
@@ -130,7 +120,6 @@ if __name__ == "__main__":
                 max_epochs=args.max_epochs,
                 dim_h=dim_h,
                 num_layers=num_layers,
-                # class_weights=None,
             )
 
             acc_callback = pl.callbacks.ModelCheckpoint(

@@ -151,6 +151,17 @@ Raises:
 
 ## sflizard.data_utils.data_extraction module
 
+This module is a tool to extract data from the Lizard and CoNSeP dataset and save the extracted data in specific format for training and testing.
+
+Only pkl extraction is mandatory for final test pipeline and training.
+Files extraction is used for using the hovernet_metric tool.
+
+To run extraction of Lizard dataset : 
+
+```
+python sflizard/data_utils/data_extraction.py --images_path data/Lizard_dataset/Lizard_Images1/ data/Lizard_dataset/Lizard_Images2/ -mf data/Lizard_dataset/Lizard_Labels/Labels/
+```
+
 
 ### sflizard.data_utils.data_extraction.extract_annotation_patches(annotation_file: str, annotations: DataFrame, patch_size: int, patch_step: int)
 Extract patches from annotations.

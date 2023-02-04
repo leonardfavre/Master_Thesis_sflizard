@@ -15,9 +15,9 @@ from sflizard import Graph, LizardDataModule, LizardGraphDataModule, Stardist
 
 IN_CHANNELS = 3
 N_RAYS = 32
-TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
-VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
-TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
+TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_test_split_train.pkl"
+VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_test_split_valid.pkl"
+TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_test_split_test.pkl"
 MODEL = "graph_sage"
 BATCH_SIZE = 64
 NUM_WORKERS = 8
@@ -49,7 +49,7 @@ NUM_FEATURES = {
     "4ll+c+x": 542,
 }
 STARDIST_CHECKPOINT = (
-    "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+    "weights/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
 X_TYPE = "4ll+c"
 DISTANCE = 45

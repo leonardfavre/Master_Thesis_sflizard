@@ -369,7 +369,7 @@ class ReportGenerator:
                     self.true_masks[i],
                     self.predicted_masks[i],
                 ],
-                ["Image", "True mask", "Predicted mask"],
+                ["Image", "True instance map", "Stardist instance map"],
                 f"test_image_{i}",
             )
 
@@ -382,9 +382,9 @@ class ReportGenerator:
                         self.pred_class_map_improved[i],
                     ],
                     [
-                        "True Class map",
-                        "Predicted Class map",
-                        "Predicted class map improved",
+                        "True class map",
+                        "Stardist class map",
+                        "Stardist class map x instance map",
                     ],
                     f"test_image_{i}_classes",
                     legend=True,
@@ -399,17 +399,17 @@ class ReportGenerator:
                 ):
                     self._save_images(
                         [self.graphs_images[i], self.graphs_class_map[i]],
-                        ["Graph", "Graph Class map"],
+                        ["Graph", "Graph class map"],
                         f"test_image_{i}_graph",
                         legend=True,
                     )
 
                 # save differences between true and predicted maps
                 diff_imgs = {}
-                diff_imgs["class mask differences"] = np.zeros_like(
+                diff_imgs["Stardist class map differences"] = np.zeros_like(
                     self.true_class_map[i]
                 )
-                diff_imgs["class mask differences"][
+                diff_imgs["Stardist class map differences"][
                     self.true_class_map[i] != self.pred_class_map_improved[i]
                 ] = 1
                 if (
@@ -418,22 +418,22 @@ class ReportGenerator:
                     and self.graphs_images is not None
                     and len(self.graphs_images) > i
                 ):
-                    diff_imgs["graph class mask differences"] = np.zeros_like(
+                    diff_imgs["graph class map differences"] = np.zeros_like(
                         self.true_class_map[i]
                     )
-                    diff_imgs["graph class mask differences"][
+                    diff_imgs["graph class map differences"][
                         self.true_class_map[i] != self.graphs_class_map[i]
                     ] = 1
-                    diff_imgs["class/graph mask differences"] = np.zeros_like(
+                    diff_imgs["Stardist/graph class map differences"] = np.zeros_like(
                         self.true_class_map[i]
                     )
-                    diff_imgs["class/graph mask differences"][
-                        diff_imgs["class mask differences"]
-                        > diff_imgs["graph class mask differences"]
+                    diff_imgs["Stardist/graph class map differences"][
+                        diff_imgs["Stardist class map differences"]
+                        > diff_imgs["graph class map differences"]
                     ] = 1
-                    diff_imgs["class/graph mask differences"][
-                        diff_imgs["class mask differences"]
-                        < diff_imgs["graph class mask differences"]
+                    diff_imgs["Stardist/graph class map differences"][
+                        diff_imgs["Stardist class map differences"]
+                        < diff_imgs["graph class map differences"]
                     ] = 2
                     self._save_images(
                         list(diff_imgs.values()),
@@ -458,6 +458,7 @@ class ReportGenerator:
         Raises:
             None.
         """
+
         fig, ax = plt.subplots(1, len(imgs), figsize=(5 * len(imgs), 5))
         for i in range(len(imgs)):
             if legend:

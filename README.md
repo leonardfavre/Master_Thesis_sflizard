@@ -6,9 +6,9 @@ The goal of this project is to improve classification of colonic nuclear instanc
 
 ## Results
 
-What the proposed pipeline does is first segmenting the image with the Stardist model, then improves the classification with a custom graph neural network using graphSAGE layers.
+The proposed pipeline first segments the image with the Stardist model, then improves the classification with a custom graph neural network using graphSAGE layers.
 
-The result of the pipeline on the test dataset is visible here: TODO INSERT LINK TO RESULTS.
+The result of the pipeline on the test dataset is visible here: [metric_report](output/stardist_pipeline/final_result/test_results.md).
 
 ## Installation
 
@@ -69,10 +69,39 @@ pip install wandb
 For more informations about wandb, and to configure an account, please visit [https://wandb.ai](https://wandb.ai)
 
 
-## Usage
+## Usage / Reproduction
 
-TO DO !
+### Reproduce test results with Stardist & graph:
 
+1. Download the data 
+    * Lizard dataset:
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module) (PKL mode)
+
+3. Run test pipeline with [sflizard.run_test_pipeline.py](docs/sflizard.md#sflizardruntestpipeline)
+
+
+### Reproduce test results on Hovernet:
+
+1. Download the data 
+    * Lizard dataset:
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module) (PKL and FILE mode)
+3. Compute output data for HoverNet
+    * Compute data like this : 
+        ```
+        python external_models/hover_net/run_infer.py --gpu='1' --nr_types=7 --model_path=weights/hover_net_trained.tar --model_mode=original --type_info_path=type_info_lizard.json tile --input_dir data/Lizard_dataset_split/patches/Lizard_Images_test --output_dir external_models/output/Lizard_test_out
+        ```
+    
+    * Run the segmentation metric tool on hovernet data:
+        ```
+        python sflizard/pipeline/run_segm_metric_on_hovernet.py 
+        ```
+
+### Run training:
+
+1. Download the data 
+    * Lizard dataset:
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module)  (PKL mode)
+3. Run train with [sflizard.training.py](docs/sflizard.md#sflizardtraining)
 
 ## Full documentation 
 

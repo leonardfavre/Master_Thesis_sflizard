@@ -2,20 +2,17 @@ import argparse
 
 from sflizard import TestPipeline
 
-VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
-TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
+VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_final_split_valid.pkl"
+TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_final_split_test.pkl"
 STARDIST_WEIGHTS_PATH = (
-    "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+    "weights/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
-GRAPH_WEIGHTS_PATH = (
-    "models/graph_custom-1024-4-4ll-45-0-0-3-16-wide-0.0005-acc-epoch=103-val_acc=0.7817.ckpt"
-    # "models/graph_sage-256-4-4ll+c-45-0.0005-acc-epoch=91-val_acc=0.7821.ckpt"
-)
+GRAPH_WEIGHTS_PATH = "weights/graph_custom-1024-4-4ll-45-0-0-3-16-wide-0.0005-acc-epoch=103-val_acc=0.7817.ckpt"
 N_RAYS = 32
 N_CLASSES = 7
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 SEED = 303
-OUTPUT_DIR = "./output/stardist_pipeline/star_graph/mod1/"
+OUTPUT_DIR = "./output/stardist_pipeline/final_result/"
 IMGS_TO_DISPLAY = 30
 
 DISTANCE = 45

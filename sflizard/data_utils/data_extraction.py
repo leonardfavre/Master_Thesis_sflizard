@@ -15,10 +15,12 @@ from tqdm import tqdm
 SEED = 303
 TRAIN_TEST_SPLIT = 0.9
 IMAGE_EXTENSION = "png"
-OUTPUT_BASE_NAME = "data_0.9_split"
+OUTPUT_BASE_NAME = "data_final_split"
 PATCH_SIZE = 540
 PATCH_STEP = 200
-SEPARATE_SAVE = True
+FILE_SAVE = True
+PKL_SAVE = True
+DATASET = "Lizard"
 
 
 def extract_annotation_patches(
@@ -42,9 +44,11 @@ def extract_annotation_patches(
     # load the annotation file
     mat_file = sio.loadmat(annotation_file)
 
+    # Lizard data in mat: 'inst_map', 'class', 'centroid', 'id', ('bbox')
+
     # extract patches for inst_map
     name = Path(annotation_file).stem.split(".")[0]
-    inst_map = np.array(mat_file["inst_map"])
+    inst_map = np.array(mat_file["inst_map"]).astype("int")
 
     inst_map_dict = extract_patches(inst_map, name, patch_size, patch_step)
 
@@ -76,6 +80,7 @@ def extract_annotation_patches(
             class_in_patch.append(class_i)
             centroid_in_patch.append(centroid_i)
             class_map[value == v] = class_i
+
         # add the new patch to the dataframe
         annotations = pd.concat(
             [
@@ -93,6 +98,7 @@ def extract_annotation_patches(
             ],
             ignore_index=True,
         )
+
     return annotations
 
 
@@ -197,6 +203,14 @@ def remove_missing_data(
         missings = set(annotations.id).difference(images.keys())
         print(f" > Annotations in {set_name} with no images : {len(missings)}")
         annotations = annotations[~annotations.id.isin(missings)]
+    # remove empty annotations
+    empty_annotations = annotations[annotations.inst_map.apply(lambda x: x.sum()) == 0]
+    print(f" > Empty annotations in {set_name} set : {len(empty_annotations)}")
+    print(empty_annotations.id.values)
+    annotations = annotations[~annotations.id.isin(empty_annotations.id)]
+    images = {k: v for k, v in images.items() if k in annotations.id.values}
+    # check correct image channels
+    images = {k: v[:, :, :3] for k, v in images.items()}
     return images, annotations
 
 
@@ -213,7 +227,7 @@ def extract_data(args: argparse.Namespace) -> None:
         None.
     """
 
-    print("1. Extracting images from folder...\n")
+    print("\n1. Extracting images from folder...\n")
     start = time.time()
     images_train = {}
     images_valid = {}
@@ -266,20 +280,27 @@ def extract_data(args: argparse.Namespace) -> None:
             test_list.append(image_file)
 
     # save the images lists
+    Path(f"data/{DATASET}_dataset_extraction/").mkdir(parents=True, exist_ok=True)
     with open(
-        "data/Lizard_dataset_extraction/" + args.output_base_name + "_train_list.txt",
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_train_list.txt",
         "w",
     ) as f:
         for item in train_list:
             f.write(f"{item}\n")
     with open(
-        "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid_list.txt",
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_valid_list.txt",
         "w",
     ) as f:
         for item in valid_list:
             f.write(f"{item}\n")
     with open(
-        "data/Lizard_dataset_extraction/" + args.output_base_name + "_test_list.txt",
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_test_list.txt",
         "w",
     ) as f:
         for item in test_list:
@@ -289,7 +310,7 @@ def extract_data(args: argparse.Namespace) -> None:
         f"\nAll {len(images_train) + len(images_valid) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
     )
 
-    print("2. Extracting annotations from folder...\n")
+    print("\n2. Extracting annotations from folder...\n")
     start = time.time()
 
     annotations = pd.DataFrame(
@@ -320,7 +341,7 @@ def extract_data(args: argparse.Namespace) -> None:
 
     print(f"\nAll annotations extracted! (in {time.time() - start:.2f} secs)\n")
 
-    print("3. Cleaning...\n")
+    print("\n3. Cleaning...\n")
     start = time.time()
     cleaned_train_data = {}
     cleaned_valid_data = {}
@@ -351,7 +372,7 @@ def extract_data(args: argparse.Namespace) -> None:
 
     print(f"\nFiles cleaned! (in {time.time() - start:.2f} secs)\n")
 
-    print("4. Report\n")
+    print("\n4. Report\n")
 
     print(
         f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_valid_data['images']) + len(cleaned_test_data['images'])}"
@@ -360,12 +381,19 @@ def extract_data(args: argparse.Namespace) -> None:
     print(f" > Number of images in valid set: {len(cleaned_valid_data['images'])}")
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
-    print("5. Saving File...\n")
+    print("\n5. Saving File...\n")
 
-    if SEPARATE_SAVE:
-        save_images_train = "data/Lizard_dataset_split/patches/Lizard_Images_train"
-        save_images_valid = "data/Lizard_dataset_split/patches/Lizard_Images_valid"
-        save_images_test = "data/Lizard_dataset_split/patches/Lizard_Images_test"
+    if FILE_SAVE:
+        Path(f"data/{DATASET}_dataset_split/patches/").mkdir(
+            parents=True, exist_ok=True
+        )
+        save_images_train = (
+            f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_train"
+        )
+        save_images_valid = (
+            f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_valid"
+        )
+        save_images_test = f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_test"
         for path in [save_images_train, save_images_valid, save_images_test]:
             Path(path).mkdir(parents=True, exist_ok=True)
         for img in cleaned_train_data["images"]:
@@ -381,9 +409,9 @@ def extract_data(args: argparse.Namespace) -> None:
             f"Images saved in {save_images_train}, {save_images_valid} and {save_images_test} folders"
         )
 
-        save_train = "data/Lizard_dataset_split/patches/Lizard_Labels_train"
-        save_valid = "data/Lizard_dataset_split/patches/Lizard_Labels_valid"
-        save_test = "data/Lizard_dataset_split/patches/Lizard_Labels_test"
+        save_train = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_train"
+        save_valid = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_valid"
+        save_test = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_test"
         for path in [save_train, save_valid, save_test]:
             Path(path).mkdir(parents=True, exist_ok=True)
         # save back to mat files
@@ -420,15 +448,15 @@ def extract_data(args: argparse.Namespace) -> None:
         print(
             f"Annotations saved in {save_train}, {save_valid} and {save_test} folders"
         )
-    else:
+    if PKL_SAVE:
         save_train = (
-            "data/Lizard_dataset_extraction/" + args.output_base_name + "_train.pkl"
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_train.pkl"
         )
         save_valid = (
-            "data/Lizard_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_valid.pkl"
         )
         save_test = (
-            "data/Lizard_dataset_extraction/" + args.output_base_name + "_test.pkl"
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_test.pkl"
         )
         with open(save_train, "wb") as f:  # type: ignore
             pickle.dump(cleaned_train_data, f)  # type: ignore
