@@ -26,4 +26,4 @@ force-exclude = '''
 allow_redefinition = "True"
 ignore_missing_imports = "True"
 show_error_codes = "True"
-exclude = ['external_models/hover_net/']
+exclude = ['external_models/hover_net']

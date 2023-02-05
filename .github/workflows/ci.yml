@@ -22,7 +22,7 @@ jobs:
           pip install \
             bandit==1.6 \
             black==22.3.0 \
-            flake8==2.0.0 \
+            flake8==3.8.3 \
             mypy==0.910 \
             types-requests==2.28.9       
 
