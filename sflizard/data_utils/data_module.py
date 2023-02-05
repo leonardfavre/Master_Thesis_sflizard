@@ -139,7 +139,7 @@ class LizardDataModule(pl.LightningDataModule):
         train_data_path: Union[str, None],
         valid_data_path: str,
         test_data_path: str,
-        annotation_target: str = "inst",
+        annotation_target: str = "stardist_class",
         batch_size: int = 4,
         num_workers: int = 4,
         input_size=540,

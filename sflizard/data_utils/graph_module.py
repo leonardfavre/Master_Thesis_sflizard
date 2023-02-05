@@ -24,7 +24,7 @@ class LizardGraphDataset(Dataset):
         n_rays: int = 32,
         distance: int = 45,
         stardist_checkpoint: str = None,
-        x_type: str = "ll",  # ll: last_layer, c: classification, p: position, a:area
+        x_type: str = "4ll",  # ll: last_layer, c: classification, p: position, a:area
         root: str = "data/graph",
         consep_data: bool = False,
         light: bool = False,

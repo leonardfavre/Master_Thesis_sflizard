@@ -30,6 +30,7 @@ class ReportGenerator:
             output_dir (str): The output directory.
             imgs_to_display (int): The number of images to display.
             n_classes (int): The number of classes.
+            console (Console): The console.
 
         Returns:
             None.

@@ -144,13 +144,13 @@ class Graph(pl.LightningModule):
     def __init__(
         self,
         model: str = "graph_gat",
-        learning_rate: float = 0.01,
+        learning_rate: float = 0.001,
         num_features: int = 33,
         num_classes: int = 7,
         seed: int = 303,
-        max_epochs: int = 20,
+        max_epochs: int = 200,
         dim_h: int = 32,
-        num_layers: int = 0,
+        num_layers: int = 1,
         heads: int = 1,
         class_weights: List[float] = [
             0,

@@ -1,7 +1,5 @@
 import argparse
-import os
 import pickle
-from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple, Union
 
@@ -24,7 +22,6 @@ NUM_WORKERS = 8
 INPUT_SIZE = 540
 LEARNING_RATE = 5e-4
 SEED = 303
-DEFAULT_ROOT_DIR = os.getcwd()
 NUM_CLASSES = 7
 LOSS_POWER_SCALER = 1.0
 
@@ -51,7 +48,7 @@ NUM_FEATURES = {
 STARDIST_CHECKPOINT = (
     "weights/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
-X_TYPE = "4ll+c"
+X_TYPE = "4ll"
 DISTANCE = 45
 
 
@@ -292,7 +289,6 @@ def full_training(args: argparse.Namespace) -> None:
     trainer.fit(model, dm)
 
     # # save the model
-    datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     if "stardist" in args.model:
         trainer.save_checkpoint(
             f"models/final3_stardist_crop-cosine_{args.max_epochs}epochs_{args.loss_power_scaler}losspower_{args.learning_rate}lr.ckpt"
@@ -318,14 +314,6 @@ def full_training(args: argparse.Namespace) -> None:
                 name = f"{args.model}-{args.dimh}-{args.num_layers}-{args.x_type}-{args.distance}-{args.dropout}-{args.learning_rate}"
 
         trainer.save_checkpoint(f"models/{name}-{args.max_epochs}.ckpt")
-
-    # run test on single GPU to avoir bias (see:https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metrics-in-distributed-data-parallel-ddp-mode)
-    if args.gpus and args.gpus > 1:
-        torch.distributed.destroy_process_group()
-        if trainer.is_global_zero:
-            trainer = pl.Trainer(gpus=1)
-
-    # trainer.test(model, dm)
 
 
 if __name__ == "__main__":
@@ -357,7 +345,7 @@ if __name__ == "__main__":
         "--model",
         type=str,
         default=MODEL,
-        help="Model to train. Can be 'stardist' or ...",
+        help="Model to train. Can be 'stardist', 'graph_gat', 'graph_custom', 'graph_gcn', 'graph_sage' or 'graph_gin'.",
     )
     parser.add_argument(
         "-bs",
@@ -392,20 +380,14 @@ if __name__ == "__main__":
         "--seed",
         type=int,
         default=SEED,
-        help="Seed to use for the dataloaders.",
-    )
-    parser.add_argument(
-        "--default-root-dir",
-        type=str,
-        help="Directory to save the trained weights to.",
-        default=DEFAULT_ROOT_DIR,
+        help="Seed to use for randomization.",
     )
     parser.add_argument(
         "-nc",
         "--num_classes",
         type=int,
         default=NUM_CLASSES,
-        help="Number of classes to use for the stardist model.",
+        help="Number of classes to use for the classification problem.",
     )
     parser.add_argument(
         "-lps",
@@ -433,7 +415,7 @@ if __name__ == "__main__":
         "--heads",
         type=int,
         default=HEADS,
-        help="Number of heads in the grap model.",
+        help="Number of heads in the graph gat model.",
     )
     parser.add_argument(
         "-cil",
@@ -496,8 +478,34 @@ if __name__ == "__main__":
         "--save_name",
         type=str,
         default="",
-        help="Name to add to the saved model.",
+        help="Name to add to the saved model to wandb logging.",
     )
+    """
+    The available arguments are:
+    - tdp / --train_data_path: Path to the .pkl file containing the train data. Default to TRAIN_DATA_PATH.
+    - vdp / --valid_data_path: Path to the .pkl file containing the validation data. Default to VALID_DATA_PATH.
+    - tp / --test_data_path: Path to the .pkl file containing the test data. Default to TEST_DATA_PATH.
+    - m / --model: Model to train. Can be 'stardist' or ... Default to MODEL.
+    - bs / --batch_size: Batch size to use for the dataloaders. Default to BATCH_SIZE.
+    - nw / --num_workers: Number of workers to use for the dataloaders. Default to NUM_WORKERS.
+    - is / --input_size: Input size to use for the dataloaders. Default to INPUT_SIZE.
+    - lr / --learning_rate: Learning rate to use for the optimizer. Default to LEARNING_RATE.
+    - s / --seed: Seed to use for the dataloaders. Default to SEED.
+    - nc / --num_classes: Number of classes to use for the stardist model. Default to NUM_CLASSES.
+    - lps / --loss_power_scaler: Loss scaler to use for the stardist model. Default to LOSS_POWER_SCALER.
+    - dh / --dimh: Dimension of the hidden layer in the grap model. Default to DIMH.
+    - nl / --num_layers: Number of layers in the grap model. Default to NUM_LAYERS.
+    - he / --heads: Number of heads in the grap model. Default to HEADS.
+    - cil / --custom_input_layer: Custom linear input layer number in the custom graph model. Default to CUSTOM_INPUT_LAYER.
+    - cih / --custom_input_hidden: Custom linear input hidden layer size in the custom graph model. Default to CUSTOM_INPUT_HIDDEN.
+    - col / --custom_output_layer: Custom linear output layer number in the custom graph model. Default to CUSTOM_OUTPUT_LAYER.
+    - coh / --custom_output_hidden: Custom linear output hidden layer size in the custom graph model. Default to CUSTOM_OUTPUT_HIDDEN.
+    - cwc / --custom_wide_connections: Custom wide connections in the custom graph model. Default to CUSTOM_WIDE_CONNECTIONS.
+    - do / --dropout: Dropout to use for the graph model. Default to DROPOUT.
+    - xt / --x_type: Type of the input in the grap model. Default to X_TYPE.
+    - d / --distance: Distance to use for the graph model. Default to DISTANCE.
+    - sn / --save_name: Name to add to the saved model. Default to "".
+    """
 
     args = parser.parse_args()
 

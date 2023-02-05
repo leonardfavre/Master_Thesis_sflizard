@@ -139,7 +139,7 @@ def get_graph(
     distance: int = 45,
     stardist_checkpoint: str = None,
     image: np.array = None,
-    x_type: str = "ll",
+    x_type: str = "4ll",
     consep_data: bool = False,
     hovernet_metric: bool = False,
 ) -> Union[None, dict]:
@@ -381,7 +381,7 @@ def get_stardist_point_for_graph(
 
 
 def get_graph_for_inference(
-    batch: torch.Tensor, distance: int, stardist_checkpoint: str, x_type: str = "ll"
+    batch: torch.Tensor, distance: int, stardist_checkpoint: str, x_type: str = "4ll"
 ) -> list:
     """Get the graph for inference.
 

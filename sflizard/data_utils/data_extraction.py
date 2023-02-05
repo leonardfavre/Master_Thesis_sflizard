@@ -496,7 +496,7 @@ if __name__ == "__main__":
         "-of",
         "--output_base_name",
         type=str,
-        help="path for the output file (must end in .pkl).",
+        help="Path for the output file (must end in .pkl).",
         default=OUTPUT_BASE_NAME,
     )
     parser.add_argument(
@@ -516,12 +516,14 @@ if __name__ == "__main__":
 
     # arguments for patches extraction
     parser.add_argument(
+        "-psi",
         "--patch_size",
         type=int,
         default=PATCH_SIZE,
         help="Size of the window to extract patches from the images.",
     )
     parser.add_argument(
+        "-spt",
         "--patch_step",
         type=int,
         default=PATCH_STEP,
