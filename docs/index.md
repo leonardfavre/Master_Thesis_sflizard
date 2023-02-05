@@ -6,8 +6,6 @@ contain the root `toctree` directive. -->
 
 This documentation describes and explains the different packages and modules developed during the SF Lizard project.
 
-This documentation describes and explains the different packages and modules developed during the SF Lizard project.
-
 The sflizard package contains 3 modules: 
 
 * **run_hovernet_metric_tool** is a test utility launcher using the `compute_stats` metric function of the hover_net package.
@@ -25,61 +23,61 @@ The sflizard package also contains 4 sub packages:
 
 * [sflizard package](sflizard.md)
 
-    * [sflizard.run_hovernet_metric_tool](sflizard.md#sflizard.run_hovernet_metric_tool)
+    * [sflizard.run_hovernet_metric_tool](sflizard.md#sflizardrun_hovernet_metric_tool)
 
 
-    * [sflizard.run_test_pipeline](sflizard.md#sflizard.run_test_pipeline)
+    * [sflizard.run_test_pipeline](sflizard.md#sflizardrun_test_pipeline)
 
 
-    * [sflizard.training](sflizard.md#sflizard.training)
+    * [sflizard.training](sflizard.md#sflizardtraining)
 
     
     * [sflizard.data_utils package](sflizard.data_utils.md)
 
 
-        * [sflizard.data_utils.classes_utils](sflizard.data_utils.md#sflizard.data_utils.classes_utils)
+        * [sflizard.data_utils.classes_utils](sflizard.data_utils.md#sflizarddata_utilsclasses_utils)
 
 
-        * [sflizard.data_utils.data_extraction](sflizard.data_utils.md#sflizard.data_utils.data_extraction)
+        * [sflizard.data_utils.data_extraction](sflizard.data_utils.md#sflizarddata_utilsdata_extraction)
 
 
-        * [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizard.data_utils.data_module)
+        * [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizarddata_utilsdata_module)
 
 
-        * [sflizard.data_utils.data_module_utils](sflizard.data_utils.md#sflizard.data_utils.data_module_utils)
+        * [sflizard.data_utils.data_module_utils](sflizard.data_utils.md#sflizarddata_utilsdata_module_utils)
 
 
-        * [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizard.data_utils.graph_module)
+        * [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizarddata_utilsgraph_module)
         
 
     * [sflizard.stardist_model package](sflizard.stardist_model.md)
 
 
-        * [sflizard.stardist_model.models_utils](sflizard.stardist_model.md#sflizard.stardist_model.models_utils)
+        * [sflizard.stardist_model.models_utils](sflizard.stardist_model.md#sflizardstardist_modelmodels_utils)
 
 
-        * [sflizard.stardist_model.stardist_model](sflizard.stardist_model.md#sflizard.stardist_model.stardist_model)
+        * [sflizard.stardist_model.stardist_model](sflizard.stardist_model.md#sflizardstardist_modelstardist_model)
 
     
     * [sflizard.Graph_model package](sflizard.Graph_model.md)
 
 
-        * [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizard.Graph_model.graph_model)
+        * [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizardGraph_modelgraph_model)
 
 
     * [sflizard.pipeline package](sflizard.pipeline.md)
 
 
-        * [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizard.pipeline.hovernet_metric_tool)
+        * [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizardpipelinehovernet_metric_tool)
 
 
-        * [sflizard.pipeline.pipeline_utils](sflizard.pipeline.md#sflizard.pipeline.pipeline_utils)
+        * [sflizard.pipeline.pipeline_utils](sflizard.pipeline.md#sflizardpipelinepipeline_utils)
 
 
-        * [sflizard.pipeline.report](sflizard.pipeline.md#sflizard.pipeline.report)
+        * [sflizard.pipeline.report](sflizard.pipeline.md#sflizardpipelinereport)
 
 
-        * [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizard.pipeline.segmentation_metric_tool)
+        * [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizardpipelinesegmentation_metric_tool)
 
 
-        * [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizard.pipeline.test_pipeline)
+        * [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizardpipelinetest_pipeline)

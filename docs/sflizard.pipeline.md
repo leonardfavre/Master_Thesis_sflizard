@@ -27,16 +27,16 @@ Provides logging and report options.
 
 Args:
 
-    valid_data_path (str): The path to the valid data.
-    test_data_path (str): The path to the test data.
-    stardist_weights_path (str): The path to the stardist weights.
-    graph_weights_path (List[str]): The path to the graph weights.
-    graph_distance (int): The distance to use for the graph.
-    n_rays (int): The number of rays to use for stardist.
-    n_classes (int): The number of classes.
-    batch_size (int): The batch size to use.
-    seed (int): The seed to use for constant randomization.
-    mode (str): The mode to use (test or valid).
+    - valid_data_path (str): The path to the valid data.
+    - test_data_path (str): The path to the test data.
+    - stardist_weights_path (str): The path to the stardist weights.
+    - graph_weights_path (List[str]): The path to the graph weights.
+    - graph_distance (int): The distance to use for the graph.
+    - n_rays (int): The number of rays to use for stardist.
+    - n_classes (int): The number of classes.
+    - batch_size (int): The batch size to use.
+    - seed (int): The seed to use for constant randomization.
+    - mode (str): The mode to use (test or valid).
 
 Raises:
 
@@ -47,8 +47,8 @@ Run the pipeline and test the model.
 
 Args:
 
-    output_dir (str): The path to the output directory for report and images. Default to None.
-    imgs_to_display (int): The number of images to display in the report. Default to 0.
+    - output_dir (str): The path to the output directory for report and images. Default to None.
+    - imgs_to_display (int): The number of images to display in the report. Default to 0.
 
 Returns:
 
@@ -71,14 +71,14 @@ If the point in the graph doesn't correspond to a cell in the instance map, will
 
 Args:
 
-    graph (list): The graph.
-    inst_map (list): The instance map.
-    graph_pred (list): The graph prediction.
-    class_pred (list): The class prediction.
+    - graph (list): The graph.
+    - inst_map (list): The instance map.
+    - graph_pred (list): The graph prediction.
+    - class_pred (list): The class prediction.
 
 Returns:
 
-    class_maps (np.array): The class map.
+    - class_maps (np.array): The class map.
 
 Raises:
 
@@ -91,13 +91,13 @@ The provided class map is used with the points to assign each entity in the segm
 
 Args:
 
-    class_map (np.array): The class map.
-    predicted_masks (np.array): The predicted masks.
-    points (np.array): The points of the cells detected in the masks.
+    - class_map (np.array): The class map.
+    - predicted_masks (np.array): The predicted masks.
+    - points (np.array): The points of the cells detected in the masks.
 
 Returns:
 
-    improved_class_map (np.array): The improved class map.
+    - improved_class_map (np.array): The improved class map.
 
 Raises:
 
@@ -119,9 +119,9 @@ This tool is able to log the results nicely, using the `rich` library. Additiona
 
 Args:
 
-    n_classes (int): The number of classes.
-    device (str): The device to use.
-    console (Console): The rich console.
+    - n_classes (int): The number of classes.
+    - device (str): The device to use.
+    - console (Console): The rich console.
 
 Raises:
 
@@ -132,9 +132,9 @@ Add a batch of instance map data to the metric tool.
 
 Args:
 
-    batch_idx (int): The batch index.
-    true_masks (np.array): The true masks.
-    pred_masks (np.array): The predicted masks.
+    - batch_idx (int): The batch index.
+    - true_masks (np.array): The true masks.
+    - pred_masks (np.array): The predicted masks.
 
 Returns:
 
@@ -150,9 +150,9 @@ Add a batch of class map data to the metric tool. The class maps will be divided
 
 Args:
 
-    batch_idx (int): The batch index.
-    true_class_map (np.array): The true class map.
-    pred_class_map (np.array): The predicted class map.
+    - batch_idx (int): The batch index.
+    - true_class_map (np.array): The true class map.
+    - pred_class_map (np.array): The predicted class map.
 
 Returns:
 
@@ -185,7 +185,7 @@ Log the results in rich tables. if the `PRINT_LATEX_STRING` constant is set to T
 
 Args:
 
-    console (Console): The rich console.
+    - console (Console): The rich console.
 
 Returns:
 
@@ -206,10 +206,10 @@ This tool creates a MD report containing metrics and shows <imgs_to_display> exa
 
 Args:
     
-    output_dir (str): The output directory.
-    imgs_to_display (int): The number of images to display.
-    n_classes (int): The number of classes.
-    console (Console): The rich console.
+    - output_dir (str): The output directory.
+    - imgs_to_display (int): The number of images to display.
+    - n_classes (int): The number of classes.
+    - console (Console): The rich console.
 
 Raises:
     
@@ -220,14 +220,14 @@ Add a batch of images to the report. All images are in np.array format, except f
 
 Args:
 
-    images (list): The images.
-    true_masks (list): The true masks.
-    pred_masks (list): The predicted masks.
-    true_class_map (list): The true class map.
-    pred_class_map (list): The predicted class map.
-    pred_class_map_improved (list): The improved predicted class map.
-    graphs (list): The graphs.
-    graphs_class_map (list): The graphs class map.
+    - images (list): The images.
+    - true_masks (list): The true masks.
+    - pred_masks (list): The predicted masks.
+    - true_class_map (list): The true class map.
+    - pred_class_map (list): The predicted class map.
+    - pred_class_map_improved (list): The improved predicted class map.
+    - graphs (list): The graphs.
+    - graphs_class_map (list): The graphs class map.
 
 Returns:
 
@@ -244,9 +244,9 @@ These are the metrics computed by [sflizard.pipeline.segmentation_metric_tool](s
 
 Args:
 
-    segmentation_metric (dict): The segmentation metric.
-    segmentation_classification_metric (dict): The segmentation classification metric.
-    graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
+    - segmentation_metric (dict): The segmentation metric.
+    - segmentation_classification_metric (dict): The segmentation classification metric.
+    - graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
 
 Returns:
 
@@ -315,11 +315,11 @@ The following constant are defined:
 
 Args:
     
-    mode (str): "valid" or "test" depending on the dataset to use. Default to "valid".
-    weights_selector (dict): dict of list of model, dimh, num_layers and heads to test. Default to {'dimh': [], 'heads': [], 'model': [], 'num_layers': []}.
-    distance (int): distance used in creation of graph. Default to 45.
-    x_type (str): type of node feature vector. Default to "4ll"
-    paths (dict): dict of paths to the model checkpoints to test. Default to {}.
+    - mode (str): "valid" or "test" depending on the dataset to use. Default to "valid".
+    - weights_selector (dict): dict of list of model, dimh, num_layers and heads to test. Default to {'dimh': [], 'heads': [], 'model': [], 'num_layers': []}.
+    - distance (int): distance used in creation of graph. Default to 45.
+    - x_type (str): type of node feature vector. Default to "4ll"
+    - paths (dict): dict of paths to the model checkpoints to test. Default to {}.
 
 Raises:
     None.

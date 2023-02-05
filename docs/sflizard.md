@@ -19,11 +19,11 @@
 
 This package contains the following modules:
 
-* [sflizard.run_hovernet_metric_tool](#module-sflizard.run_hovernet_metric_tool)
+* [sflizard.run_hovernet_metric_tool](#module-sflizardrun_hovernet_metric_tool)
 
-* [sflizard.run_test_pipeline](#module-sflizard.run_test_pipeline)
+* [sflizard.run_test_pipeline](#module-sflizardrun_test_pipeline)
 
-* [sflizard.training](#module-sflizard.training)
+* [sflizard.training](#module-sflizardtraining)
 
 ## sflizard.run_hovernet_metric_tool
 
@@ -79,7 +79,7 @@ The available arguments are the following:
     -d / --distance: Distance to use for the graph. Default to 45.
     -m / --mode: Mode to use for the test ('valid' or 'test').Default to "test".
 
-For a more in-depth description of the test pipeline, see [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizard.pipeline.test_pipeline).
+For a more in-depth description of the test pipeline, see [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizardpipelinetest_pipeline).
 
 ## sflizard.training
 
@@ -124,7 +124,7 @@ Initiate the model, dataloader, callbacks. Creates the pytorch-lightning Trainer
 
 Args:
 
-    args (argparse.Namespace): the arguments from the command line.
+    - args (argparse.Namespace): the arguments from the command line.
 
 Returns:
 
@@ -137,21 +137,20 @@ Raises:
 
 ### sflizard.training.init_graph_training
 Init the training for the graphSage model.
-Creates a LizardGraphDataModule with provided data path and other provided arguments (see [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizard.data_utils.graph_module)).
-Creates a Graph Lightning module containing the model (see [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizard.Graph_model.graph_model)).
+Creates a LizardGraphDataModule with provided data path and other provided arguments (see [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizarddata_utilsgraph_module)).
+Creates a Graph Lightning module containing the model (see [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizardGraph_modelgraph_model)).
 Creates 3 callbacks: loss, accuracy and macro-accuracy.
 
 Args:
 
-    args (argparse.Namespace): the arguments from the command line.
+    - args (argparse.Namespace): the arguments from the command line.
 
 Returns:
 
-    tuple: tuple containing:
-
-        dm (LizardGraphDataModule): the datamodule.
-        model (Graph): the model.
-        callbacks (List[pl.callbacks.Callback]): the callbacks.
+    - tuple: tuple containing:
+        * dm (LizardGraphDataModule): the datamodule.
+        * model (Graph): the model.
+        * callbacks (List[pl.callbacks.Callback]): the callbacks.
 
 Raises:
 
@@ -160,23 +159,22 @@ Raises:
 
 ### sflizard.training.init_stardist_training
 Init the training for the stardist model.
-Creates a LizardDataModule with provided data path and other provided arguments (see [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizard.data_utils.data_module)).
-Creates a Stardist Lightning module containing the model (see [sflizard.stardist_model.stardist_model](sflizard.stardist_model.md#sflizard.stardist_model.stardist_model)).
+Creates a LizardDataModule with provided data path and other provided arguments (see [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizarddata_utilsdata_module)).
+Creates a Stardist Lightning module containing the model (see [sflizard.stardist_model.stardist_model](sflizard.stardist_model.md#sflizardstardist_modelstardist_model)).
 Creates 1 callbacks for loss.
 
 Args:
 
-    args (argparse.Namespace): the arguments from the command line.
-    device (Union[str, torch.device]): the device to use.
-    debug (bool): if True, print debug messages. Default to False.
+    - args (argparse.Namespace): the arguments from the command line.
+    - device (Union[str, torch.device]): the device to use.
+    - debug (bool): if True, print debug messages. Default to False.
 
 Returns:
 
-    tuple: tuple containing:
-
-        dm (LizardDataModule): the datamodule.
-        model (Stardist): the model.
-        callbacks (List[pl.callbacks.Callback]): the callbacks.
+    - tuple: tuple containing:
+        * dm (LizardDataModule): the datamodule.
+        * model (Stardist): the model.
+        * callbacks (List[pl.callbacks.Callback]): the callbacks.
 
 Raises:
 

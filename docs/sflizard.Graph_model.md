@@ -4,10 +4,9 @@
 
 This package contains the following modules:
 
-* [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizard.Graph_model.graph_model)
+* [sflizard.Graph_model.graph_model](sflizard.Graph_model.md#sflizardGraph_modelgraph_model)
 
 ## sflizard.Graph_model.graph_model
-
 
 ### _class_ sflizard.Graph_model.graph_model.Graph
 Bases: `LightningModule`
@@ -16,25 +15,27 @@ Graph neural network model lightning module.
 This class define the lightning module containing the graph neural network model.
 
 Args:
-    model (str): The type of graph model to use. Default to "graph_gat".
-    learning_rate (float): The learning rate. Default to 0.001.
-    num_features (int): The number of features. Default to 33.
-    num_classes (int): The number of classes. Default to 7.
-    seed (int): The seed. Default to 303.
-    max_epochs (int): The maximum number of epochs. Default to 200.
-    dim_h (int): The dimension of the hidden layers. Default to 32.
-    num_layers (int): The number of graph layers. Default to 1.
-    heads (int): The number of heads for the graph attention layer (only for graph_gat). Default to 1.
-    class_weights (List[float]): The class weights. Default to [0, 0.3713368309107073, 0.008605586894052789, 0.01929911238667816, 0.06729488533622548, 0.515399722585458, 0.018063861886878453].
-    wandb_log (bool): Whether to log to wandb. Default to False.
-    custom_input_layer (int): The number of linear input layers (only for graph_custom). Default to 0.
-    custom_input_hidden (int): The dimension of the linear input hidden layers (only for graph_custom). Default to 8.
-    custom_output_layer (int): The number of linear output layers (only for graph_custom). Default to 0.
-    custom_output_hidden (int): The dimension of the linear output hidden layers (only for graph_custom). Default to 8.
-    custom_wide_connections (bool): Whether to use wide connections between linear and graph layers (only for graph_custom). Default to False.
-    dropout (float): The dropout rate. Default to 0.0.
+
+    - model (str): The type of graph model to use. Default to "graph_gat".
+    - learning_rate (float): The learning rate. Default to 0.001.
+    - num_features (int): The number of features. Default to 33.
+    - num_classes (int): The number of classes. Default to 7.
+    - seed (int): The seed. Default to 303.
+    - max_epochs (int): The maximum number of epochs. Default to 200.
+    - dim_h (int): The dimension of the hidden layers. Default to 32.
+    - num_layers (int): The number of graph layers. Default to 1.
+    - heads (int): The number of heads for the graph attention layer (only for graph_gat). Default to 1.
+    - class_weights (List[float]): The class weights. Default to [0, 0.3713368309107073, 0.008605586894052789, 0.01929911238667816, 0.06729488533622548, 0.515399722585458, 0.018063861886878453].
+    - wandb_log (bool): Whether to log to wandb. Default to False.
+    - custom_input_layer (int): The number of linear input layers (only for graph_custom). Default to 0.
+    - custom_input_hidden (int): The dimension of the linear input hidden layers (only for graph_custom). Default to 8.
+    - custom_output_layer (int): The number of linear output layers (only for graph_custom). Default to 0.
+    - custom_output_hidden (int): The dimension of the linear output hidden layers (only for graph_custom). Default to 8.
+    - custom_wide_connections (bool): Whether to use wide connections between linear and graph layers (only for graph_custom). Default to False.
+    - dropout (float): The dropout rate. Default to 0.0.
 
 Raises:
+
     None.
 
 
@@ -47,10 +48,9 @@ Args:
 
 Returns:
 
-    tuple: tuple containing:
-
-        optimizers (List[torch.optim.Optimizer]): The optimizers.
-        schedulers (List[torch.optim.lr_scheduler._LRScheduler]): The schedulers.
+    - tuple: tuple containing:
+        * optimizers (List[torch.optim.Optimizer]): The optimizers.
+        * schedulers (List[torch.optim.lr_scheduler._LRScheduler]): The schedulers.
 
 Raises:
 
@@ -62,12 +62,12 @@ Perform a forward pass. Calls the model with the input tensor (node feature vect
 
 Args:
 
-    x (torch.Tensor): The input tensor.
-    edge_index (torch.Tensor): The edge index tensor.
+    - x (torch.Tensor): The input tensor.
+    - edge_index (torch.Tensor): The edge index tensor.
 
 Returns:
 
-    output (torch.Tensor): The output tensor.
+    - output (torch.Tensor): The output tensor.
 
 Raises:
 
@@ -81,7 +81,7 @@ Run at the end of a training epoch. Log loss to wandb if wandb_log was set to Tr
 
 Args:
 
-    outputs (List[torch.Tensor]): The outputs.
+    - outputs (List[torch.Tensor]): The outputs.
 
 Returns:
 
@@ -97,12 +97,12 @@ Run at each step of training. Get the current batch data, run the model and comp
 
 Args:
 
-    batch (torch.Tensor): The batch.
-    batch_idx (int): The batch index.
+    - batch (torch.Tensor): The batch.
+    - batch_idx (int): The batch index.
 
 Returns:
 
-    loss (torch.Tensor): The loss.
+    - loss (torch.Tensor): The loss.
 
 Raises:
 
@@ -114,7 +114,7 @@ Run at the end of a validation epoch. Log loss to wandb if wandb_log was set to 
 
 Args:
 
-    outputs (List[torch.Tensor]): The outputs.
+    - outputs (List[torch.Tensor]): The outputs.
 
 Returns:
 
@@ -130,12 +130,12 @@ Run at each step of validation. Get the current batch data, run the model and co
 
 Args:
 
-    batch (torch.Tensor): The batch.
-    batch_idx (int): The batch index.
+    - batch (torch.Tensor): The batch.
+    - batch_idx (int): The batch index.
 
 Returns:
 
-    loss (torch.Tensor): The loss.
+    - loss (torch.Tensor): The loss.
 
 Raises:
 
@@ -149,17 +149,17 @@ Custom graph model adding linear layers before and after the graph layers.
 
 Args:
     
-    dim_in (int): The dimension of the input.
-    dim_h (int): The dimension of the hidden layers.
-    dim_out (int): The dimension of the output.
-    num_layers (int): The number of graph layers.
-    layer_type (torch.nn.Module): The type of graph layer to use.
-    custom_input_layer (int): The number of linear input layers. Default to 0.
-    custom_input_hidden (int): The dimension of the linear input hidden layers. Default to 8.
-    custom_output_layer (int): The number of linear output layers. Default to 0.
-    custom_output_hidden (int): The dimension of the linear output hidden layers. Default to 8.
-    custom_wide_connections (bool): Whether to use wide connections. Default to False.
-    dropout (float): The dropout rate. Default to 0.0.
+    - dim_in (int): The dimension of the input.
+    - dim_h (int): The dimension of the hidden layers.
+    - dim_out (int): The dimension of the output.
+    - num_layers (int): The number of graph layers.
+    - layer_type (torch.nn.Module): The type of graph layer to use.
+    - custom_input_layer (int): The number of linear input layers. Default to 0.
+    - custom_input_hidden (int): The dimension of the linear input hidden layers. Default to 8.
+    - custom_output_layer (int): The number of linear output layers. Default to 0.
+    - custom_output_hidden (int): The dimension of the linear output hidden layers. Default to 8.
+    - custom_wide_connections (bool): Whether to use wide connections. Default to False.
+    - dropout (float): The dropout rate. Default to 0.0.
 
 Raises:
 
@@ -170,12 +170,12 @@ Perform a forward pass. Calls the model with the input tensor (node feature vect
 
 Args:
 
-    x (torch.Tensor): The input tensor.
-    edge_index (torch.Tensor): The edge index tensor.
+    - x (torch.Tensor): The input tensor.
+    - edge_index (torch.Tensor): The edge index tensor.
 
 Returns:
 
-    output (torch.Tensor): The output tensor.
+    - output (torch.Tensor): The output tensor.
 
 Raises:
 

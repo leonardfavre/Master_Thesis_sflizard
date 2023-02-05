@@ -4,15 +4,15 @@
 
 This package contains the following modules:
 
-* [sflizard.data_utils.classes_utils](sflizard.data_utils.md#sflizard.data_utils.classes_utils)
+* [sflizard.data_utils.classes_utils](sflizard.data_utils.md#sflizarddata_utilsclasses_utils)
 
-* [sflizard.data_utils.data_extraction](sflizard.data_utils.md#sflizard.data_utils.data_extraction)
+* [sflizard.data_utils.data_extraction](sflizard.data_utils.md#sflizarddata_utilsdata_extraction)
 
-* [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizard.data_utils.data_module)
+* [sflizard.data_utils.data_module](sflizard.data_utils.md#sflizarddata_utilsdata_module)
 
-* [sflizard.data_utils.data_module_utils](sflizard.data_utils.md#sflizard.data_utils.data_module_utils)
+* [sflizard.data_utils.data_module_utils](sflizard.data_utils.md#sflizarddata_utilsdata_module_utils)
 
-* [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizard.data_utils.graph_module)
+* [sflizard.data_utils.graph_module](sflizard.data_utils.md#sflizarddata_utilsgraph_module)
 
 ## sflizard.data_utils.classes_utils
 
@@ -26,7 +26,7 @@ Args:
 
 Returns:
 
-    class_color (list): List of the color used for each cells and background.
+    - class_color (list): List of the color used for each cells and background.
 
 Raises:
 
@@ -42,7 +42,7 @@ Args:
 
 Returns:
 
-    class_name (dict): Dict of the class name of the cells.
+    - class_name (dict): Dict of the class name of the cells.
 
 Raises:
 
@@ -88,14 +88,14 @@ Loads the mat file, extract patches from instance map, select classes, nuclei_id
 
 Args:
 
-    annotation_file (str): path to the annotation file.
-    annotations (pd.Dataframe): dataframe of annotations.
-    patch_size (int): size of the patches.
-    patch_step (int): step between patches.
+    - annotation_file (str): path to the annotation file.
+    - annotations (pd.Dataframe): dataframe of annotations.
+    - patch_size (int): size of the patches.
+    - patch_step (int): step between patches.
 
 Returns:
 
-    annotations (pd.Dataframe): dataframe of annotations with the new patches.
+    - annotations (pd.Dataframe): dataframe of annotations with the new patches.
 
 Raises:
 
@@ -108,7 +108,7 @@ First extract all images, then extract all annotations, then clean data and fina
 
 Args:
 
-    args (argparse.Namespace): arguments from the command line (see list bellow).
+    - args (argparse.Namespace): arguments from the command line (see list bellow).
 
 Returns:
 
@@ -125,13 +125,13 @@ Reads the image, extract patches from image and save the result in a dict.
 
 Args:
 
-    image_file (str): path to the image file.
-    patch_size (int): size of the patches.
-    patch_step (int): step between patches.
+    - image_file (str): path to the image file.
+    - patch_size (int): size of the patches.
+    - patch_step (int): step between patches.
 
 Returns:
 
-    images (dict): dictionary of images with the new patches.
+    - images (dict): dictionary of images with the new patches.
 
 Raises:
 
@@ -144,14 +144,14 @@ Iterate over the image in each 2 first dimension to extract all possible patches
 
 Args:
 
-    array (np.array): array to be patched.
-    array_name (str): name of the array.
-    patch_size (int): size of the patches.
-    patch_step (int): step between patches.
+    - array (np.array): array to be patched.
+    - array_name (str): name of the array.
+    - patch_size (int): size of the patches.
+    - patch_step (int): step between patches.
 
 Returns:
 
-    array_dict (dict): dictionary of array patches.
+    - array_dict (dict): dictionary of array patches.
 
 Raises:
 
@@ -165,13 +165,13 @@ Also removes images and annotations with no cells (instance map is all 0).
 
 Args:
 
-    images (dict): dictionary of images.
-    annotations (pd.DataFrame): dataframe of annotations.
-    set_name (str): name of the set.
+    - images (dict): dictionary of images.
+    - annotations (pd.DataFrame): dataframe of annotations.
+    - set_name (str): name of the set.
 
 Returns:
 
-    tuple: tuple containing:
+    - tuple: tuple containing:
         * images (dict): dictionary of images.
         * annotations (pd.DataFrame): dataframe of annotations.
 
@@ -189,15 +189,15 @@ DataModule that returns the correct dataloaders for the Lizard dataset.
 
 Args:
 
-    train_data_path (str): path to the train data.
-    valid_data_path (str): path to the valid data.
-    test_data_path (str): path to the test data.
-    annotation_target (str): annotation target. Default to "stardist_class".
-    batch_size (int): batch size. Default to 4.
-    num_workers (int): number of workers. Default to 4.
-    input_size (int): input size. Default to 540.
-    seed (int): seed. Default to 303.
-    aditional_args (Optional[dict]): aditional arguments. Used for nrays. Default to None.
+    - train_data_path (str): path to the train data.
+    - valid_data_path (str): path to the valid data.
+    - test_data_path (str): path to the test data.
+    - annotation_target (str): annotation target. Default to "stardist_class".
+    - batch_size (int): batch size. Default to 4.
+    - num_workers (int): number of workers. Default to 4.
+    - input_size (int): input size. Default to 540.
+    - seed (int): seed. Default to 303.
+    - aditional_args (Optional[dict]): aditional arguments. Used for nrays. Default to None.
 
 Raises: None.
 
@@ -210,7 +210,7 @@ Defines a augmentation transformation composition for train set (horizontalFlip,
 
 Args:
 
-    stage (Optional[str]): stage.
+    - stage (Optional[str]): stage.
 
 Returns:
 
@@ -230,7 +230,7 @@ Args:
 
 Returns:
 
-    dataloader (DataLoader): the test dataloader.
+    - dataloader (DataLoader): the test dataloader.
 
 Raises:
 
@@ -246,7 +246,7 @@ Args:
 
 Returns:
 
-    dataloader (DataLoader): the training dataloader.
+    - dataloader (DataLoader): the training dataloader.
 
 Raises:
 
@@ -262,7 +262,7 @@ Args:
 
 Returns:
 
-    dataloader (DataLoader): the validation dataloader.
+    - dataloader (DataLoader): the validation dataloader.
 
 Raises:
 
@@ -291,12 +291,12 @@ They are compute with the `sflizard.data_utils.data_module_utils.get_stardist_da
 
 Args:
     
-    df (pd.DataFrame): dataframe containing the data.
-    data (np.ndarray): array containing the images.
-    tf_base (A.Compose): base transformation.
-    tf_augment (A.Compose): augmentation transformation.
-    annotation_target (str): annotation target.
-    aditional_args (Optional[dict]): aditional arguments. Used for nrays. Default to None.
+    - df (pd.DataFrame): dataframe containing the data.
+    - data (np.ndarray): array containing the images.
+    - tf_base (A.Compose): base transformation.
+    - tf_augment (A.Compose): augmentation transformation.
+    - annotation_target (str): annotation target.
+    - aditional_args (Optional[dict]): aditional arguments. Used for nrays. Default to None.
 
 Raises:
 
@@ -310,16 +310,15 @@ Compute the star valid label of image according dist and prob.
 
 Args:
 
-    dist (torch.Tensor): distance map.
-    prob (torch.Tensor): probability map.
+    - dist (torch.Tensor): distance map.
+    - prob (torch.Tensor): probability map.
 
 Returns:
 
-    tuple: tuple containing:
-
-        points (np.ndarray): detected cells centroid.
-        probs (np.ndarray): probability of each pixel to be a cell.
-        dists (np.ndarray): distances corresponding to the cells shape.
+    - tuple: tuple containing:
+        * points (np.ndarray): detected cells centroid.
+        * probs (np.ndarray): probability of each pixel to be a cell.
+        * dists (np.ndarray): distances corresponding to the cells shape.
 
 Raises:
 
@@ -331,12 +330,12 @@ Get the edge list from the vertex for each vertex closer than distance. The dist
 
 Args:
 
-    vertex (np.array): vertex.
-    distance (int): distance.
+    - vertex (np.array): vertex.
+    - distance (int): distance.
 
 Returns:
 
-    edge_list (list): edge list.
+    - edge_list (list): edge list.
 
 Raises:
 
@@ -376,20 +375,20 @@ If the consep_data is True, the labels will be corrected to apply the HoverNet s
 
 Args:
 
-    inst_map (np.ndarray): instance map. Default to None.
-    points (np.ndarray): list of detected cells centroid. Default to None.
-    predicted_classes (np.ndarray): list of predicted classes corresponding to the cells in points array. Default to None.
-    true_class_map (np.ndarray): true class map. Default to None.
-    n_rays (int): number of rays of stardist objects. Default to None.
-    distance (int): distance between two vertex to have an edge. Default to 45.
-    stardist_checkpoint (str): path to stardist checkpoint.
-    image (np.ndarray): image. Default to None.
-    x_type (str): type of x : ll or ll+c or ll+x or ll+c+x or 4ll or 4ll+c. Default to "4ll".
-    consep_data (bool): if True, the data is from consep datset. Default to False.
+    - inst_map (np.ndarray): instance map. Default to None.
+    - points (np.ndarray): list of detected cells centroid. Default to None.
+    - predicted_classes (np.ndarray): list of predicted classes corresponding to the cells in points array. Default to None.
+    - true_class_map (np.ndarray): true class map. Default to None.
+    - n_rays (int): number of rays of stardist objects. Default to None.
+    - distance (int): distance between two vertex to have an edge. Default to 45.
+    - stardist_checkpoint (str): path to stardist checkpoint.
+    - image (np.ndarray): image. Default to None.
+    - x_type (str): type of x : ll or ll+c or ll+x or ll+c+x or 4ll or 4ll+c. Default to "4ll".
+    - consep_data (bool): if True, the data is from consep datset. Default to False.
 
 Returns:
 
-    graph (dict): Computed graph.
+    - graph (dict): Computed graph.
 
 Raises:
 
@@ -402,14 +401,14 @@ Uses the `sflizard.data_utils.data_module_utils.get_graph` to compute graph for 
 
 Args:
 
-    batch (torch.Tensor): batch containing images.
-    distance (int): distance between two vertex to create an edge.
-    stardist_checkpoint (str): path to stardist checkpoint.
-    x_type (str): type of node feature vector. Default to "4ll".
+    - batch (torch.Tensor): batch containing images.
+    - distance (int): distance between two vertex to create an edge.
+    - stardist_checkpoint (str): path to stardist checkpoint.
+    - x_type (str): type of node feature vector. Default to "4ll".
 
 Returns:
 
-    graphs (list): list of computed graphs.
+    - graphs (list): list of computed graphs.
 
 Raises:
 
@@ -422,17 +421,16 @@ Uses the instance map to get distances and obj_probability. The class map is the
 
 Args:
 
-    inst_map (np.array): instance map.
-    aditional_args (dict): additional arguments, must contain n_rays.
-    class_map (np.array): class map. Default to None.
+    - inst_map (np.array): instance map.
+    - aditional_args (dict): additional arguments, must contain n_rays.
+    - class_map (np.array): class map. Default to None.
 
 Returns:
 
-    tuple: tuple containing:
-
-        dist (torch.Tensor): distance map.
-        prob (torch.Tensor): probability map.
-        classes (torch.Tensor): list of classes, if arg class_map is not None.
+    - tuple: tuple containing:
+        * dist (torch.Tensor): distance map.
+        * prob (torch.Tensor): probability map.
+        * classes (torch.Tensor): list of classes, if arg class_map is not None.
 
 Raises:
 
@@ -445,12 +443,12 @@ The distances are retrieved using the `star_dist` function from Stardist library
 
 Args:
 
-    inst_map (np.array): annotation dictionary.
-    n_rays (int): number of rays.
+    - inst_map (np.array): annotation dictionary.
+    - n_rays (int): number of rays.
 
 Returns:
 
-    distances (torch.Tensor): distance map.
+    - distances (torch.Tensor): distance map.
 
 
 ### sflizard.data_utils.data_module_utils.get_stardist_obj_probabilities
@@ -459,12 +457,12 @@ The object probabilities are retrieved using the `edt_prob` function from Stardi
 
 Args:
 
-    inst_map (np.array): instance map.
+    - inst_map (np.array): instance map.
 
 Returns:
 
-    obj_probabilities (torch.Tensor): object probabilities.
-
+    - obj_probabilities (torch.Tensor): object probabilities.
+ 
 
 ### sflizard.data_utils.data_module_utils.get_stardist_point_for_graph
 Get the node feature vector from Stardist for graph creation.
@@ -473,16 +471,16 @@ Node features that can be extracted are "x", "c" and "ll". Possible node feature
 
 Args:
 
-    image (np.array): image
-    model_ll (torch.nn.Module): model for last layer
-    model_c (torch.nn.Module): model for complete network
-    points (np.array): points
-    x_type (str): type of node feature vector. Defaults to “ll”.
-    rotate (int): rotation of image. Defaults to 0.
+    - image (np.array): image
+    - model_ll (torch.nn.Module): model for last layer
+    - model_c (torch.nn.Module): model for complete network
+    - points (np.array): points
+    - x_type (str): type of node feature vector. Defaults to “ll”.
+    - rotate (int): rotation of image. Defaults to 0.
 
 Returns:
 
-    torch.Tensor: node feature vector.
+    - torch.Tensor: node feature vector.
 
 Raises:
 
@@ -502,22 +500,22 @@ In the case of direct annotation dataframe, the images are not saved.
 
 Args:
 
-    train_data (dict or pd.DataFrame): train data.
-    valid_data (dict or pd.DataFrame): valid data.
-    test_data (dict or pd.DataFrame): test data.
-    batch_size (int): batch size.
-    num_workers (int): number of workers.
-    seed (int): seed for random number generator.
-    stardist_checkpoint (str): path to stardist checkpoint.
-    x_type (str): type of node features.
-    distance (int): distance for graph creation.
-    root (str): root path for saving processed data.
-    consep_data (bool): if True, use consep data.
-    light (bool): if True, only save basic graph information.
+    - train_data (dict or pd.DataFrame): train data.
+    - valid_data (dict or pd.DataFrame): valid data.
+    - test_data (dict or pd.DataFrame): test data.
+    - batch_size (int): batch size.
+    - num_workers (int): number of workers.
+    - seed (int): seed for random number generator.
+    - stardist_checkpoint (str): path to stardist checkpoint.
+    - x_type (str): type of node features.
+    - distance (int): distance for graph creation.
+    - root (str): root path for saving processed data.
+    - consep_data (bool): if True, use consep data.
+    - light (bool): if True, only save basic graph information.
 
 Returns:
 
-    datamodule (LightningDataset): Datamodule containing the required datasets.
+    - datamodule (LightningDataset): Datamodule containing the required datasets.
 
 Raises:
 
@@ -531,18 +529,18 @@ Dataset object for the Graphs.
 
 Args:
 
-    transform (None): transform. Default to None.
-    pre_transform (None): pre_transform. Default to None.
-    df (pd.DataFrame): dataframe containing the data. Default to pd.DataFrame().
-    data (np.ndarray): array containing the images. Default to np.array([]).
-    name (str): name of the dataset. Default to "".
-    n_rays (int): number of rays of stardist shape. Default to 32.
-    distance (int): distance between 2 connected cells. Default to 45.
-    stardist_checkpoint (str): path to the stardist checkpoint. Default to None.
-    x_type (str): type of the node feature vetor. Default to "4ll".
-    root (str): root path. Default to "data/graph".
-    consep_data (bool): if the data is from consep. Default to False.
-    light (bool): if the data included in the graph needs to be minimum, speed up training. Default to False.
+    - transform (None): transform. Default to None.
+    - pre_transform (None): pre_transform. Default to None.
+    - df (pd.DataFrame): dataframe containing the data. Default to pd.DataFrame().
+    - data (np.ndarray): array containing the images. Default to np.array([]).
+    - name (str): name of the dataset. Default to "".
+    - n_rays (int): number of rays of stardist shape. Default to 32.
+    - distance (int): distance between 2 connected cells. Default to 45.
+    - stardist_checkpoint (str): path to the stardist checkpoint. Default to None.
+    - x_type (str): type of the node feature vetor. Default to "4ll".
+    - root (str): root path. Default to "data/graph".
+    - consep_data (bool): if the data is from consep. Default to False.
+    - light (bool): if the data included in the graph needs to be minimum, speed up training. Default to False.
 
 Raises:
 
@@ -558,11 +556,11 @@ Return the data at index idx.
 
 Args:
 
-    idx (int): index of the data to return.
+    - idx (int): index of the data to return.
 
 Returns:
 
-    data (Data): data at index idx.
+    - data (Data): data at index idx.
 
 Raises:
 
@@ -578,7 +576,7 @@ Args:
 
 Returns:
 
-    int: length of the dataset.
+    - int: length of the dataset.
 
 Raises:
 
