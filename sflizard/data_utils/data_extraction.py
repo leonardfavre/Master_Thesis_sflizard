@@ -1,11 +1,3 @@
-"""Copyright (C) SquareFactory SA - All Rights Reserved.
-
-This source code is protected under international copyright law. All rights 
-reserved and protected by the copyright holders.
-This file is confidential and only available to authorized individuals with the
-permission of the copyright holders. If you encounter this file and do not have
-permission, please contact the copyright holders and delete this file.
-"""
 import argparse
 import glob
 import pickle
@@ -21,14 +13,19 @@ from rich import print
 from tqdm import tqdm
 
 SEED = 303
-TRAIN_TEST_SPLIT = 0.8
+TRAIN_TEST_SPLIT = 0.9
 IMAGE_EXTENSION = "png"
-OUTPUT_BASE_NAME = "data"
+OUTPUT_BASE_NAME = "data_final_split"
 PATCH_SIZE = 540
 PATCH_STEP = 200
+FILE_SAVE = True
+PKL_SAVE = True
+DATASET = "Lizard"
 
 
-def extract_annotation_patches(annotation_file, annotations, patch_size, patch_step):
+def extract_annotation_patches(
+    annotation_file: str, annotations: pd.DataFrame, patch_size: int, patch_step: int
+) -> pd.DataFrame:
     """Extract patches from annotations.
 
     Args:
@@ -47,9 +44,11 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
     # load the annotation file
     mat_file = sio.loadmat(annotation_file)
 
+    # Lizard data in mat: 'inst_map', 'class', 'centroid', 'id', ('bbox')
+
     # extract patches for inst_map
     name = Path(annotation_file).stem.split(".")[0]
-    inst_map = np.array(mat_file["inst_map"])
+    inst_map = np.array(mat_file["inst_map"]).astype("int")
 
     inst_map_dict = extract_patches(inst_map, name, patch_size, patch_step)
 
@@ -63,12 +62,25 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
         patch_id = np.unique(value).tolist()[1:]
         # keep only values present in the patch
         nuclei_id = np.squeeze(mat_file["id"]).tolist()
-        classes = np.squeeze(mat_file["class"]).tolist()
-        classes = []
+        nuclei_in_patch = []
+        class_in_patch = []
+        centroid_in_patch = []
         class_map = np.zeros(value.shape)
         for v in patch_id:
             idx = nuclei_id.index(v)
-            class_map[value == v] = mat_file["class"][idx]
+            class_i = mat_file["class"][idx]
+            centroid_i = mat_file["centroid"][idx].copy()
+            centroid_i[0] = min(
+                max(0, centroid_i[0] - int(key.split("_")[3])), patch_size - 1
+            )
+            centroid_i[1] = min(
+                max(0, centroid_i[1] - int(key.split("_")[2])), patch_size - 1
+            )
+            nuclei_in_patch.append(v)
+            class_in_patch.append(class_i)
+            centroid_in_patch.append(centroid_i)
+            class_map[value == v] = class_i
+
         # add the new patch to the dataframe
         annotations = pd.concat(
             [
@@ -78,17 +90,19 @@ def extract_annotation_patches(annotation_file, annotations, patch_size, patch_s
                         "id": [key],
                         "inst_map": [value],
                         "class_map": [class_map],
-                        "nuclei_id": [nuclei_id],
-                        "classes": [classes],
+                        "nuclei_id": [nuclei_in_patch],
+                        "classes": [class_in_patch],
+                        "centroid": [centroid_in_patch],
                     }
                 ),
             ],
             ignore_index=True,
         )
+
     return annotations
 
 
-def extract_image_patches(image_file, patch_size, patch_step):
+def extract_image_patches(image_file: str, patch_size: int, patch_step: int) -> dict:
     """Extract patches from an image.
 
     Args:
@@ -112,7 +126,9 @@ def extract_image_patches(image_file, patch_size, patch_step):
     return images_dict
 
 
-def extract_patches(array, array_name, patch_size, patch_step):
+def extract_patches(
+    array: np.array, array_name: str, patch_size: int, patch_step: int
+) -> dict:
     """Extract patches from an image or an instance map.
 
     Args:
@@ -157,7 +173,9 @@ def extract_patches(array, array_name, patch_size, patch_step):
     return array_dict
 
 
-def remove_missing_data(images, annotations, set_name):
+def remove_missing_data(
+    images: dict, annotations: pd.DataFrame, set_name: str
+) -> tuple:
     """Clean data by removing image without annotations and annotations without images.
 
     Args:
@@ -166,8 +184,9 @@ def remove_missing_data(images, annotations, set_name):
         set_name (str): name of the set.
 
     Returns:
-        images (dict): dictionary of images.
-        annotations (pd.DataFrame): dataframe of annotations.
+        tuple: tuple containing:
+            - images (dict): dictionary of images.
+            - annotations (pd.DataFrame): dataframe of annotations.
 
     Raises:
         None.
@@ -184,10 +203,18 @@ def remove_missing_data(images, annotations, set_name):
         missings = set(annotations.id).difference(images.keys())
         print(f" > Annotations in {set_name} with no images : {len(missings)}")
         annotations = annotations[~annotations.id.isin(missings)]
+    # remove empty annotations
+    empty_annotations = annotations[annotations.inst_map.apply(lambda x: x.sum()) == 0]
+    print(f" > Empty annotations in {set_name} set : {len(empty_annotations)}")
+    print(empty_annotations.id.values)
+    annotations = annotations[~annotations.id.isin(empty_annotations.id)]
+    images = {k: v for k, v in images.items() if k in annotations.id.values}
+    # check correct image channels
+    images = {k: v[:, :, :3] for k, v in images.items()}
     return images, annotations
 
 
-def extract_data(args):
+def extract_data(args: argparse.Namespace) -> None:
     """Extract data from the original dataset folder.
 
     Args:
@@ -200,12 +227,14 @@ def extract_data(args):
         None.
     """
 
-    print("1. Extracting images from folder...\n")
+    print("\n1. Extracting images from folder...\n")
     start = time.time()
     images_train = {}
+    images_valid = {}
     images_test = {}
     image_files = []
     train_list = []
+    valid_list = []
     test_list = []
     # Get all the images from the folder list
     for folder in args.images_path:
@@ -223,8 +252,8 @@ def extract_data(args):
     random.Random(SEED).shuffle(image_files)
 
     # determine the number of images for training and testing
-    train_size = int(len(image_files) * args.train_test_split)
-    len(image_files) - train_size
+    test_size = len(image_files) - int(len(image_files) * args.train_test_split)
+    train_size = int((len(image_files) - test_size) * args.train_test_split)
 
     # extract train patches
     for idx, image_file in enumerate(tqdm(image_files, desc="Extracting images")):
@@ -235,6 +264,13 @@ def extract_data(args):
                 extract_image_patches(image_file, args.patch_size, args.patch_step)
             )
             train_list.append(image_file)
+        # extract patches for validation
+        elif idx < len(image_files) - test_size:
+            # extract patches from the images to have multiple images of same size:
+            images_valid.update(
+                extract_image_patches(image_file, args.patch_size, args.patch_step)
+            )
+            valid_list.append(image_file)
         # extract patches for testing
         else:
             # extract patches from the images to have multiple images of same size:
@@ -243,19 +279,38 @@ def extract_data(args):
             )
             test_list.append(image_file)
 
-    # save the train and test lists
-    with open(args.output_base_name + "_train_list.txt", "w") as f:
+    # save the images lists
+    Path(f"data/{DATASET}_dataset_extraction/").mkdir(parents=True, exist_ok=True)
+    with open(
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_train_list.txt",
+        "w",
+    ) as f:
         for item in train_list:
             f.write(f"{item}\n")
-    with open(args.output_base_name + "_test_list.txt", "w") as f:
+    with open(
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_valid_list.txt",
+        "w",
+    ) as f:
+        for item in valid_list:
+            f.write(f"{item}\n")
+    with open(
+        f"data/{DATASET}_dataset_extraction/"
+        + args.output_base_name
+        + "_test_list.txt",
+        "w",
+    ) as f:
         for item in test_list:
             f.write(f"{item}\n")
 
     print(
-        f"\nAll {len(images_train) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
+        f"\nAll {len(images_train) + len(images_valid) + len(images_test)} images extracted! (in {time.time() - start:.2f} secs)\n"
     )
 
-    print("2. Extracting annotations from folder...\n")
+    print("\n2. Extracting annotations from folder...\n")
     start = time.time()
 
     annotations = pd.DataFrame(
@@ -263,6 +318,9 @@ def extract_data(args):
             "id",
             "inst_map",
             "class_map",
+            "nuclei_id",
+            "classes",
+            "centroid",
         ]
     )
     # Get all the annotations from the folder list
@@ -283,18 +341,23 @@ def extract_data(args):
 
     print(f"\nAll annotations extracted! (in {time.time() - start:.2f} secs)\n")
 
-    print("3. Cleaning...\n")
+    print("\n3. Cleaning...\n")
     start = time.time()
     cleaned_train_data = {}
+    cleaned_valid_data = {}
     cleaned_test_data = {}
 
     # split annotations
     annotations_train = annotations[annotations["id"].isin(images_train.keys())]
+    annotations_valid = annotations[annotations["id"].isin(images_valid.keys())]
     annotations_test = annotations[annotations["id"].isin(images_test.keys())]
 
     # clean missing data
     images_train, annotations_train = remove_missing_data(
         images_train, annotations_train, "train"
+    )
+    images_valid, annotations_valid = remove_missing_data(
+        images_valid, annotations_valid, "valid"
     )
     images_test, annotations_test = remove_missing_data(
         images_test, annotations_test, "test"
@@ -302,30 +365,108 @@ def extract_data(args):
 
     cleaned_train_data["images"] = images_train
     cleaned_train_data["annotations"] = annotations_train
+    cleaned_valid_data["images"] = images_valid
+    cleaned_valid_data["annotations"] = annotations_valid
     cleaned_test_data["images"] = images_test
     cleaned_test_data["annotations"] = annotations_test
 
     print(f"\nFiles cleaned! (in {time.time() - start:.2f} secs)\n")
 
-    print("4. Report\n")
+    print("\n4. Report\n")
 
     print(
-        f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_test_data['images'])}"
+        f" > Number of images : {len(cleaned_train_data['images']) + len(cleaned_valid_data['images']) + len(cleaned_test_data['images'])}"
     )
-    print(
-        f" > Number of images in train/validation set: {len(cleaned_train_data['images'])}"
-    )
+    print(f" > Number of images in train set: {len(cleaned_train_data['images'])}")
+    print(f" > Number of images in valid set: {len(cleaned_valid_data['images'])}")
     print(f" > Number of images in test set: {len(cleaned_test_data['images'])}")
 
-    print("5. Saving File...\n")
-    save_train = args.output_base_name + "_train.pkl"
-    save_test = args.output_base_name + "_test.pkl"
-    with open(save_train, "wb") as f:
-        pickle.dump(cleaned_train_data, f)
-    print(f"Cleaned train data saved in {save_train}")
-    with open(save_test, "wb") as f:
-        pickle.dump(cleaned_test_data, f)
-    print(f"Cleaned test data saved in {save_test}")
+    print("\n5. Saving File...\n")
+
+    if FILE_SAVE:
+        Path(f"data/{DATASET}_dataset_split/patches/").mkdir(
+            parents=True, exist_ok=True
+        )
+        save_images_train = (
+            f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_train"
+        )
+        save_images_valid = (
+            f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_valid"
+        )
+        save_images_test = f"data/{DATASET}_dataset_split/patches/{DATASET}_Images_test"
+        for path in [save_images_train, save_images_valid, save_images_test]:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        for img in cleaned_train_data["images"]:
+            im = Image.fromarray(cleaned_train_data["images"][img])
+            im.save(save_images_train + f"/{img}.png")
+        for img in cleaned_valid_data["images"]:
+            im = Image.fromarray(cleaned_valid_data["images"][img])
+            im.save(save_images_valid + f"/{img}.png")
+        for img in cleaned_test_data["images"]:
+            im = Image.fromarray(cleaned_test_data["images"][img])
+            im.save(save_images_test + f"/{img}.png")
+        print(
+            f"Images saved in {save_images_train}, {save_images_valid} and {save_images_test} folders"
+        )
+
+        save_train = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_train"
+        save_valid = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_valid"
+        save_test = f"data/{DATASET}_dataset_split/patches/{DATASET}_Labels_test"
+        for path in [save_train, save_valid, save_test]:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        # save back to mat files
+        for idx in cleaned_train_data["images"]:
+            dic = cleaned_train_data["annotations"][
+                cleaned_train_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_train + f"/{idx}.mat",
+                dic,
+            )
+        for idx in cleaned_valid_data["images"]:
+            dic = cleaned_valid_data["annotations"][
+                cleaned_valid_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_valid + f"/{idx}.mat",
+                dic,
+            )
+        for idx in cleaned_test_data["images"]:
+            dic = cleaned_test_data["annotations"][
+                cleaned_test_data["annotations"]["id"] == idx
+            ].to_dict(orient="list")
+            for key in dic:
+                dic[key] = dic[key][0]
+            sio.savemat(
+                save_test + f"/{idx}.mat",
+                dic,
+            )
+        print(
+            f"Annotations saved in {save_train}, {save_valid} and {save_test} folders"
+        )
+    if PKL_SAVE:
+        save_train = (
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_train.pkl"
+        )
+        save_valid = (
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_valid.pkl"
+        )
+        save_test = (
+            f"data/{DATASET}_dataset_extraction/" + args.output_base_name + "_test.pkl"
+        )
+        with open(save_train, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_train_data, f)  # type: ignore
+        print(f"Cleaned train data saved in {save_train}")
+        with open(save_valid, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_valid_data, f)  # type: ignore
+        print(f"Cleaned valid data saved in {save_valid}")
+        with open(save_test, "wb") as f:  # type: ignore
+            pickle.dump(cleaned_test_data, f)  # type: ignore
+        print(f"Cleaned test data saved in {save_test}")
 
 
 if __name__ == "__main__":

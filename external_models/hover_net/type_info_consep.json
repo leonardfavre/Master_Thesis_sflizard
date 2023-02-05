@@ -1,0 +1,7 @@
+{
+    "0" : ["nolabe", [0  ,   0,   0]], 
+    "1" : ["Miscellaneous", [255,   0,   0]], 
+    "2" : ["Inflammator", [0  , 255,   0]], 
+    "3" : ["Epithelial", [0  ,   0, 255]], 
+    "4" : ["Spindle-shaped", [255, 255,   0]],
+}

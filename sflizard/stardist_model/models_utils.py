@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import torch
@@ -7,42 +7,9 @@ import torch.nn.functional as F
 from stardist import non_maximum_suppression, polygons_to_label
 
 
-class MaskStardist:
-    """class for masking images using stardist model."""
-
-    def __init__(self, weights_path: str) -> None:
-        """Init the function."""
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = UNetStar(1, 32)
-        self.model.load_state_dict(torch.load(weights_path))
-        self.model = self.model.to(self.device)
-
-    def eval(
-        self,
-        images: Union[torch.Tensor, list],
-        multiple: bool = False,
-        channels: list = None,
-    ) -> Union[np.ndarray, list]:
-        """Get a mask from the image."""
-        # convert to tensor if needed
-        if isinstance(images, list):
-            images = torch.Tensor(np.array(images))
-        # we want the ndim to be equal to 4
-        if images.ndim == 3:
-            images = images.unsqueeze(1)
-        elif images.ndim == 5:
-            images = images[:, :, 0, :, :]
-
-        tensors = images.to(self.device)
-
-        dist, prob = self.model(tensors)
-
-        star_labels = self.model.compute_star_label(tensors, dist, prob, multiple)
-
-        return star_labels
-
-
 class MyL1BCELoss(torch.nn.Module):
+    """Custom loss function for StarDist. source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/distance_loss.py"""
+
     def __init__(self, scale=[1, 1]):
         super(MyL1BCELoss, self).__init__()
         assert len(scale) == 2
@@ -64,7 +31,21 @@ class MyL1BCELoss(torch.nn.Module):
 
 
 class ClassL1BCELoss(torch.nn.Module):
-    def __init__(self, class_weights, scale=[1, 1, 1]):
+    """Custom loss function for StarDist. Improvement of MyL1BCELoss by adding class loss"""
+
+    def __init__(self, class_weights: torch.Tensor, scale: list = [1, 1, 1]) -> None:
+        """Init the class.
+
+        Args:
+            class_weights (torch.Tensor): Weights for each class.
+            scale (list, optional): Scale for each loss. Defaults to [1, 1, 1].
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         super(ClassL1BCELoss, self).__init__()
         assert len(scale) == 3
         self.scale = scale
@@ -72,7 +53,27 @@ class ClassL1BCELoss(torch.nn.Module):
         self.mean = [0, 0, 0]
         self.total = 0
 
-    def forward(self, prediction, obj_probabilities, target_dists, classes):
+    def forward(
+        self,
+        prediction: torch.Tensor,
+        obj_probabilities: torch.Tensor,
+        target_dists: torch.Tensor,
+        classes: torch.Tensor,
+    ) -> torch.Tensor:
+        """Forward pass.
+
+        Args:
+            prediction (torch.Tensor): The prediction.
+            obj_probabilities (torch.Tensor): The probabilities map true values.
+            target_dists (torch.Tensor): The distances map true values.
+            classes (torch.Tensor): The classes map true values.
+
+        Returns:
+            torch.Tensor: The loss.
+
+        Raises:
+            None.
+        """
         # Predicted distances errors are weighted by object prob
         l1loss = F.l1_loss(prediction[0], target_dists, size_average=True, reduce=False)
         # weights = self.getWeights(target_dists)
@@ -91,8 +92,29 @@ class ClassL1BCELoss(torch.nn.Module):
 
 
 class UNetStar(nn.Module):
-    def __init__(self, n_channels, n_rays, n_classes=None, last_layer_out=False):
-        """Init the class."""
+    """UNetStar model. source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_model.py"""
+
+    def __init__(
+        self,
+        n_channels: int,
+        n_rays: int,
+        n_classes: Union[int, None] = None,
+        last_layer_out: bool = False,
+    ) -> None:
+        """Init the class.
+
+        Args:
+            n_channels (int): Number of channels.
+            n_rays (int): Number of rays.
+            n_classes (int, optional): Number of classes. Defaults to None.
+            last_layer_out (bool, optional): If True, the last layer is returned. Defaults to False.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         super(UNetStar, self).__init__()
         self.output_classes = n_classes is not None
         self.output_last_layer = last_layer_out
@@ -112,8 +134,21 @@ class UNetStar(nn.Module):
             self.out_class = outconv(128, n_classes)
             self.final_activation_class = nn.Softmax(dim=1)
 
-    def forward(self, x):
-        """Forward the input in the network."""
+    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+        """Forward the input in the network.
+
+        Args:
+            x (torch.Tensor): The input.
+
+        Returns:
+            List[torch.Tensor]: The output:
+                - [0]: The distances map (torch.Tensor).
+                - [1]: The probabilities map (torch.Tensor).
+                - [2]: The classes map (torch.Tensor).
+
+        Raises:
+            None.
+        """
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
@@ -137,13 +172,27 @@ class UNetStar(nn.Module):
 
     def compute_star_label(
         self,
-        image: torch.Tensor,
+        image: np.array,
         dist: torch.Tensor,
         prob: torch.Tensor,
-        multiple: bool = True,
-    ):
-        """Compute the stare label of images according dist and prob."""
+        get_points: bool = False,
+    ) -> Union[np.array, Tuple[np.array, list]]:
+        """Compute the star label of images according dist and prob.
+
+        Args:
+            image (np.array): The image.
+            dist (torch.Tensor): The distances map.
+            prob (torch.Tensor): The probabilities map.
+            get_points (bool, optional): If True, the points are returned. Defaults to False.
+
+        Returns:
+            star_labels (np.array): The star label.
+
+        Raises:
+            None.
+        """
         star_labels = []
+        points_b = []
         for i in range(image.shape[0]):
             dist_numpy = dist[i].detach().cpu().numpy().squeeze()
             prob_numpy = prob[i].detach().cpu().numpy().squeeze()
@@ -154,33 +203,21 @@ class UNetStar(nn.Module):
             star_label = polygons_to_label(
                 dists, points, (image.shape[3], image.shape[2]), probs
             )
-            if not multiple:
-                # keep only the largest connected component
-                labels, count = np.unique(star_label, return_counts=True)
 
-                # biggest count is background
-                background_id = np.argmax(count)
-
-                labels = np.delete(labels, background_id)
-                count = np.delete(count, background_id)
-
-                # the label we want to keed comes after the background
-                if len(labels) > 0:
-                    best_label = labels[np.argmax(count)]
-
-                    # replace all other labels with background (set to 0), replace the label by the number 1
-                    for i in range(star_label.shape[0]):
-                        for j in range(star_label.shape[1]):
-                            star_label[i][j] = (
-                                0 if star_label[i][j] != best_label else 1
-                            )
             star_labels.append(star_label)
+            points_b.append(points)
         star_labels = np.array(star_labels)
-        return star_labels
+        points_b = points_b
+        if get_points:
+            return star_labels, points_b
+        else:
+            return star_labels
 
 
 # Utilities for UNetStar model
 class double_conv(nn.Module):
+    """source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_parts_gn.py"""
+
     def __init__(self, in_ch, out_ch):
         """Init the class."""
         super(double_conv, self).__init__()
@@ -200,6 +237,8 @@ class double_conv(nn.Module):
 
 
 class inconv(nn.Module):
+    """source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_parts_gn.py"""
+
     def __init__(self, in_ch, out_ch):
         """Init the class."""
         super(inconv, self).__init__()
@@ -211,6 +250,8 @@ class inconv(nn.Module):
 
 
 class down(nn.Module):
+    """source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_parts_gn.py"""
+
     def __init__(self, in_ch, out_ch):
         """Init the class."""
         super(down, self).__init__()
@@ -222,6 +263,8 @@ class down(nn.Module):
 
 
 class up(nn.Module):
+    """source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_parts_gn.py"""
+
     def __init__(self, in_ch, out_ch):
         """Init the class."""
         super(up, self).__init__()
@@ -239,6 +282,8 @@ class up(nn.Module):
 
 
 class outconv(nn.Module):
+    """source: https://github.com/ASHISRAVINDRAN/stardist_pytorch/blob/master/unet/unet_parts_gn.py"""
+
     def __init__(self, in_ch, out_ch):
         """Init the class."""
         super(outconv, self).__init__()

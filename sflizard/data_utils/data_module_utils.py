@@ -1,16 +1,19 @@
-import numpy as np
 import math
+from typing import Any, List, Optional, Union
+
+import numpy as np
 import torch
 from stardist import edt_prob, non_maximum_suppression, star_dist
+from torch_geometric.data import Data
 
 from sflizard import Stardist
 
 
-def get_stardist_distances(inst_map, n_rays):
-    """Get the distances for stardist.
+def get_stardist_distances(inst_map: np.array, n_rays: int) -> torch.Tensor:
+    """Get the distances (rays) of stardist from an instance map.
 
     Args:
-        inst_map (): annotation dictionary.
+        inst_map (np.array): annotation dictionary.
         n_rays (int): number of rays.
 
     Returns:
@@ -21,11 +24,11 @@ def get_stardist_distances(inst_map, n_rays):
     return distances
 
 
-def get_stardist_obj_probabilities(inst_map):
-    """Get the object probabilities for stardist.
+def get_stardist_obj_probabilities(inst_map: np.array) -> torch.Tensor:
+    """Get the object probabilities of stardist from an instance map.
 
     Args:
-        inst_map (): instance map.
+        inst_map (np.array): instance map.
 
     Returns:
         obj_probabilities (torch.Tensor): object probabilities.
@@ -35,41 +38,56 @@ def get_stardist_obj_probabilities(inst_map):
     return obj_probabilities
 
 
-def get_stardist_data(inst_map, aditional_args, class_map=None):
+def get_stardist_data(
+    inst_map: np.array, aditional_args: Optional[dict], class_map: np.array = None
+) -> tuple:
     """Get the data for stardist.
 
     Args:
-        inst_map (): instance map.
+        inst_map (np.array): instance map.
         aditional_args (dict): additional arguments, must contain n_rays.
-        classes (list): list of classes.
+        class_map (np.array): class map.
 
     Returns:
         tuple: tuple containing:
-            - dist (np.ndarray): distance map.
-            - prob (np.ndarray): probability map.
-            - classes (list): list of classes.
+            dist (torch.Tensor): distance map.
+            prob (torch.Tensor): probability map.
+            classes (torch.Tensor): list of classes, if arg class_map is not None.
 
     Raises:
         ValueError: if n_rays is not in aditional_args.
     """
-    if "n_rays" not in aditional_args.keys():
+    if aditional_args is None or "n_rays" not in aditional_args.keys():
         raise ValueError("n_rays not in aditional_args. Mandatory for stardist model.")
-    distances = get_stardist_distances(inst_map, aditional_args["n_rays"])
-    obj_probabilities = get_stardist_obj_probabilities(inst_map)
-    if class_map is not None:
-        return obj_probabilities, distances, torch.from_numpy(class_map)
     else:
-        return obj_probabilities, distances
+        distances = get_stardist_distances(inst_map, aditional_args["n_rays"])
+        obj_probabilities = get_stardist_obj_probabilities(inst_map)
+        if class_map is not None:
+            return obj_probabilities, distances, torch.from_numpy(class_map)
+        else:
+            return obj_probabilities, distances
 
 
 # GRAPH UTILS
-
-
 def compute_stardist(
     dist: torch.Tensor,
     prob: torch.Tensor,
-):
-    """Compute the stare label of image according dist and prob."""
+) -> tuple:
+    """Compute the star valid label of image according dist and prob.
+
+    Args:
+        dist (torch.Tensor): distance map.
+        prob (torch.Tensor): probability map.
+
+    Returns:
+        tuple: tuple containing:
+            points (np.ndarray): detected cells centroid.
+            probs (np.ndarray): probability of each pixel to be a cell.
+            dists (np.ndarray): distances corresponding to the cells shape.
+
+    Raises:
+        None.
+    """
     dist_numpy = dist.detach().cpu().numpy().squeeze()
     prob_numpy = prob.detach().cpu().numpy().squeeze()
     dist_numpy = np.transpose(dist_numpy, (1, 2, 0))
@@ -79,13 +97,26 @@ def compute_stardist(
     return points, probs, dists
 
 
-def get_edge_list(vertex, distance):
+def get_edge_list(vertex: np.array, distance: int) -> list:
+    """Get the edge list from the vertex for each vertex closer than distance.
+
+    Args:
+        vertex (np.array): vertex.
+        distance (int): distance.
+
+    Returns:
+        edge_list (list): edge list.
+
+    Raises:
+        None.
+    """
     # edge distanche
     def distance_between_vertex(v_i, v_j):
+        """Get the euclidian distance between two vertex."""
         distance = ((v_i[0] - v_j[0]) ** 2 + (v_i[1] - v_j[1]) ** 2) ** (0.5)
         return distance
 
-    edge_list = [[], [], []]
+    edge_list: List[Any] = [[], [], []]
     for i in range(vertex.shape[0]):
         for j in range(i + 1, vertex.shape[0]):
             dist = distance_between_vertex(vertex[i], vertex[j])
@@ -100,18 +131,40 @@ def get_edge_list(vertex, distance):
 
 
 def get_graph(
-    inst_map=None,
-    points=None,
-    predicted_classes=None,
-    true_class_map=None,
-    n_rays=None,
-    distance=None,
-    stardist_checkpoint=None,
-    image=None,
-    x_type="ll",
-    consep_data=False,
-):
+    inst_map: np.array = None,
+    points: np.array = None,
+    predicted_classes: np.array = None,
+    true_class_map: np.array = None,
+    n_rays: int = None,
+    distance: int = 45,
+    stardist_checkpoint: str = None,
+    image: np.array = None,
+    x_type: str = "ll",
+    consep_data: bool = False,
+    hovernet_metric: bool = False,
+) -> Union[None, dict]:
     """Get the graph from the instance map.
+
+    The graph can be computed from a Stardist checkpoint, in this case the following data are required:
+        image: used as input for Stardist.
+    If the hovernet_metric is True, the instance map computed by stardist is included in the returned dict.
+    The x_type available for this technique is "c", "x", "ll", "c+x", "ll+x", "ll+c", "ll+x+c", "c", "4x", "4ll", "4c+x", "4ll+x", "4ll+c", "4ll+x+c".
+
+    The graph can be computed from the points and predicted classes, in this case the following data are required:
+        points: list of detected cells centroid.
+        predicted_classes: list of predicted classes corresponding to the cells in points array.
+    The x_type available for this technique is "c".
+    This technique is used for the hovernet model.
+
+    The graph can be computed from an instance map, in this case the following data are required:
+        inst_map: instance map.
+        n_rays: number of rays of stardist objects.
+    It will call the function compute_stardist to compute the points, probs and dists.
+    The x_type available for this technique is "dist".
+    This technique is deprecated.
+
+    If true_class_map is not None, the graph includes the labels of the cells in the "y" entry.
+    If the consep_data is True, the labels will be corrected to apply the HoverNet simplification of the classes.
 
     Args:
         inst_map (np.ndarray): instance map.
@@ -126,16 +179,18 @@ def get_graph(
         consep_data (bool): if True, the data is from consep datset.
 
     Returns:
-        vertex (torch.Tensor): vertex.
+        graph (dict): Computed graph.
 
     Raises:
-        NotImplementedError: if x_type is not known.
+        ValueError: if input is insuficient to compute graph.
     """
     graph = {}
     if stardist_checkpoint is None:
         if x_type == "dist":
             if inst_map is None or n_rays is None:
-                raise ValueError("inst_map and n_rays must be provided for xtype dist and no stardist checkpoint.")
+                raise ValueError(
+                    "inst_map and n_rays must be provided for xtype dist and no stardist checkpoint."
+                )
             # get stardist result from instance map
             prob, dist = get_stardist_data(inst_map, {"n_rays": n_rays})
             points, _, dists = compute_stardist(dist, prob)
@@ -143,10 +198,14 @@ def get_graph(
             graph["x"] = torch.Tensor(dists)
         if x_type == "c":
             if predicted_classes is None or points is None:
-                raise ValueError("predicted_classes and points must be provided for xtype c and no stardist checkpoint.")
+                raise ValueError(
+                    "predicted_classes and points must be provided for xtype c and no stardist checkpoint."
+                )
             graph["x"] = torch.Tensor(predicted_classes)
         else:
-            raise ValueError("x_type not implemented for graph without stardist checkpoint.")
+            raise ValueError(
+                "x_type not implemented for graph without stardist checkpoint."
+            )
 
     else:
         model_c = Stardist.load_from_checkpoint(
@@ -160,9 +219,16 @@ def get_graph(
             input = torch.Tensor(image).unsqueeze(0).float().to("cuda")
             dist, prob, _ = model_c(input)
             points, _, _ = compute_stardist(dist, prob)
+            # get instance map
+            if hovernet_metric:
+                graph["inst_map"], points = model_c.compute_star_label(
+                    input, dist, prob, get_points=True
+                )
+                points = points[0]
 
         if points.shape[0] == 0:
             graph["x"] = torch.Tensor([])
+            return None
         else:
             # init models
             if "ll" in x_type:
@@ -195,6 +261,7 @@ def get_graph(
                 stardist_points = get_stardist_point_for_graph(
                     image, model_ll, model_c, points, x_type=x_type
                 )
+
             # set x for graph
             graph["x"] = stardist_points.detach().cpu()
 
@@ -209,17 +276,21 @@ def get_graph(
 
     # add target to graph
     if true_class_map is not None:
+        #
         # get points with target
         y = []
         for i in range(points.shape[0]):
-            if type(points[i, 0]) == int:
-                y.append(true_class_map[points[i, 0], points[i, 1]])
+            if type(points[i, 0]) == np.int64:
+                yi = true_class_map[points[i, 0], points[i, 1]]
             else:
                 # get the 4 nearest points in the class map
+                # dataset input centroid: 1, 0
                 yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
                 yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
                 yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])
-                yi4 = int(true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])])
+                yi4 = int(
+                    true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])]
+                )
                 # if all 4 points have the same class
                 if (yi1 == yi2) & (yi2 == yi3) & (yi3 == yi4):
                     yi = yi1
@@ -234,16 +305,35 @@ def get_graph(
                     yi = 3
                 elif (yi == 5) | (yi == 6) | (yi == 7):
                     yi = 4
+            y.append(yi)
         graph["y"] = torch.Tensor(y)
 
     return graph
 
 
 def get_stardist_point_for_graph(
-    image, model_ll, model_c, points, x_type="ll", rotate=0
-):
-    """
-    Get the stardist point for graph.
+    image: np.array,
+    model_ll: torch.nn.Module,
+    model_c: torch.nn.Module,
+    points: np.array,
+    x_type: str = "ll",
+    rotate: int = 0,
+) -> torch.Tensor:
+    """Get the node feature vector from stardist for graph creation.
+
+    Args:
+        image (np.array): image
+        model_ll (torch.nn.Module): model for last layer
+        model_c (torch.nn.Module): model for complete network
+        points (np.array): points
+        x_type (str): type of node feature vector. Defaults to "ll".
+        rotate (int): rotation of image. Defaults to 0.
+
+    Returns:
+        torch.Tensor: node feature vector.
+
+    Raises:
+        None.
     """
     input = torch.Tensor(image).unsqueeze(0).float().to("cuda")
     if rotate != 0:
@@ -273,8 +363,8 @@ def get_stardist_point_for_graph(
                 dim=1,
                 index=points[i, 1],
             )
-        if "x" in x_type:
-            xi = torch.Tensor([points[i, 0], points[i, 1]])
+        if "x" in x_type and rotate == 0:
+            xi = torch.Tensor([points[i, 0], points[i, 1]]).to("cuda")
 
         # concat everything together
         sp = torch.Tensor([]).to("cuda")
@@ -282,7 +372,7 @@ def get_stardist_point_for_graph(
             sp = torch.cat((sp, lli))
         if "c" in x_type:
             sp = torch.cat((sp, ci))
-        if "x" in x_type:
+        if "x" in x_type and rotate == 0:
             sp = torch.cat((sp, xi))
 
         stardist_points.append(sp)
@@ -290,22 +380,41 @@ def get_stardist_point_for_graph(
     return stardist_points
 
 
-def get_graph_for_inference(batch, distance, stardist_checkpoint, x_type="ll"):
+def get_graph_for_inference(
+    batch: torch.Tensor, distance: int, stardist_checkpoint: str, x_type: str = "ll"
+) -> list:
     """Get the graph for inference.
 
     Args:
-        batch (dict): batch.
-        distance (int): distance between two vertex to have an edge.
+        batch (torch.Tensor): batch containing images.
+        distance (int): distance between two vertex to create an edge.
         stardist_checkpoint (str): path to stardist checkpoint.
-        x_type (str): type of x.
+        x_type (str): type of node feature vector.
 
     Returns:
-        graph (dict): graph.
+        graphs (list): list of computed graphs.
+
+    Raises:
+        None.
     """
-    graphs = []
+    graphs: List[Any] = []
     for i in range(batch.shape[0]):
         graph = get_graph(
-            distance=distance, stardist_checkpoint=stardist_checkpoint, image=batch[i], x_type=x_type
+            distance=distance,
+            stardist_checkpoint=stardist_checkpoint,
+            image=batch[i],
+            x_type=x_type,
+            hovernet_metric=True,
         )
-        graphs.append(graph)
+        if graph is None:
+            graphs.append(None)
+        else:
+            processed_data = Data(
+                x=graph["x"],
+                edge_index=graph["edge_index"],
+                pos=graph["pos"],
+                original_img=batch[i],
+                inst_map=graph["inst_map"],
+            )
+            graphs.append(processed_data)
     return graphs

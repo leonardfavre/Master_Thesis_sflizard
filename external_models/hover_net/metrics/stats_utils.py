@@ -268,7 +268,7 @@ def get_fast_pq(true, pred, match_iou=0.5):
     fp = len(unpaired_pred)
     fn = len(unpaired_true)
     # get the F1-score i.e DQ
-    dq = tp / (tp + 0.5 * fp + 0.5 * fn)
+    dq = tp / (tp + 0.5 * fp + 0.5 * fn + 1.0e-6)
     # get the SQ, no paired has 0 iou so not impact
     sq = paired_iou.sum() / (tp + 1.0e-6)
 

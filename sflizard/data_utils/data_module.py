@@ -1,23 +1,14 @@
-"""Copyright (C) SquareFactory SA - All Rights Reserved.
-
-This source code is protected under international copyright law. All rights 
-reserved and protected by the copyright holders.
-This file is confidential and only available to authorized individuals with the
-permission of the copyright holders. If you encounter this file and do not have
-permission, please contact the copyright holders and delete this file.
-"""
 from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import albumentations as A
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 from albumentations.pytorch import ToTensorV2
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
 from sflizard.data_utils import get_stardist_data
@@ -34,23 +25,73 @@ class LizardDataset(Dataset):
         tf_augment: A.Compose,
         annotation_target: str,
         aditional_args: Optional[dict] = None,
-        test: bool = False,
-    ):
-        """Initialize dataset."""
+    ) -> None:
+        """Initialize dataset.
+
+        Args:
+            df (pd.DataFrame): dataframe containing the data.
+            data (np.ndarray): array containing the images.
+            tf_base (A.Compose): base transformation.
+            tf_augment (A.Compose): augmentation transformation.
+            annotation_target (str): annotation target.
+            aditional_args (Optional[dict]): aditional arguments. Used for nrays.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         self.df = df
         self.data = data
         self.tf_base = tf_base
         self.tf_augment = tf_augment
-        self.test = test
         self.annotation_target = annotation_target
         self.aditional_args = aditional_args
 
-    def __len__(self):
-        """Get the length of the dataset."""
+    def __len__(self) -> int:
+        """Get the length of the dataset.
+
+        Args:
+            None.
+
+        Returns:
+            len (int): length of the dataset.
+
+        Raises:
+            None.
+        """
         return len(self.df)
 
-    def __getitem__(self, idx):
-        """Get images and transform them if needed."""
+    def __getitem__(self, idx: int) -> tuple:
+        """Get item from the dataset.
+
+        In the case of a classic stardist annotation target:
+            - image
+            - obj_probabilities map
+            - distances map
+
+        In the case of a stardist annotation target with classes:
+            - image
+            - obj_probabilities map
+            - distances map
+            - classes map
+
+        Transform them if needed.
+
+        Args:
+            idx (int): index of the item.
+
+        Returns:
+            tuple: tuple containing:
+                - image
+                - obj_probabilities map
+                - distances map
+                - classes map (optional)
+
+        Raises:
+            ValueError: if the annotation target is not supported.
+        """
         # retriev inputs
         image = np.array(self.data[self.df.iloc[idx].id])
 
@@ -95,7 +136,8 @@ class LizardDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_data_path: str,
+        train_data_path: Union[str, None],
+        valid_data_path: str,
         test_data_path: str,
         annotation_target: str = "inst",
         batch_size: int = 4,
@@ -103,18 +145,34 @@ class LizardDataModule(pl.LightningDataModule):
         input_size=540,
         seed: int = 303,
         aditional_args: Optional[dict] = None,
-    ):
-        """Initialize the dataloaders with batch size and targets."""
+    ) -> None:
+        """Create the datamodule and initialize the argument for the dataloaders.
+
+        Args:
+            train_data_path (str): path to the train data.
+            valid_data_path (str): path to the valid data.
+            test_data_path (str): path to the test data.
+            annotation_target (str): annotation target.
+            batch_size (int): batch size.
+            num_workers (int): number of workers.
+            input_size (int): input size.
+            seed (int): seed.
+            aditional_args (Optional[dict]): aditional arguments. Used for nrays.
+        """
         super().__init__()
 
-        train_data_path = Path(train_data_path)
-        with train_data_path.open("rb") as f:
-            train_data = pickle.load(f)
+        if train_data_path is not None:
+            train_data_p = Path(train_data_path)
+            with train_data_p.open("rb") as f:
+                self.train_data = pickle.load(f)
+        else:
+            self.train_data = None
+        valid_data_path = Path(valid_data_path)
+        with valid_data_path.open("rb") as f:
+            self.valid_data = pickle.load(f)
         test_data_path = Path(test_data_path)
         with test_data_path.open("rb") as f:
-            test_data = pickle.load(f)
-        self.train_data = train_data
-        self.test_data = test_data
+            self.test_data = pickle.load(f)
 
         self.annotation_target = annotation_target
 
@@ -126,21 +184,19 @@ class LizardDataModule(pl.LightningDataModule):
         self.seed = seed
         self.aditional_args = aditional_args
 
-    def setup(self, stage: Optional[str] = None):
-        """Data setup for training."""
+    def setup(self, stage: Optional[str] = None) -> None:
+        """Data setup for training, define transformations and datasets.
 
-        train_annotations = self.train_data["annotations"]
-        test_df = self.test_data["annotations"]
+        Args:
+            stage (Optional[str]): stage.
 
-        train_df, valid_df = train_test_split(
-            train_annotations,
-            test_size=0.2,
-            random_state=self.seed,
-        )
+        Returns:
+            None.
 
-        train_df.reset_index(drop=True, inplace=True)
-        valid_df.reset_index(drop=True, inplace=True)
-        test_df.reset_index(drop=True, inplace=True)
+        Raises:
+            None.
+        """
+
         tf_base = A.Compose(
             [
                 A.Resize(self.input_size, self.input_size),
@@ -154,27 +210,37 @@ class LizardDataModule(pl.LightningDataModule):
                 A.VerticalFlip(p=0.5),
                 A.RandomRotate90(p=0.5),
                 # A.RandomBrightnessContrast(p=0.2),
-                # A.RandomSizedCrop(
-                #     min_max_height=[self.input_size / 2, self.input_size],
-                #     height=self.input_size,
-                #     width=self.input_size,
-                #     p=0.75,
-                # ),
+                A.RandomSizedCrop(
+                    min_max_height=[self.input_size / 2, self.input_size],
+                    height=self.input_size,
+                    width=self.input_size,
+                    p=0.75,
+                ),
             ]
         )
 
-        print(f"Training with {len(train_df)} examples")
-        self.train_ds = LizardDataset(
-            train_df,
-            self.train_data["images"],
-            tf_base,
-            tf_augment,
-            self.annotation_target,
-            self.aditional_args,
-        )
+        if self.train_data is not None:
+            train_df = self.train_data["annotations"]
+            train_df.reset_index(drop=True, inplace=True)
+            print(f"Training with {len(train_df)} examples")
+            self.train_ds = LizardDataset(
+                train_df,
+                self.train_data["images"],
+                tf_base,
+                tf_augment,
+                self.annotation_target,
+                self.aditional_args,
+            )
+
+        valid_df = self.valid_data["annotations"]
+        test_df = self.test_data["annotations"]
+
+        valid_df.reset_index(drop=True, inplace=True)
+        test_df.reset_index(drop=True, inplace=True)
+
         self.valid_ds = LizardDataset(
             valid_df,
-            self.train_data["images"],
+            self.valid_data["images"],
             tf_base,
             None,
             self.annotation_target,
@@ -187,17 +253,48 @@ class LizardDataModule(pl.LightningDataModule):
             None,
             self.annotation_target,
             self.aditional_args,
-            test=True,
         )
 
-    def train_dataloader(self):
-        """Return the training dataloader."""
+    def train_dataloader(self) -> DataLoader:
+        """Return the training dataloader.
+
+        Args:
+            None.
+
+        Returns:
+            dataloader (DataLoader): the training dataloader.
+
+        Raises:
+            None.
+        """
+        if self.train_data is None:
+            return None
         return DataLoader(self.train_ds, **self.dataloader_arguments)
 
-    def val_dataloader(self):
-        """Return the validation dataloader."""
+    def val_dataloader(self) -> DataLoader:
+        """Return the validation dataloader.
+
+        Args:
+            None.
+
+        Returns:
+            dataloader (DataLoader): the validation dataloader.
+
+        Raises:
+            None.
+        """
         return DataLoader(self.valid_ds, **self.dataloader_arguments)
 
-    def test_dataloader(self):
-        """Return the test dataloader."""
+    def test_dataloader(self) -> DataLoader:
+        """Return the test dataloader.
+
+        Args:
+            None.
+
+        Returns:
+            dataloader (DataLoader): the test dataloader.
+
+        Raises:
+            None.
+        """
         return DataLoader(self.test_ds, **self.dataloader_arguments)

@@ -133,12 +133,6 @@ logs/
 checkpoints/
 lightning_logs/
 
-# dataset
-data/
-*.pkl
-
-
 *.ckpt
-*.png
 *.tar
 

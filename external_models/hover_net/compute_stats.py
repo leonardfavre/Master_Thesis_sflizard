@@ -4,14 +4,8 @@ import os
 
 import numpy as np
 import scipy.io as sio
-from metrics.stats_utils import (
-    get_dice_1,
-    get_fast_aji,
-    get_fast_aji_plus,
-    get_fast_pq,
-    pair_coordinates,
-    remap_label,
-)
+from metrics.stats_utils import get_fast_pq, pair_coordinates, remap_label
+from tqdm import tqdm
 
 
 def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True):
@@ -46,7 +40,7 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
         true_info = sio.loadmat(os.path.join(true_dir, basename + ".mat"))
         # dont squeeze, may be 1 instance exist
         true_centroid = (true_info["centroid"]).astype("float32")
-        true_inst_type = (true_info["class"]).astype("int32")
+        true_inst_type = (true_info["classes"]).astype("int32")
 
         if true_centroid.shape[0] != 0:
             true_inst_type = true_inst_type[:, 0]
@@ -176,13 +170,12 @@ def run_nuclei_type_stat(pred_dir, true_dir, type_uid_list=None, exhaustive=True
 
 def run_nuclei_inst_stat(pred_dir, true_dir, print_img_stats=False, ext=".mat"):
     # print stats of each image
-    print(pred_dir)
 
     file_list = glob.glob("%s/*%s" % (pred_dir, ext))
     file_list.sort()  # ensure same order
 
     metrics = [[], [], [], [], [], []]
-    for filename in file_list[:]:
+    for filename in tqdm(file_list[:]):
         filename = os.path.basename(filename)
         basename = filename.split(".")[0]
 
@@ -197,12 +190,12 @@ def run_nuclei_inst_stat(pred_dir, true_dir, print_img_stats=False, ext=".mat"):
         true = remap_label(true, by_size=False)
 
         pq_info = get_fast_pq(true, pred, match_iou=0.5)[0]
-        metrics[0].append(get_dice_1(true, pred))
-        metrics[1].append(get_fast_aji(true, pred))
+        metrics[0].append(0)  # get_dice_1(true, pred))
+        metrics[1].append(0)  # get_fast_aji(true, pred))
         metrics[2].append(pq_info[0])  # dq
         metrics[3].append(pq_info[1])  # sq
         metrics[4].append(pq_info[2])  # pq
-        metrics[5].append(get_fast_aji_plus(true, pred))
+        metrics[5].append(0)  # get_fast_aji_plus(true, pred))
 
         if print_img_stats:
             print(basename, end="\t")
