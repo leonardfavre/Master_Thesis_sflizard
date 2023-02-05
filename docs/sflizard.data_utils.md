@@ -302,7 +302,7 @@ Raises:
 
     None.
 
-## sflizard.data_utils.data_module_utils module
+## sflizard.data_utils.data_module_utils
 
 
 ### sflizard.data_utils.data_module_utils.compute_stardist

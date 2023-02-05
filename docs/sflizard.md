@@ -19,11 +19,11 @@
 
 This package contains the following modules:
 
-* [sflizard.run_hovernet_metric_tool](#module-sflizardrun_hovernet_metric_tool)
+* [sflizard.run_hovernet_metric_tool](#sflizardrun_hovernet_metric_tool)
 
-* [sflizard.run_test_pipeline](#module-sflizardrun_test_pipeline)
+* [sflizard.run_test_pipeline](#sflizardrun_test_pipeline)
 
-* [sflizard.training](#module-sflizardtraining)
+* [sflizard.training](#sflizardtraining)
 
 ## sflizard.run_hovernet_metric_tool
 
@@ -58,7 +58,7 @@ Weights paths need to be provided in the following form: `{name: path}`. Example
 }
 ```
 
-For a more in-depth description of the hovernet metric tool, see [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizard.pipeline.hovernet_metric_tool).
+For a more in-depth description of the hovernet metric tool, see [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizardpipelinehovernet_metric_tool).
 
 ## sflizard.run_test_pipeline
 

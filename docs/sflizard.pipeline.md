@@ -4,15 +4,15 @@
 
 This package contains the following modules:
 
-* [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizard.pipeline.test_pipeline)
+* [sflizard.pipeline.test_pipeline](sflizard.pipeline.md#sflizardpipelinetest_pipeline)
 
-* [sflizard.pipeline.pipeline_utils](sflizard.pipeline.md#sflizard.pipeline.pipeline_utils)
+* [sflizard.pipeline.pipeline_utils](sflizard.pipeline.md#sflizardpipelinepipeline_utils)
 
-* [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizard.pipeline.segmentation_metric_tool)
+* [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizardpipelinesegmentation_metric_tool)
 
-* [sflizard.pipeline.report](sflizard.pipeline.md#sflizard.pipeline.report)
+* [sflizard.pipeline.report](sflizard.pipeline.md#sflizardpipelinereport)
 
-* [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizard.pipeline.hovernet_metric_tool)
+* [sflizard.pipeline.hovernet_metric_tool](sflizard.pipeline.md#sflizardpipelinehovernet_metric_tool)
 
 
 ## sflizard.pipeline.test_pipeline
@@ -240,7 +240,7 @@ Raises:
 
 #### add_final_metrics
 Add final metrics to the report.
-These are the metrics computed by [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizard.pipeline.segmentation_metric_tool).
+These are the metrics computed by [sflizard.pipeline.segmentation_metric_tool](sflizard.pipeline.md#sflizardpipelinesegmentation_metric_tool).
 
 Args:
 
