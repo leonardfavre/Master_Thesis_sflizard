@@ -237,14 +237,14 @@ Compute the star label of images according dist and prob.
 
 Args:
 
-    - image (np.array): The image.
+    - image (np.ndarray): The image.
     - dist (torch.Tensor): The distances map.
     - prob (torch.Tensor): The probabilities map.
     - get_points (bool, optional): If True, the points are returned. Defaults to False.
 
 Returns:
 
-    - star_labels (np.array): The star label.
+    - star_labels (np.ndarray): The star label.
 
 Raises:
 

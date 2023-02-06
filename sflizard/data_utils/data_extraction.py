@@ -127,12 +127,12 @@ def extract_image_patches(image_file: str, patch_size: int, patch_step: int) -> 
 
 
 def extract_patches(
-    array: np.array, array_name: str, patch_size: int, patch_step: int
+    array: np.ndarray, array_name: str, patch_size: int, patch_step: int
 ) -> dict:
     """Extract patches from an image or an instance map.
 
     Args:
-        array (np.array): array to be patched.
+        array (np.ndarray): array to be patched.
         array_name (str): name of the array.
         patch_size (int): size of the patches.
         patch_step (int): step between patches.

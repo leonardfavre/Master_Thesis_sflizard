@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -21,7 +21,7 @@ class Stardist(pl.LightningModule):
         n_classes: int = 1,
         loss_power_scaler: float = 0.0,
         seed: int = 303,
-        device: str = "cpu",
+        device: Union[str, torch.device] = "cpu",
         wandb_log: bool = False,
         max_epochs: int = 200,
     ) -> None:
@@ -71,18 +71,18 @@ class Stardist(pl.LightningModule):
                 3**loss_power_scaler / 0.16856008596522243,
                 1**loss_power_scaler / 1.1985746181324908,
             ]
-            self.loss = ClassL1BCELoss(class_weights, loss_scale)
+            self.loss = ClassL1BCELoss(class_weights, loss_scale)  # type: ignore
 
         else:
             self.model = UNet(in_channels, n_rays)
-            self.loss = MyL1BCELoss()
+            self.loss = MyL1BCELoss()  # type: ignore
         self.wandb_log = wandb_log
         # if self.wandb_log:
         #     wandb.watch(self.model)
 
         self.max_epochs = max_epochs
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
         """Forward pass.
 
         Args:
@@ -139,7 +139,7 @@ class Stardist(pl.LightningModule):
 
         return loss
 
-    def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:  # type: ignore
         """Training step.
 
         Args:
@@ -154,7 +154,7 @@ class Stardist(pl.LightningModule):
         """
         return self._step(batch, "train")
 
-    def training_epoch_end(self, outputs: List[torch.Tensor]) -> None:
+    def training_epoch_end(self, outputs: List[Dict[str, Any]]) -> None:  # type: ignore
         """Training epoch end.
 
         Args:
@@ -169,7 +169,7 @@ class Stardist(pl.LightningModule):
         outputs = [x["loss"] for x in outputs if x is not None]
         self._epoch_end(outputs, "train")
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:  # type: ignore
         """Validation step.
 
         Args:
@@ -184,7 +184,7 @@ class Stardist(pl.LightningModule):
         """
         return self._step(batch, "val")
 
-    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:
+    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:  # type: ignore
         """Validation epoch end.
 
         Args:
@@ -198,7 +198,7 @@ class Stardist(pl.LightningModule):
         """
         self._epoch_end(outputs, "val")
 
-    def _epoch_end(self, outputs: List[torch.Tensor], name: str) -> None:
+    def _epoch_end(self, outputs: List[Any], name: str) -> None:
         """epoch end for train/val.
 
         Args:

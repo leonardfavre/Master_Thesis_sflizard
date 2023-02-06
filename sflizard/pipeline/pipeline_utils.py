@@ -2,17 +2,17 @@ import numpy as np
 
 
 def improve_class_map(
-    class_map: np.array, predicted_masks: np.array, points: np.array
-) -> np.array:
+    class_map: np.ndarray, predicted_masks: np.ndarray, points: np.ndarray
+) -> np.ndarray:
     """Improve the class map by assigning the same class to each segmented object.
 
     Args:
-        class_map (np.array): The class map.
-        predicted_masks (np.array): The predicted masks.
-        points (np.array): The points of the cells detected in the masks.
+        class_map (np.ndarray): The class map.
+        predicted_masks (np.ndarray): The predicted masks.
+        points (np.ndarray): The points of the cells detected in the masks.
 
     Returns:
-        improved_class_map (np.array): The improved class map.
+        improved_class_map (np.ndarray): The improved class map.
 
     Raises:
         None.
@@ -35,7 +35,7 @@ def get_class_map_from_graph(
     inst_maps: list,
     graph_pred: list,
     class_pred: list,
-) -> np.array:
+) -> np.ndarray:
     """Get the class map from the graph prediction.
 
     Args:
@@ -45,15 +45,15 @@ def get_class_map_from_graph(
         class_pred (list): The class prediction.
 
     Returns:
-        class_maps (np.array): The class map.
+        class_maps (np.ndarray): The class map.
 
     Raises:
         None.
     """
-    class_maps = []
+    class_maps_list = []
     for idx, inst_map in enumerate(inst_maps):
         if graph_pred[idx] is None:
-            class_maps.append(class_pred[idx])
+            class_maps_list.append(class_pred[idx])
             print("problem with graph prediction")
         else:
             class_map = np.zeros_like(inst_map)
@@ -67,6 +67,6 @@ def get_class_map_from_graph(
                         )
                 else:
                     print("problem between graph and stardist")
-            class_maps.append(class_map)
-    class_maps = np.array(class_maps).astype("int32")
+            class_maps_list.append(class_map)
+    class_maps = np.array(class_maps_list).astype("int32")
     return class_maps

@@ -78,7 +78,7 @@ Args:
 
 Returns:
 
-    - class_maps (np.array): The class map.
+    - class_maps (np.ndarray): The class map.
 
 Raises:
 
@@ -91,13 +91,13 @@ The provided class map is used with the points to assign each entity in the segm
 
 Args:
 
-    - class_map (np.array): The class map.
-    - predicted_masks (np.array): The predicted masks.
-    - points (np.array): The points of the cells detected in the masks.
+    - class_map (np.ndarray): The class map.
+    - predicted_masks (np.ndarray): The predicted masks.
+    - points (np.ndarray): The points of the cells detected in the masks.
 
 Returns:
 
-    - improved_class_map (np.array): The improved class map.
+    - improved_class_map (np.ndarray): The improved class map.
 
 Raises:
 
@@ -133,8 +133,8 @@ Add a batch of instance map data to the metric tool.
 Args:
 
     - batch_idx (int): The batch index.
-    - true_masks (np.array): The true masks.
-    - pred_masks (np.array): The predicted masks.
+    - true_masks (np.ndarray): The true masks.
+    - pred_masks (np.ndarray): The predicted masks.
 
 Returns:
 
@@ -151,8 +151,8 @@ Add a batch of class map data to the metric tool. The class maps will be divided
 Args:
 
     - batch_idx (int): The batch index.
-    - true_class_map (np.array): The true class map.
-    - pred_class_map (np.array): The predicted class map.
+    - true_class_map (np.ndarray): The true class map.
+    - pred_class_map (np.ndarray): The predicted class map.
 
 Returns:
 
@@ -216,7 +216,7 @@ Raises:
     None.
 
 #### add_batch
-Add a batch of images to the report. All images are in np.array format, except for original images that are in torch.Tensor.
+Add a batch of images to the report. All images are in np.ndarray format, except for original images that are in torch.Tensor.
 
 Args:
 

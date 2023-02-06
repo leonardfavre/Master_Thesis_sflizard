@@ -9,11 +9,11 @@ from torch_geometric.data import Data
 from sflizard import Stardist
 
 
-def get_stardist_distances(inst_map: np.array, n_rays: int) -> torch.Tensor:
+def get_stardist_distances(inst_map: np.ndarray, n_rays: int) -> torch.Tensor:
     """Get the distances (rays) of stardist from an instance map.
 
     Args:
-        inst_map (np.array): annotation dictionary.
+        inst_map (np.ndarray): annotation dictionary.
         n_rays (int): number of rays.
 
     Returns:
@@ -24,11 +24,11 @@ def get_stardist_distances(inst_map: np.array, n_rays: int) -> torch.Tensor:
     return distances
 
 
-def get_stardist_obj_probabilities(inst_map: np.array) -> torch.Tensor:
+def get_stardist_obj_probabilities(inst_map: np.ndarray) -> torch.Tensor:
     """Get the object probabilities of stardist from an instance map.
 
     Args:
-        inst_map (np.array): instance map.
+        inst_map (np.ndarray): instance map.
 
     Returns:
         obj_probabilities (torch.Tensor): object probabilities.
@@ -39,14 +39,14 @@ def get_stardist_obj_probabilities(inst_map: np.array) -> torch.Tensor:
 
 
 def get_stardist_data(
-    inst_map: np.array, aditional_args: Optional[dict], class_map: np.array = None
+    inst_map: np.ndarray, aditional_args: Optional[dict], class_map: np.ndarray = None
 ) -> tuple:
     """Get the data for stardist.
 
     Args:
-        inst_map (np.array): instance map.
+        inst_map (np.ndarray): instance map.
         aditional_args (dict): additional arguments, must contain n_rays.
-        class_map (np.array): class map.
+        class_map (np.ndarray): class map.
 
     Returns:
         tuple: tuple containing:
@@ -97,11 +97,11 @@ def compute_stardist(
     return points, probs, dists
 
 
-def get_edge_list(vertex: np.array, distance: int) -> list:
+def get_edge_list(vertex: np.ndarray, distance: int) -> list:
     """Get the edge list from the vertex for each vertex closer than distance.
 
     Args:
-        vertex (np.array): vertex.
+        vertex (np.ndarray): vertex.
         distance (int): distance.
 
     Returns:
@@ -131,14 +131,14 @@ def get_edge_list(vertex: np.array, distance: int) -> list:
 
 
 def get_graph(
-    inst_map: np.array = None,
-    points: np.array = None,
-    predicted_classes: np.array = None,
-    true_class_map: np.array = None,
+    inst_map: np.ndarray = None,
+    points: np.ndarray = None,
+    predicted_classes: np.ndarray = None,
+    true_class_map: np.ndarray = None,
     n_rays: int = None,
     distance: int = 45,
     stardist_checkpoint: str = None,
-    image: np.array = None,
+    image: torch.Tensor = None,
     x_type: str = "4ll",
     consep_data: bool = False,
     hovernet_metric: bool = False,
@@ -174,7 +174,7 @@ def get_graph(
         n_rays (int): number of rays of stardist objects.
         distance (int): distance between two vertex to have an edge.
         stardist_checkpoint (str): path to stardist checkpoint.
-        image (np.ndarray): image.
+        image (torch.Tensor): image.
         x_type (str): type of x : ll or ll+c or ll+x or ll+c+x or 4ll or 4ll+c.
         consep_data (bool): if True, the data is from consep datset.
 
@@ -224,9 +224,10 @@ def get_graph(
                 graph["inst_map"], points = model_c.compute_star_label(
                     input, dist, prob, get_points=True
                 )
-                points = points[0]
+                if points is not None:
+                    points = points[0]
 
-        if points.shape[0] == 0:
+        if points is None or points.shape[0] == 0:
             graph["x"] = torch.Tensor([])
             return None
         else:
@@ -243,24 +244,25 @@ def get_graph(
                 model_ll = None
 
             # get stardist points
-            if "4" in x_type:
-                sp0 = get_stardist_point_for_graph(
-                    image, model_ll, model_c, points, x_type=x_type
-                )
-                sp1 = get_stardist_point_for_graph(
-                    image, model_ll, model_c, points, x_type=x_type, rotate=90
-                )
-                sp2 = get_stardist_point_for_graph(
-                    image, model_ll, model_c, points, x_type=x_type, rotate=180
-                )
-                sp3 = get_stardist_point_for_graph(
-                    image, model_ll, model_c, points, x_type=x_type, rotate=270
-                )
-                stardist_points = torch.cat((sp0, sp1, sp2, sp3), dim=1)
-            else:
-                stardist_points = get_stardist_point_for_graph(
-                    image, model_ll, model_c, points, x_type=x_type
-                )
+            if image is not None:
+                if "4" in x_type:
+                    sp0 = get_stardist_point_for_graph(
+                        image, model_ll, model_c, points, x_type=x_type
+                    )
+                    sp1 = get_stardist_point_for_graph(
+                        image, model_ll, model_c, points, x_type=x_type, rotate=90
+                    )
+                    sp2 = get_stardist_point_for_graph(
+                        image, model_ll, model_c, points, x_type=x_type, rotate=180
+                    )
+                    sp3 = get_stardist_point_for_graph(
+                        image, model_ll, model_c, points, x_type=x_type, rotate=270
+                    )
+                    stardist_points = torch.cat((sp0, sp1, sp2, sp3), dim=1)
+                else:
+                    stardist_points = get_stardist_point_for_graph(
+                        image, model_ll, model_c, points, x_type=x_type
+                    )
 
             # set x for graph
             graph["x"] = stardist_points.detach().cpu()
@@ -279,53 +281,58 @@ def get_graph(
         #
         # get points with target
         y = []
-        for i in range(points.shape[0]):
-            if type(points[i, 0]) == np.int64:
-                yi = true_class_map[points[i, 0], points[i, 1]]
-            else:
-                # get the 4 nearest points in the class map
-                # dataset input centroid: 1, 0
-                yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
-                yi2 = int(true_class_map[math.ceil(points[i, 1]), int(points[i, 0])])
-                yi3 = int(true_class_map[int(points[i, 1]), math.ceil(points[i, 0])])
-                yi4 = int(
-                    true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])]
-                )
-                # if all 4 points have the same class
-                if (yi1 == yi2) & (yi2 == yi3) & (yi3 == yi4):
-                    yi = yi1
-                # if not, take the most common class
+        if points is not None:
+            for i in range(points.shape[0]):
+                if type(points[i, 0]) == np.int64:
+                    yi = true_class_map[points[i, 0], points[i, 1]]
                 else:
-                    possible_y = [yi1, yi2, yi3, yi4]
-                    # remove 0
-                    possible_y = [x for x in possible_y if x != 0]
-                    yi = max(set(possible_y), key=possible_y.count)
-            if consep_data:
-                if (yi == 3) or (yi == 4):
-                    yi = 3
-                elif (yi == 5) | (yi == 6) | (yi == 7):
-                    yi = 4
-            y.append(yi)
+                    # get the 4 nearest points in the class map
+                    # dataset input centroid: 1, 0
+                    yi1 = int(true_class_map[int(points[i, 1]), int(points[i, 0])])
+                    yi2 = int(
+                        true_class_map[math.ceil(points[i, 1]), int(points[i, 0])]
+                    )
+                    yi3 = int(
+                        true_class_map[int(points[i, 1]), math.ceil(points[i, 0])]
+                    )
+                    yi4 = int(
+                        true_class_map[math.ceil(points[i, 1]), math.ceil(points[i, 0])]
+                    )
+                    # if all 4 points have the same class
+                    if (yi1 == yi2) & (yi2 == yi3) & (yi3 == yi4):
+                        yi = yi1
+                    # if not, take the most common class
+                    else:
+                        possible_y = [yi1, yi2, yi3, yi4]
+                        # remove 0
+                        possible_y = [x for x in possible_y if x != 0]
+                        yi = max(set(possible_y), key=possible_y.count)
+                if consep_data:
+                    if (yi == 3) or (yi == 4):
+                        yi = 3
+                    elif (yi == 5) | (yi == 6) | (yi == 7):
+                        yi = 4
+                y.append(yi)
         graph["y"] = torch.Tensor(y)
 
     return graph
 
 
 def get_stardist_point_for_graph(
-    image: np.array,
-    model_ll: torch.nn.Module,
+    image: torch.Tensor,
+    model_ll: Union[torch.nn.Module, None],
     model_c: torch.nn.Module,
-    points: np.array,
+    points: np.ndarray,
     x_type: str = "ll",
     rotate: int = 0,
 ) -> torch.Tensor:
     """Get the node feature vector from stardist for graph creation.
 
     Args:
-        image (np.array): image
+        image (torch.Tensor): image
         model_ll (torch.nn.Module): model for last layer
         model_c (torch.nn.Module): model for complete network
-        points (np.array): points
+        points (np.ndarray): points
         x_type (str): type of node feature vector. Defaults to "ll".
         rotate (int): rotation of image. Defaults to 0.
 
@@ -339,7 +346,7 @@ def get_stardist_point_for_graph(
     if rotate != 0:
         input = torch.rot90(input, rotate // 90, [2, 3])
     with torch.no_grad():
-        if "ll" in x_type:
+        if "ll" in x_type and model_ll is not None:
             ll = model_ll(input)[0]
         if "c" in x_type:
             c = model_c(input)[2]
@@ -351,7 +358,7 @@ def get_stardist_point_for_graph(
 
     stardist_points = []
     for i in range(points.shape[0]):
-        if "ll" in x_type:
+        if "ll" in x_type and model_ll is not None:
             lli = torch.select(
                 torch.select(ll[0], dim=1, index=points[i, 0]),
                 dim=1,
@@ -368,7 +375,7 @@ def get_stardist_point_for_graph(
 
         # concat everything together
         sp = torch.Tensor([]).to("cuda")
-        if "ll" in x_type:
+        if "ll" in x_type and model_ll is not None:
             sp = torch.cat((sp, lli))
         if "c" in x_type:
             sp = torch.cat((sp, ci))

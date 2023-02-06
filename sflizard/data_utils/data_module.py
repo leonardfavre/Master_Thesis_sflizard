@@ -255,7 +255,7 @@ class LizardDataModule(pl.LightningDataModule):
             self.aditional_args,
         )
 
-    def train_dataloader(self) -> DataLoader:
+    def train_dataloader(self) -> Union[None, DataLoader]:  # type: ignore
         """Return the training dataloader.
 
         Args:
@@ -269,7 +269,7 @@ class LizardDataModule(pl.LightningDataModule):
         """
         if self.train_data is None:
             return None
-        return DataLoader(self.train_ds, **self.dataloader_arguments)
+        return DataLoader(self.train_ds, **self.dataloader_arguments)  # type: ignore
 
     def val_dataloader(self) -> DataLoader:
         """Return the validation dataloader.
@@ -283,7 +283,7 @@ class LizardDataModule(pl.LightningDataModule):
         Raises:
             None.
         """
-        return DataLoader(self.valid_ds, **self.dataloader_arguments)
+        return DataLoader(self.valid_ds, **self.dataloader_arguments)  # type: ignore
 
     def test_dataloader(self) -> DataLoader:
         """Return the test dataloader.
@@ -297,4 +297,4 @@ class LizardDataModule(pl.LightningDataModule):
         Raises:
             None.
         """
-        return DataLoader(self.test_ds, **self.dataloader_arguments)
+        return DataLoader(self.test_ds, **self.dataloader_arguments)  # type: ignore

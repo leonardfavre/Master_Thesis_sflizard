@@ -103,10 +103,10 @@ class HoverNetMetricTool:
         # get the dataloader
         if mode == "test":
             print("-- test mode")
-            self.dataloader = dm.val_dataloader()
+            self.dataloader = dm.val_dataloader()  # type: ignore
         elif mode == "valid":
             print("-- validation mode")
-            self.dataloader = dm.train_dataloader()
+            self.dataloader = dm.train_dataloader()  # type: ignore
         print("Data loaded.")
 
         if not quick_run:

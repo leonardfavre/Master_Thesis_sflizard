@@ -19,7 +19,7 @@ class LizardGraphDataset(Dataset):
         transform=None,
         pre_transform=None,
         df: pd.DataFrame = pd.DataFrame(),
-        data: np.ndarray = np.array([]),
+        data: np.ndarray = np.ndarray([]),
         name: str = "",
         n_rays: int = 32,
         distance: int = 45,

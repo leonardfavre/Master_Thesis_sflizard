@@ -172,21 +172,21 @@ class UNetStar(nn.Module):
 
     def compute_star_label(
         self,
-        image: np.array,
+        image: np.ndarray,
         dist: torch.Tensor,
         prob: torch.Tensor,
         get_points: bool = False,
-    ) -> Union[np.array, Tuple[np.array, list]]:
+    ) -> Union[np.ndarray, Tuple[np.ndarray, list]]:
         """Compute the star label of images according dist and prob.
 
         Args:
-            image (np.array): The image.
+            image (np.ndarray): The image.
             dist (torch.Tensor): The distances map.
             prob (torch.Tensor): The probabilities map.
             get_points (bool, optional): If True, the points are returned. Defaults to False.
 
         Returns:
-            star_labels (np.array): The star label.
+            star_labels (np.ndarray): The star label.
 
         Raises:
             None.

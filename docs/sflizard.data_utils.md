@@ -26,7 +26,7 @@ Args:
 
 Returns:
 
-    - class_color (list): List of the color used for each cells and background.
+    - class_color (np.ndarray): List of the color used for each cells and background.
 
 Raises:
 
@@ -144,7 +144,7 @@ Iterate over the image in each 2 first dimension to extract all possible patches
 
 Args:
 
-    - array (np.array): array to be patched.
+    - array (np.ndarray): array to be patched.
     - array_name (str): name of the array.
     - patch_size (int): size of the patches.
     - patch_step (int): step between patches.
@@ -330,7 +330,7 @@ Get the edge list from the vertex for each vertex closer than distance. The dist
 
 Args:
 
-    - vertex (np.array): vertex.
+    - vertex (np.ndarray): vertex.
     - distance (int): distance.
 
 Returns:
@@ -382,7 +382,7 @@ Args:
     - n_rays (int): number of rays of stardist objects. Default to None.
     - distance (int): distance between two vertex to have an edge. Default to 45.
     - stardist_checkpoint (str): path to stardist checkpoint.
-    - image (np.ndarray): image. Default to None.
+    - image (torch.Tensor): image. Default to None.
     - x_type (str): type of x : ll or ll+c or ll+x or ll+c+x or 4ll or 4ll+c. Default to "4ll".
     - consep_data (bool): if True, the data is from consep datset. Default to False.
 
@@ -421,9 +421,9 @@ Uses the instance map to get distances and obj_probability. The class map is the
 
 Args:
 
-    - inst_map (np.array): instance map.
+    - inst_map (np.ndarray): instance map.
     - aditional_args (dict): additional arguments, must contain n_rays.
-    - class_map (np.array): class map. Default to None.
+    - class_map (np.ndarray): class map. Default to None.
 
 Returns:
 
@@ -443,7 +443,7 @@ The distances are retrieved using the `star_dist` function from Stardist library
 
 Args:
 
-    - inst_map (np.array): annotation dictionary.
+    - inst_map (np.ndarray): annotation dictionary.
     - n_rays (int): number of rays.
 
 Returns:
@@ -457,7 +457,7 @@ The object probabilities are retrieved using the `edt_prob` function from Stardi
 
 Args:
 
-    - inst_map (np.array): instance map.
+    - inst_map (np.ndarray): instance map.
 
 Returns:
 
@@ -471,10 +471,10 @@ Node features that can be extracted are "x", "c" and "ll". Possible node feature
 
 Args:
 
-    - image (np.array): image
+    - image (torch.Tensor): image
     - model_ll (torch.nn.Module): model for last layer
     - model_c (torch.nn.Module): model for complete network
-    - points (np.array): points
+    - points (np.ndarray): points
     - x_type (str): type of node feature vector. Defaults to “ll”.
     - rotate (int): rotation of image. Defaults to 0.
 

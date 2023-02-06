@@ -24,14 +24,14 @@ def get_class_name() -> dict:
     return class_name
 
 
-def get_class_color() -> list:
+def get_class_color() -> np.ndarray:
     """Get the color to use for plotting for the background and the cells from the yaml file.
 
     Args:
         None.
 
     Returns:
-        class_color (list): List of the color used for each cells and background.
+        class_color (np.ndarray): List of the color used for each cells and background.
 
     Raises:
         None.

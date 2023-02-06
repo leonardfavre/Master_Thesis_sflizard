@@ -351,7 +351,7 @@ class TestPipeline:
                     pred_class_map,
                     pred_class_map_improved,
                     graphs,
-                    graphs_class_map[list(graphs_class_map.keys())[0]]
+                    graphs_class_map[list(graphs_class_map.keys())[0]]  # type: ignore
                     if self.compute_graph
                     else None,
                 )

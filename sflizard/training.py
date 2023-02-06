@@ -276,9 +276,9 @@ def full_training(args: argparse.Namespace) -> None:
     )
 
     if "stardist" in args.model:
-        dm, model, callbacks = init_stardist_training(args, device)
+        dm, model, callbacks = init_stardist_training(args, device)  # type: ignore
     elif "graph" in args.model:
-        dm, model, callbacks = init_graph_training(args)
+        dm, model, callbacks = init_graph_training(args)  # type: ignore
     else:
         raise ValueError("Model not implemented.")
 
