@@ -1,0 +1,182 @@
+Starting test
+loss_cb/final2-stardist_class-0.0losspower_0.0005lr-noaug_nopower-loss-epoch=73-val_loss=1.61.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.5587 │
+│      recall      │ 0.7460 │
+│       acc        │ 0.4694 │
+│        f1        │ 0.6389 │
+│ panoptic_quality │ 0.4458 │
+└──────────────────┴────────┘
+                  Classification metrics                   
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃        macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9153741002082825 │ 0.5306864976882935  │
+│      F1      │ 0.9153741002082825 │ 0.48285356163978577 │
+└──────────────┴────────────────────┴─────────────────────┘
+
+loss_cb/final2-nopower-stardist_class-0.0losspower_0.0005lr-noaug-loss-epoch=199-val_loss=1.53.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.6543 │
+│      recall      │ 0.7787 │
+│       acc        │ 0.5517 │
+│        f1        │ 0.7111 │
+│ panoptic_quality │ 0.5237 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9320930242538452 │ 0.5830304026603699 │
+│      F1      │ 0.9320930242538452 │ 0.5456793308258057 │
+└──────────────┴────────────────────┴────────────────────┘
+
+
+final2_stardist_nopower-noaug_200epochs_0.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.6543 │
+│      recall      │ 0.7787 │
+│       acc        │ 0.5517 │
+│        f1        │ 0.7111 │
+│ panoptic_quality │ 0.5237 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9320930242538452 │ 0.5830304026603699 │
+│      F1      │ 0.9320930242538452 │ 0.5456793308258057 │
+└──────────────┴────────────────────┴────────────────────┘
+
+
+loss_cb/final2-stardist_class-1.0losspower_0.0005lr-noaug-loss-epoch=72-val_loss=3.68.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.7337 │
+│      recall      │ 0.7925 │
+│       acc        │ 0.6155 │
+│        f1        │ 0.7620 │
+│ panoptic_quality │ 0.5811 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9343711733818054 │ 0.5365903377532959 │
+│      F1      │ 0.9343711733818054 │ 0.5319538712501526 │
+└──────────────┴────────────────────┴────────────────────┘
+
+loss_cb/final2-stardist_class-1.0losspower_0.0005lr-noaug-loss-epoch=135-val_loss=3.53.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.7638 │
+│      recall      │ 0.8307 │
+│       acc        │ 0.6609 │
+│        f1        │ 0.7958 │
+│ panoptic_quality │ 0.6169 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9400621652603149 │ 0.5919512510299683 │
+│      F1      │ 0.9400621652603149 │ 0.5628275275230408 │
+└──────────────┴────────────────────┴────────────────────┘
+
+final2_stardist_noaug_200epochs_1.0losspower_0.0005lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.7739 │
+│      recall      │ 0.8255 │
+│       acc        │ 0.6651 │
+│        f1        │ 0.7989 │
+│ panoptic_quality │ 0.6228 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9419271349906921 │ 0.5979198813438416 │
+│      F1      │ 0.9419271349906921 │ 0.5807316303253174 │
+└──────────────┴────────────────────┴────────────────────┘

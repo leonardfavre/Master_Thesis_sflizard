@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install needed packages (black, flake8, mypy, bandit)
         run: |
@@ -46,10 +46,11 @@ jobs:
         with:
           submodules: true
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
+
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install nbmake pytest-cov
         run: pip install nbmake==1.2 pytest-cov==3.0.0

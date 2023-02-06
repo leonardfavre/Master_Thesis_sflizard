@@ -1,0 +1,63 @@
+Starting test
+loss_cb/final3-stardist_class-1.0losspower_0.001lr-crop-cosine-loss-epoch=186-val_loss=3.42.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+validation mode
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.7963 │
+│      recall      │ 0.8322 │
+│       acc        │ 0.6861 │
+│        f1        │ 0.8138 │
+│ panoptic_quality │ 0.6330 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9429846405982971 │ 0.6145728826522827 │
+│      F1      │ 0.9429846405982971 │ 0.5856277942657471 │
+└──────────────┴────────────────────┴────────────────────┘
+
+final3_stardist_crop-cosine_200epochs_1.0losspower_0.001lr.ckpt
+Testing pipeline...
+Using device: cuda
+Loading data...
+validation mode
+Data loaded.
+Loading stardist model...
+Stardist model loaded.
+Testing...
+Test done.
+
+Results:
+
+    Segmentation metrics     
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃      Metric      ┃ Value  ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│    precision     │ 0.8014 │
+│      recall      │ 0.8296 │
+│       acc        │ 0.6882 │
+│        f1        │ 0.8153 │
+│ panoptic_quality │ 0.6348 │
+└──────────────────┴────────┘
+                  Classification metrics                  
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ metric \ avg ┃       micro        ┃       macro        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│   Accuracy   │ 0.9434759020805359 │ 0.6209056973457336 │
+│      F1      │ 0.9434759020805359 │ 0.5938237905502319 │
+└──────────────┴────────────────────┴────────────────────┘
+

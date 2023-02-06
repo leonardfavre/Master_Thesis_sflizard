@@ -26,4 +26,4 @@ force-exclude = '''
 allow_redefinition = "True"
 ignore_missing_imports = "True"
 show_error_codes = "True"
-exclude = "tests/segmentation/conftest.py"
+exclude = 'external_models/hover_net'
