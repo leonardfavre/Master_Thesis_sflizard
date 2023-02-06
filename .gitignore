@@ -133,6 +133,4 @@ logs/
 checkpoints/
 lightning_logs/
 
-*.ckpt
-*.tar
 

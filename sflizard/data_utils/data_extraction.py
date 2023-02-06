@@ -127,12 +127,12 @@ def extract_image_patches(image_file: str, patch_size: int, patch_step: int) -> 
 
 
 def extract_patches(
-    array: np.array, array_name: str, patch_size: int, patch_step: int
+    array: np.ndarray, array_name: str, patch_size: int, patch_step: int
 ) -> dict:
     """Extract patches from an image or an instance map.
 
     Args:
-        array (np.array): array to be patched.
+        array (np.ndarray): array to be patched.
         array_name (str): name of the array.
         patch_size (int): size of the patches.
         patch_step (int): step between patches.
@@ -496,7 +496,7 @@ if __name__ == "__main__":
         "-of",
         "--output_base_name",
         type=str,
-        help="path for the output file (must end in .pkl).",
+        help="Path for the output file (must end in .pkl).",
         default=OUTPUT_BASE_NAME,
     )
     parser.add_argument(
@@ -516,12 +516,14 @@ if __name__ == "__main__":
 
     # arguments for patches extraction
     parser.add_argument(
+        "-psi",
         "--patch_size",
         type=int,
         default=PATCH_SIZE,
         help="Size of the window to extract patches from the images.",
     )
     parser.add_argument(
+        "-spt",
         "--patch_step",
         type=int,
         default=PATCH_STEP,

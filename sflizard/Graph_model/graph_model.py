@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pytorch_lightning as pl
 import torch
@@ -144,13 +144,13 @@ class Graph(pl.LightningModule):
     def __init__(
         self,
         model: str = "graph_gat",
-        learning_rate: float = 0.01,
+        learning_rate: float = 0.001,
         num_features: int = 33,
         num_classes: int = 7,
         seed: int = 303,
-        max_epochs: int = 20,
+        max_epochs: int = 200,
         dim_h: int = 32,
-        num_layers: int = 0,
+        num_layers: int = 1,
         heads: int = 1,
         class_weights: List[float] = [
             0,
@@ -264,12 +264,12 @@ class Graph(pl.LightningModule):
         )
 
         if class_weights is not None:
-            class_weights = torch.tensor(class_weights).to("cuda")
-            self.loss = nn.CrossEntropyLoss(weight=class_weights)
+            class_w = torch.tensor(class_weights).to("cuda")
+            self.loss = nn.CrossEntropyLoss(weight=class_w)
         else:
             self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> Any:  # type: ignore
         """Forward pass.
 
         Args:
@@ -303,10 +303,10 @@ class Graph(pl.LightningModule):
         Raises:
             ValueError: If the name is not train or val.
         """
-        x, edge_index = batch.x, batch.edge_index
-        label = batch.y
+        x, edge_index = batch.x, batch.edge_index  # type: ignore
+        label = batch.y  # type: ignore
         label = label.long()
-        logger_batch_size = len(batch.y)
+        logger_batch_size = len(batch.y)  # type: ignore
 
         outputs = self.model(x, edge_index)
         loss = self.loss(outputs, label)
@@ -346,7 +346,7 @@ class Graph(pl.LightningModule):
 
         return loss
 
-    def training_step(
+    def training_step(  # type: ignore
         self,
         batch: torch.Tensor,
         batch_idx: int,
@@ -365,7 +365,7 @@ class Graph(pl.LightningModule):
         """
         return self._step(batch, batch_idx, "train")
 
-    def validation_step(
+    def validation_step(  # type: ignore
         self,
         batch: torch.Tensor,
         batch_idx: int,
@@ -410,7 +410,7 @@ class Graph(pl.LightningModule):
         else:
             raise ValueError(f"Invalid step name given: {name}")
 
-    def training_epoch_end(self, outputs: List[torch.Tensor]) -> None:
+    def training_epoch_end(self, outputs: List[torch.Tensor]) -> None:  # type: ignore
         """Training epoch end.
 
         Args:
@@ -424,7 +424,7 @@ class Graph(pl.LightningModule):
         """
         self._epoch_end(outputs, "train")
 
-    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:
+    def validation_epoch_end(self, outputs: List[torch.Tensor]) -> None:  # type: ignore
         """Validation epoch end.
 
         Args:

@@ -54,21 +54,25 @@ WEIGHTS_PATH = {
     # "mod1-b-0.5-test": "models/graph_custom-1024-4-4ll-45-0.5-0-0-3-16-wide-0.0005-acc-epoch=72-val_acc=0.7726.ckpt",
 }
 
+MODE = "test"
+DISTANCE = 45
+X_TYPE = "4ll"
+
 if __name__ == "__main__":
 
     if not TEST_MODE:
         hmt = HoverNetMetricTool(
-            mode="test",
+            mode=MODE,
             weights_selector=WEIGHTS_SELECTOR,
-            distance=45,
-            x_type="4ll",
+            distance=DISTANCE,
+            x_type=X_TYPE,
         )
 
     else:
         hmt = HoverNetMetricTool(
-            mode="test",
+            mode=MODE,
             weights_selector={},
-            distance=45,
-            x_type="4ll",
+            distance=DISTANCE,
+            x_type=X_TYPE,
             paths=WEIGHTS_PATH,
         )

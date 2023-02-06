@@ -30,6 +30,7 @@ class ReportGenerator:
             output_dir (str): The output directory.
             imgs_to_display (int): The number of images to display.
             n_classes (int): The number of classes.
+            console (Console): The console.
 
         Returns:
             None.
@@ -72,11 +73,11 @@ class ReportGenerator:
     def add_batch(
         self,
         images: list,
-        true_masks: list,
-        pred_masks: list,
-        true_class_map: list = None,
-        pred_class_map: list = None,
-        pred_class_map_improved: list = None,
+        true_masks: Union[np.ndarray, list],
+        pred_masks: Union[np.ndarray, list],
+        true_class_map: Union[np.ndarray, list, None] = None,
+        pred_class_map: Union[np.ndarray, list, None] = None,
+        pred_class_map_improved: Union[np.ndarray, list, None] = None,
         graphs: list = None,
         graphs_class_map: list = None,
     ) -> None:
@@ -484,16 +485,16 @@ class ReportGenerator:
     def _draw_graph(
         self,
         graph: dict,
-        class_map: np.array,
-    ) -> np.array:
+        class_map: np.ndarray,
+    ) -> np.ndarray:
         """Draw graph on class map.
 
         Args:
             graph (dict): graph to draw.
-            class_map (np.array): class map.
+            class_map (np.ndarray): class map.
 
         Returns:
-            img (np.array): class map with graph drawn.
+            img (np.ndarray): class map with graph drawn.
 
         Raises:
             None.

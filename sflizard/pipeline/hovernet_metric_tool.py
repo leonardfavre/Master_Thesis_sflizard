@@ -26,7 +26,7 @@ TEST_DROPOUT = True
 
 
 class HoverNetMetricTool:
-    """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool."""
+    """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_stats tool."""
 
     def __init__(
         self,
@@ -38,16 +38,17 @@ class HoverNetMetricTool:
             "heads": [],
         },
         distance: int = 45,
-        x_type: str = "ll+c",
+        x_type: str = "4ll",
         paths: dict = {},
     ) -> None:
-        """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_metric tool.
+        """Tool to evaluate the performance of Graph model on the Lizard dataset using hovernet compute_stats tool.
 
         Args:
             mode (str): "valid" or "test" depending on the dataset to use.
             weights_selector (dict): dict of list of model, dimh, num_layers and heads to test.
             distance (int): distance used in creation of graph.
             x_type (str): type of node feature vector.
+            paths (dict): dict of paths to the model checkpoints to test.
 
         Returns:
             None.
@@ -71,7 +72,7 @@ class HoverNetMetricTool:
             Path(self.log_file).touch(exist_ok=True)
 
             # result table to store results for easier analysis
-            self.init_result_table(weights_selector)
+            self.__init_result_table(weights_selector)
         else:
             self.base_save_path = "output/graph/manual"
             Path(self.base_save_path).mkdir(parents=True, exist_ok=True)
@@ -102,16 +103,16 @@ class HoverNetMetricTool:
         # get the dataloader
         if mode == "test":
             print("-- test mode")
-            self.dataloader = dm.val_dataloader()
+            self.dataloader = dm.val_dataloader()  # type: ignore
         elif mode == "valid":
             print("-- validation mode")
-            self.dataloader = dm.train_dataloader()
+            self.dataloader = dm.train_dataloader()  # type: ignore
         print("Data loaded.")
 
         if not quick_run:
             # get the checkpoints
             print("\nGetting checkpoints...")
-            weights_paths = self.get_weights_path(weights_selector)
+            weights_paths = self.__get_weights_path(weights_selector)
             print(f"Checkpoints found: {len(weights_paths)}")
             for wp in weights_paths:
                 print(f" -- {wp}")
@@ -131,16 +132,16 @@ class HoverNetMetricTool:
             print(f"\n -- {wp}...")
             try:
                 # load graph model
-                graph_model = self.init_graph_inference(weights_paths[wp])
+                graph_model = self.__init_graph_inference(weights_paths[wp])
                 # run the inference on data
-                self.save_mat(graph_model, wp)
+                self.__save_mat(graph_model, wp)
                 # run the hovernet metric tool
-                result = self.run_hovernet_metric_tool(wp)
+                result = self.__run_hovernet_metric_tool(wp)
                 print(f"{result}...done.\n")
                 if not quick_run:
-                    self.save_result_in_table(wp, result)
+                    self.__save_result_in_table(wp, result)
                     # clean the folder
-                    self.clean_folder(wp)
+                    self.__clean_folder(wp)
                     with self.log_file.open("a") as f:  # type: ignore
                         f.write(f"\n{wp}: {result}")  # type: ignore
 
@@ -176,11 +177,11 @@ class HoverNetMetricTool:
 
         # save the result table
         if not quick_run:
-            self.save_result_to_file()
+            self.__save_result_to_file()
 
         print("\nAll done.")
 
-    def init_graph_inference(self, weights_path: str) -> torch.nn.Module:
+    def __init_graph_inference(self, weights_path: str) -> torch.nn.Module:
         """Initialize the graph model for inference.
 
         Args:
@@ -201,7 +202,7 @@ class HoverNetMetricTool:
         print("Graph model loaded.")
         return graph
 
-    def get_weights_path(self, weights_selector: dict) -> dict:
+    def __get_weights_path(self, weights_selector: dict) -> dict:
         """Looks for the weights path for each model available and return the one that matches the selection.
 
         Args:
@@ -276,7 +277,7 @@ class HoverNetMetricTool:
                                 weights_path = save_path(checkpoint, wp, weights_path)
         return weights_path
 
-    def save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
+    def __save_mat(self, graph_model: torch.nn.Module, save_folder: str) -> None:
         """Run the inference on the test data and save the results in a .mat file.
 
         Args:
@@ -327,7 +328,7 @@ class HoverNetMetricTool:
                 # save the results
                 sio.savemat(f"{save_path}{batch[b].image_idx}.mat", mat)
 
-    def run_hovernet_metric_tool(self, save_folder: str) -> str:
+    def __run_hovernet_metric_tool(self, save_folder: str) -> str:
         """Run the hovernet metric tool to compute the metrics.
 
         Args:
@@ -346,7 +347,7 @@ class HoverNetMetricTool:
         result = ret.stdout.decode()
         return result
 
-    def clean_folder(self, save_folder: str) -> None:
+    def __clean_folder(self, save_folder: str) -> None:
         """Clean the folder with the results to save disk space.
 
         Args:
@@ -361,7 +362,7 @@ class HoverNetMetricTool:
         save_path = self.base_save_path + f"/{save_folder}/"
         shutil.rmtree(save_path)
 
-    def init_result_table(self, weights_selector: dict) -> None:
+    def __init_result_table(self, weights_selector: dict) -> None:
         """Initialize the result table to save the results.
 
         Args:
@@ -400,7 +401,7 @@ class HoverNetMetricTool:
         self.result_file = Path(self.base_save_path) / "result_table.pkl"
         Path(self.result_file).touch(exist_ok=True)
 
-    def save_result_in_table(self, save_folder: str, result: str) -> None:
+    def __save_result_in_table(self, save_folder: str, result: str) -> None:
         """Save the result of a model in the result table.
 
         Args:
@@ -449,7 +450,7 @@ class HoverNetMetricTool:
             ckpt = selector[3]
             self.result_table[model][ckpt][dimh][num_layers] = result
 
-    def save_result_to_file(self) -> None:
+    def __save_result_to_file(self) -> None:
         """Save the result table to a file in a good format to use later.
 
         Args:

@@ -17,8 +17,6 @@ from sflizard import (
     get_class_map_from_graph,
     get_graph_for_inference,
     improve_class_map,
-    merge_stardist_class_together,
-    rotate_and_pred,
 )
 
 X_TYPE = {
@@ -29,7 +27,6 @@ X_TYPE = {
     540: "4ll+c",
     548: "4ll+c+x",
 }
-STAR_4_IMPROVEMENT = False
 
 
 class TestPipeline:
@@ -275,13 +272,6 @@ class TestPipeline:
                 inputs, dist, prob, get_points=True
             )
 
-            # 4 times stardist to improve mask
-            if STAR_4_IMPROVEMENT:
-                # rotate input
-                pred_90_mask, clas_90 = rotate_and_pred(self.stardist, inputs, 1)
-                pred_180_mask, clas_180 = rotate_and_pred(self.stardist, inputs, 2)
-                pred_270_mask, clas_270 = rotate_and_pred(self.stardist, inputs, 3)
-
             # stardist class mask
             if self.classification:
 
@@ -304,16 +294,6 @@ class TestPipeline:
                 pred_class_map_improved, pred_class_map = get_class_pred(
                     clas, pred_mask
                 )
-                if STAR_4_IMPROVEMENT:
-                    class_pred_90, _ = get_class_pred(clas_90, pred_90_mask)
-                    class_pred_180, _ = get_class_pred(clas_180, pred_180_mask)
-                    class_pred_270, _ = get_class_pred(clas_270, pred_270_mask)
-                    pred_class_map_improved = merge_stardist_class_together(
-                        pred_class_map_improved,
-                        class_pred_90,
-                        class_pred_180,
-                        class_pred_270,
-                    )
             else:
                 pred_class_map_improved = None
 
@@ -371,7 +351,7 @@ class TestPipeline:
                     pred_class_map,
                     pred_class_map_improved,
                     graphs,
-                    graphs_class_map[list(graphs_class_map.keys())[0]]
+                    graphs_class_map[list(graphs_class_map.keys())[0]]  # type: ignore
                     if self.compute_graph
                     else None,
                 )

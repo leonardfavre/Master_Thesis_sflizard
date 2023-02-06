@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import numpy as np
 from rich.console import Console
@@ -35,23 +35,23 @@ class SegmentationMetricTool:
         self.seg_metrics: Dict[int, Any] = {}
 
         # init data holders
-        self.true_masks = None
-        self.predicted_masks = None
+        self.true_masks: Union[np.ndarray, None] = None
+        self.predicted_masks: Union[np.ndarray, None] = None
         self.true_class_map: Dict[int, Any] = {}
         self.pred_class_map: Dict[int, Any] = {}
 
     def add_batch(
         self,
         batch_idx: int,
-        true_masks: np.array,
-        pred_masks: np.array,
+        true_masks: np.ndarray,
+        pred_masks: np.ndarray,
     ) -> None:
         """Add a batch to the metric tool.
 
         Args:
             batch_idx (int): The batch index.
-            true_masks (np.array): The true masks.
-            pred_masks (np.array): The predicted masks.
+            true_masks (np.ndarray): The true masks.
+            pred_masks (np.ndarray): The predicted masks.
 
         Returns:
             None.
@@ -80,15 +80,15 @@ class SegmentationMetricTool:
     def add_batch_class(
         self,
         batch_idx: int,
-        true_class_map: np.array,
-        pred_class_map: np.array,
+        true_class_map: np.ndarray,
+        pred_class_map: np.ndarray,
     ) -> None:
         """Add a batch to the metric tool.
 
         Args:
             batch_idx (int): The batch index.
-            true_class_map (np.array): The true class map.
-            pred_class_map (np.array): The predicted class map.
+            true_class_map (np.ndarray): The true class map.
+            pred_class_map (np.ndarray): The predicted class map.
 
         Returns:
             None.
@@ -133,19 +133,19 @@ class SegmentationMetricTool:
                 self.true_masks, self.predicted_masks, show_progress=True, parallel=True
             )
 
-        # compute metrics for each class
-        for i in range(1, self.n_classes):
-            self.console.print(
-                f"Computing class {get_class_name()[i]} segmentation metrics..."
-            )
             # compute metrics for each class
-            tm = np.copy(self.true_masks)
-            tm[self.true_class_map[i] == 0] = 0
-            pm = np.copy(self.predicted_masks)
-            pm[self.pred_class_map[i] == 0] = 0
-            self.seg_metrics[i] = matching_dataset(
-                tm, pm, show_progress=True, parallel=True
-            )
+            for i in range(1, self.n_classes):
+                self.console.print(
+                    f"Computing class {get_class_name()[i]} segmentation metrics..."
+                )
+                # compute metrics for each class
+                tm = np.copy(self.true_masks)
+                tm[self.true_class_map[i] == 0] = 0
+                pm = np.copy(self.predicted_masks)
+                pm[self.pred_class_map[i] == 0] = 0
+                self.seg_metrics[i] = matching_dataset(
+                    tm, pm, show_progress=True, parallel=True
+                )
 
     def log_results(self) -> None:
         """Log the results in rich tables.

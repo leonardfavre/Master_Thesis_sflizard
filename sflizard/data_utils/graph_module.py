@@ -19,12 +19,12 @@ class LizardGraphDataset(Dataset):
         transform=None,
         pre_transform=None,
         df: pd.DataFrame = pd.DataFrame(),
-        data: np.ndarray = np.array([]),
+        data: np.ndarray = np.ndarray([]),
         name: str = "",
         n_rays: int = 32,
         distance: int = 45,
         stardist_checkpoint: str = None,
-        x_type: str = "ll",  # ll: last_layer, c: classification, p: position, a:area
+        x_type: str = "4ll",  # ll: last_layer, c: classification, p: position, a:area
         root: str = "data/graph",
         consep_data: bool = False,
         light: bool = False,
