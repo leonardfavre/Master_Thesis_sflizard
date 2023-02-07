@@ -12,7 +12,7 @@ N_RAYS = 32
 N_CLASSES = 7
 BATCH_SIZE = 1
 SEED = 303
-OUTPUT_DIR = "./output/stardist_pipeline/final_result/"
+OUTPUT_DIR = "./output/stardist_pipeline/final_result_test/"
 IMGS_TO_DISPLAY = 30
 
 DISTANCE = 45

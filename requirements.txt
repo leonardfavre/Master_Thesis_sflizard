@@ -12,5 +12,5 @@ pytorch_lightning==1.7.7
 stardist==0.8.3
 pytorch-lightning-bolts==0.3.2
 ray==2.0.1
-
+seaborn==0.12.2
 # pip install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cu117.html

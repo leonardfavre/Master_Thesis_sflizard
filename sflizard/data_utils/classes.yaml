@@ -1,5 +1,6 @@
 classes_name:
   {
+    0: "Background",
     1: "Neutrophil",
     2: "Epithelial",
     3: "Lymphocyte",
