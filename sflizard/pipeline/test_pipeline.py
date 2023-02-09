@@ -190,7 +190,7 @@ class TestPipeline:
             num_classes=self.n_classes
         )
         self.star_confmat_norm = torchmetrics.classification.MulticlassConfusionMatrix(
-            num_classes=self.n_classes, normalize="true"
+            num_classes=self.n_classes, normalize="pred"
         )
 
     def __init_graph_inference(self) -> None:
@@ -225,7 +225,7 @@ class TestPipeline:
             self.graph_confmat_norm[
                 w
             ] = torchmetrics.classification.MulticlassConfusionMatrix(
-                num_classes=self.n_classes, normalize="true"
+                num_classes=self.n_classes, normalize="pred"
             )
         self.console.print("Graph model loaded.")
 
@@ -414,7 +414,7 @@ class TestPipeline:
         )
         log_confmat(
             self.star_confmat_norm.compute(),
-            "Stardist classification confusion matrix (normalized over targets)",
+            "Stardist classification confusion matrix (normalized over predicitions)",
             self.console,
         )
         if self.compute_graph:
@@ -429,7 +429,7 @@ class TestPipeline:
                 )
                 log_confmat(
                     self.graph_confmat_norm[g].compute(),
-                    "Graph classification confusion matrix (normalized over targets)",
+                    "Graph classification confusion matrix (normalized over predicitions)",
                     self.console,
                 )
 

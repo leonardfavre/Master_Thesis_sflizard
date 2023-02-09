@@ -32,6 +32,14 @@
 | mean_true_score |0.3775 |  0.5799 |  0.6516 |  0.6469 |  0.4594 |  0.5385 | 
 | mean_matched_score |0.7409 |  0.7651 |  0.8494 |  0.8352 |  0.6989 |  0.8105 | 
 | panoptic_quality |0.1372 |  0.6082 |  0.6675 |  0.4652 |  0.3129 |  0.5587 | 
+## Confusion Matrix
+
+![](images/Confusion_Matrix.png)
+
+## Confusion Matrix normalized
+
+![](images/Confusion_Matrix_normalized.png)
+
 ## Segmentation Metrics per class after graph improvement
 
 | Metric | Neutrophil | Epithelial | Lymphocyte | Plasma | Eosinophil | Connective tissue |
@@ -48,6 +56,14 @@
 | mean_true_score |0.3281 |  0.6206 |  0.6388 |  0.5769 |  0.4022 |  0.5600 | 
 | mean_matched_score |0.7466 |  0.7653 |  0.8513 |  0.8344 |  0.6937 |  0.8102 | 
 | panoptic_quality |0.1485 |  0.6173 |  0.6731 |  0.4678 |  0.3433 |  0.5774 | 
+## Confusion Matrix after graph improvement
+
+![](images/Confusion_Matrix_after_graph_improvement.png)
+
+## Confusion Matrix normalized after graph improvement
+
+![](images/Confusion_Matrix_normalized_after_graph_improvement.png)
+
 ## Images
 
 ### Image 1
