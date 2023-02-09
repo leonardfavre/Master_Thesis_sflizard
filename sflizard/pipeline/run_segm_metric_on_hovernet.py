@@ -95,6 +95,10 @@ report_generator.add_final_metrics(
     smt.seg_metrics[0],
     smt.seg_metrics,
     None,
+    None,
+    None,
+    None,
+    None,
 )
 
 report_generator.generate_md()
