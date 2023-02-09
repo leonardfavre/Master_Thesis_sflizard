@@ -22,6 +22,7 @@ from sflizard.Graph_model.graph_model import Graph  # noqa: F401
 from sflizard.pipeline.pipeline_utils import (  # noqa: F401
     improve_class_map,
     get_class_map_from_graph,
+    log_confmat,
 )
 from sflizard.pipeline.report import ReportGenerator  # noqa: F401
 from sflizard.pipeline.segmentation_metric_tool import (  # noqa: F401

@@ -103,6 +103,23 @@ Raises:
 
     None.
 
+### sflizard.pipeline.pipeline_utils.log_confmat
+Log the confusion matrix in the terminal.
+
+Args:
+    
+    - confmat (torch.Tensor): The confusion matrix.
+    - title (str): The title of the confusion matrix.
+    - console (Console): The console to log the confusion matrix.
+    
+Returns:
+
+    None.
+    
+Raises:
+
+    None.
+
 
 ## sflizard.pipeline.segmentation_metric_tool
 
@@ -247,6 +264,10 @@ Args:
     - segmentation_metric (dict): The segmentation metric.
     - segmentation_classification_metric (dict): The segmentation classification metric.
     - graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
+    - star_confmat (torch.Tensor): The stardist confusion matrix.
+    - star_confmat_norm (torch.Tensor): The normalized stardist confusion matrix.
+    - graph_confmat (torch.Tensor): The graph confusion matrix.
+    - graph_confmat_norm (torch.Tensor): The normalized graph confusion matrix.
 
 Returns:
 

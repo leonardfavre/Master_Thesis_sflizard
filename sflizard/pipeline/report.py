@@ -2,6 +2,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import numpy as np
+import pandas as pd
+import seaborn as sn
+import torch
 import torchvision.transforms as T
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -128,6 +131,10 @@ class ReportGenerator:
         segmentation_metric: Union[Dict[Any, Any], None],
         segmentation_classification_metric: Union[Dict[Any, Any], None],
         graph_segmentation_classification_metric: Union[Dict[Any, Any], None],
+        star_confmat: torch.Tensor,
+        star_confmat_norm: torch.Tensor,
+        graph_confmat: Union[torch.Tensor, None],
+        graph_confmat_norm: Union[torch.Tensor, None],
     ) -> None:
         """Add final metrics to the report.
 
@@ -135,6 +142,10 @@ class ReportGenerator:
             segmentation_metric (dict): The segmentation metric.
             segmentation_classification_metric (dict): The segmentation classification metric.
             graph_segmentation_classification_metric (dict): The graph segmentation classification metric.
+            star_confmat (torch.Tensor): The stardist confusion matrix.
+            star_confmat_norm (torch.Tensor): The normalized stardist confusion matrix.
+            graph_confmat (torch.Tensor): The graph confusion matrix.
+            graph_confmat_norm (torch.Tensor): The normalized graph confusion matrix.
 
         Returns:
             None.
@@ -147,6 +158,10 @@ class ReportGenerator:
         self.graph_segmentation_classification_metric = (
             graph_segmentation_classification_metric
         )
+        self.star_confmat = star_confmat
+        self.star_confmat_norm = star_confmat_norm
+        self.graph_confmat = graph_confmat
+        self.graph_confmat_norm = graph_confmat_norm
 
     def generate_md(self) -> None:
         """Generate a markdown file with the report.
@@ -182,11 +197,33 @@ class ReportGenerator:
                 self.segmentation_classification_metric,
                 md,
             )
+        if self.star_confmat is not None and self.star_confmat_norm is not None:
+            md = self._get_confusion_matrix(
+                "Confusion Matrix", self.star_confmat, md, False
+            )
+            md = self._get_confusion_matrix(
+                "Confusion Matrix normalized", self.star_confmat_norm, md, True
+            )
+
         if self.graph_segmentation_classification_metric is not None:
             md = self._get_per_class_metric_table(
                 "Segmentation Metrics per class after graph improvement",
                 self.graph_segmentation_classification_metric,
                 md,
+            )
+
+        if self.graph_confmat is not None and self.graph_confmat_norm is not None:
+            md = self._get_confusion_matrix(
+                "Confusion Matrix after graph improvement",
+                self.graph_confmat,
+                md,
+                False,
+            )
+            md = self._get_confusion_matrix(
+                "Confusion Matrix normalized after graph improvement",
+                self.graph_confmat_norm,
+                md,
+                True,
             )
 
         if len(self.images) > 0:
@@ -255,7 +292,7 @@ class ReportGenerator:
         md += f"## {title}\n\n"
         md += "| Metric |"
         for i in range(1, self.n_classes):
-            md += f" {get_class_name()[i]} |"
+            md += f" {self.class_name[i]} |"
         md += "\n"
         md += "| :--- |"
         for i in range(1, self.n_classes):
@@ -347,6 +384,43 @@ class ReportGenerator:
             + "\n"
         )
 
+        return md
+
+    def _get_confusion_matrix(
+        self, title: str, confmat: torch.tensor, md: str, norm: bool
+    ) -> str:
+        """Generate confusion matrix table.
+
+        Args:
+            title (str): The title of the table.
+            confmat (torch.tensor): The confusion matrix.
+            md (str): The markdown string.
+            norm (bool): Whether to normalize the confusion matrix.
+
+        Returns:
+            md (str): The markdown string with the added table.
+
+        Raises:
+            None.
+        """
+        cm = confmat.cpu().numpy()
+        index = list(self.class_name.values())
+        df = pd.DataFrame(cm, index=index, columns=index)
+        if norm:
+            ax = sn.heatmap(
+                df, annot=True, fmt=".2f", cmap="YlGnBu", cbar=False, vmin=0, vmax=1
+            )
+        else:
+            ax = sn.heatmap(df, annot=True, fmt="g", cmap="YlGnBu", cbar=False)
+        ax.set_title(title)
+        ax.figsize = (5, 10)
+        # ax.set(xlabel=index, ylabel=index)
+        save_name = title.replace(" ", "_")
+        plt.tight_layout()
+        ax.figure.savefig(f"{self.output_dir}images/{save_name}.png", dpi=300)
+        ax.figure.clf()
+        md += f"## {title}\n\n"
+        md += f"![](images/{save_name}.png)\n\n"
         return md
 
     def _generate_images(self) -> None:

@@ -1,4 +1,9 @@
 import numpy as np
+import torch
+from rich.console import Console
+from rich.table import Table
+
+from sflizard.data_utils import get_class_name
 
 
 def improve_class_map(
@@ -70,3 +75,32 @@ def get_class_map_from_graph(
             class_maps_list.append(class_map)
     class_maps = np.array(class_maps_list).astype("int32")
     return class_maps
+
+
+def log_confmat(confmat: torch.Tensor, title: str, console: Console) -> None:
+    """Log the confusion matrix.
+
+    Args:
+        confmat (torch.Tensor): The confusion matrix.
+        title (str): The title of the confusion matrix.
+        console (Console): The console to log the confusion matrix.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    cm = confmat.cpu().numpy()
+    table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        title=title,
+    )
+    table.add_column(" ", style="bold magenta", justify="center")
+    for i in range(cm.shape[0]):
+        table.add_column(get_class_name()[i], justify="center")
+    for i in range(cm.shape[1]):
+        str_cm_line = [str(c) for c in cm[i]]
+        table.add_row(get_class_name()[i], *str_cm_line)
+    console.print(table)

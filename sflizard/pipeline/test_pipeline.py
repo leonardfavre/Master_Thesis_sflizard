@@ -3,6 +3,7 @@ from typing import List
 
 import numpy as np
 import torch
+import torchmetrics
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
@@ -17,6 +18,7 @@ from sflizard import (
     get_class_map_from_graph,
     get_graph_for_inference,
     improve_class_map,
+    log_confmat,
 )
 
 X_TYPE = {
@@ -184,6 +186,12 @@ class TestPipeline:
         self.stardist_layer.output_last_layer = True
         self.console.print("Stardist model loaded.")
         self.classification = self.n_classes > 1
+        self.star_confmat = torchmetrics.classification.MulticlassConfusionMatrix(
+            num_classes=self.n_classes
+        )
+        self.star_confmat_norm = torchmetrics.classification.MulticlassConfusionMatrix(
+            num_classes=self.n_classes, normalize="pred"
+        )
 
     def __init_graph_inference(self) -> None:
         """Init the graph model for inference.
@@ -200,6 +208,8 @@ class TestPipeline:
         self.console.print("\n\n[bold cyan]### Loading graph model...[/bold cyan]")
 
         self.graph = {}
+        self.graph_confmat = {}
+        self.graph_confmat_norm = {}
         for w in self.graph_weights_path:
             model = Graph.load_from_checkpoint(
                 w,
@@ -207,6 +217,16 @@ class TestPipeline:
             )
             self.x_type = X_TYPE[model.num_features]
             self.graph[w] = model.model.to(self.device)
+            self.graph_confmat[
+                w
+            ] = torchmetrics.classification.MulticlassConfusionMatrix(
+                num_classes=self.n_classes
+            )
+            self.graph_confmat_norm[
+                w
+            ] = torchmetrics.classification.MulticlassConfusionMatrix(
+                num_classes=self.n_classes, normalize="pred"
+            )
         self.console.print("Graph model loaded.")
 
     def test(self, output_dir=None, imgs_to_display=0) -> None:
@@ -324,6 +344,24 @@ class TestPipeline:
                             graphs, pred_mask, graph_pred, pred_class_map_improved
                         )
 
+            # get per-cell class list for confusion matrix
+            if self.classification:
+                for b in range(len(pred_class_map_improved)):
+                    star_pred_b = torch.Tensor(
+                        [pred_class_map_improved[b][p[0]][p[1]] for p in points[b]]
+                    )
+                    true_b = torch.Tensor(
+                        [true_class_map[b][p[0]][p[1]] for p in points[b]]
+                    )
+                    self.star_confmat(star_pred_b, true_b)
+                    self.star_confmat_norm(star_pred_b, true_b)
+                    for g in self.graph:
+                        graph_pred_b = torch.Tensor(
+                            [graphs_class_map[g][b][p[0]][p[1]] for p in points[b]]
+                        )
+                        self.graph_confmat[g](graph_pred_b, true_b)
+                        self.graph_confmat_norm[g](graph_pred_b, true_b)
+
             # metrics gattering
             self.star_smt.add_batch(i, true_mask, pred_mask)
 
@@ -356,6 +394,8 @@ class TestPipeline:
                     else None,
                 )
 
+        print(self.star_confmat.compute())
+
         # compute metrics
         self.console.print("Computing metrics...")
         self.star_smt.compute_metrics()
@@ -365,12 +405,33 @@ class TestPipeline:
 
         self.console.print("Test done.\n\nResults:\n")
 
-        self.console.print(Markdown("\n ## StarDist results:\n"))
+        self.console.print(Markdown("\n ## Stardist results:\n"))
         self.star_smt.log_results()
+        log_confmat(
+            self.star_confmat.compute(),
+            "Stardist classification confusion matrix",
+            self.console,
+        )
+        log_confmat(
+            self.star_confmat_norm.compute(),
+            "Stardist classification confusion matrix (normalized over predicitions)",
+            self.console,
+        )
         if self.compute_graph:
             self.console.print(Markdown("\n## Graph results:\n"))
             for g in self.graph_smt:
+                self.console.print(Markdown(f"\n### {g} results:\n"))
                 self.graph_smt[g].log_results()
+                log_confmat(
+                    self.graph_confmat[g].compute(),
+                    "Graph classification confusion matrix",
+                    self.console,
+                )
+                log_confmat(
+                    self.graph_confmat_norm[g].compute(),
+                    "Graph classification confusion matrix (normalized over predicitions)",
+                    self.console,
+                )
 
         # generate report
         if output_dir is not None:
@@ -379,6 +440,16 @@ class TestPipeline:
                 self.star_smt.seg_metrics[0],
                 self.star_smt.seg_metrics if self.classification else None,
                 self.graph_smt[list(self.graph_smt.keys())[0]].seg_metrics
+                if self.compute_graph
+                else None,
+                self.star_confmat.compute(),
+                self.star_confmat_norm.compute(),
+                self.graph_confmat[list(self.graph_confmat.keys())[0]].compute()
+                if self.compute_graph
+                else None,
+                self.graph_confmat_norm[
+                    list(self.graph_confmat_norm.keys())[0]
+                ].compute()
                 if self.compute_graph
                 else None,
             )

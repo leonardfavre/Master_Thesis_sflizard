@@ -75,16 +75,16 @@ For more informations about wandb, and to configure an account, please visit [ht
 
 1. Download the data 
     * Lizard dataset:
-2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module) (PKL mode)
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddata_utilsdata_extraction) (PKL mode)
 
-3. Run test pipeline with [sflizard.run_test_pipeline.py](docs/sflizard.md#sflizardruntestpipeline)
+3. Run test pipeline with [sflizard.run_test_pipeline.py](docs/sflizard.md#sflizardrun_test_pipeline)
 
 
 ### Reproduce test results on Hovernet:
 
 1. Download the data 
     * Lizard dataset:
-2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module) (PKL and FILE mode)
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddata_utilsdata_extraction) (PKL and FILE mode)
 3. Compute output data for HoverNet
     * Compute data like this : 
         ```
@@ -100,7 +100,7 @@ For more informations about wandb, and to configure an account, please visit [ht
 
 1. Download the data 
     * Lizard dataset:
-2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddatautilsdataextraction-module)  (PKL mode)
+2. Extract the data with [sflizard.data_utils.data_extraction.py](docs/sflizard.data_utils.md#sflizarddata_utilsdata_extraction)  (PKL mode)
 3. Run train with [sflizard.training.py](docs/sflizard.md#sflizardtraining)
 
 ## Full documentation 
