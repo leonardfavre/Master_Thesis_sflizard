@@ -12,12 +12,12 @@ from tqdm import tqdm
 from sflizard import Graph, LizardGraphDataModule
 
 # config of training
-TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_train.pkl"
-VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_valid.pkl"
-TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_0.9_split_test.pkl"
+TRAIN_DATA_PATH = "data/Lizard_dataset_extraction/data_final_split_train.pkl"
+VALID_DATA_PATH = "data/Lizard_dataset_extraction/data_final_split_valid.pkl"
+TEST_DATA_PATH = "data/Lizard_dataset_extraction/data_final_split_test.pkl"
 SEED = 303
 STARDIST_CHECKPOINT = (
-    "models/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
+    "weights/final3_stardist_crop-cosine_200epochs_1.0losspower_0.0005lr.ckpt"
 )
 CHECKPOINT_PATH = ["models/", "models/cp_acc_graph/", "models/loss_cb_graph/"]
 TRUE_DATA_PATH_START = "data/Lizard_dataset_split/patches/Lizard_Labels_"
