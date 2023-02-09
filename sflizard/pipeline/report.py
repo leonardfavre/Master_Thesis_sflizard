@@ -131,8 +131,8 @@ class ReportGenerator:
         segmentation_metric: Union[Dict[Any, Any], None],
         segmentation_classification_metric: Union[Dict[Any, Any], None],
         graph_segmentation_classification_metric: Union[Dict[Any, Any], None],
-        star_confmat: torch.Tensor,
-        star_confmat_norm: torch.Tensor,
+        star_confmat: Union[torch.Tensor, None],
+        star_confmat_norm: Union[torch.Tensor, None],
         graph_confmat: Union[torch.Tensor, None],
         graph_confmat_norm: Union[torch.Tensor, None],
     ) -> None:
